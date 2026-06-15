@@ -9,7 +9,7 @@ from customers.models import Customer
 from translations import get_text, normalize_lang
 
 def get_lang():
-    lang = normalize_lang(request.args.get("lang", session.get("lang", "ko")))
+    lang = normalize_lang(request.args.get("lang", session.get("lang", "en")))
     session["lang"] = lang
     return lang
 
@@ -49,7 +49,7 @@ def signup():
         return redirect(
             url_for(
                 "customer_booking.customer_home",
-                lang=session.get("lang", "ko")
+                lang=session.get("lang", "en")
             )
         )
 
@@ -76,7 +76,7 @@ def login():
 
         session["customer_id"] = customer.id
 
-        return redirect(url_for("customer_booking.customer_home", lang=session.get("lang", "ko")))
+        return redirect(url_for("customer_booking.customer_home", lang=session.get("lang", "en")))
 
     lang = get_lang()
     return render_template("login.html", lang=lang, text=get_text(lang))
@@ -85,4 +85,4 @@ def login():
 @auth_bp.route("/logout")
 def logout():
     session.pop("customer_id", None)
-    return redirect(url_for("customer_booking.customer_home", lang=session.get("lang", "ko")))
+    return redirect(url_for("customer_booking.customer_home", lang=session.get("lang", "en")))

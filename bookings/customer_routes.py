@@ -15,7 +15,7 @@ from translations import get_text, normalize_lang
 
 
 def get_lang():
-    lang = normalize_lang(request.args.get("lang", session.get("lang", "ko")))
+    lang = normalize_lang(request.args.get("lang", session.get("lang", "en")))
     session["lang"] = lang
     return lang
 

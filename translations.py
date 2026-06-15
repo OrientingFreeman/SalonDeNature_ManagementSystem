@@ -105,8 +105,8 @@ TRANSLATIONS = {
 
 
 def get_text(lang):
-    return TRANSLATIONS.get(lang, TRANSLATIONS["ko"])
+    return TRANSLATIONS.get(lang, TRANSLATIONS["en"])
 
 
 def normalize_lang(lang):
-    return lang if lang in TRANSLATIONS else "ko"
+    return lang if lang in TRANSLATIONS else "en"

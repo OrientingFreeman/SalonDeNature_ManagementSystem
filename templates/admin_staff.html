@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}직원 관리{% endblock %}
+
+{% block content %}
+<h1>직원 관리</h1>
+
+<h2>직원 추가</h2>
+
+<form method="POST" action="/admin/staff/create">
+    <p>
+        이름:
+        <input type="text" name="name" required>
+    </p>
+
+    <p>
+        직원 아이디:
+        <input type="text" name="username" required>
+    </p>
+
+    <p>
+        비밀번호:
+        <input type="password" name="password" required>
+    </p>
+
+
+    <p>
+        역할:
+        <select name="role">
+            <option value="staff">직원</option>
+        </select>
+    </p>
+
+    <p>
+        연락처:
+        <input type="text" name="phone">
+    </p>
+
+    <button type="submit">직원 추가</button>
+</form>
+
+<hr>
+
+<h2>직원 목록</h2>
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>이름</th>
+            <th>아이디</th>
+            <th>역할</th>
+            <th>연락처</th>
+            <th>활성 상태</th>
+            <th>관리</th>
+            <th>스케줄</th>
+            <th>가능 시술</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for staff in staff_list %}
+            <tr>
+                <td>{{ staff.id }}</td>
+                <td>{{ staff.name }}</td>
+                <td>{{ staff.username or "-" }}</td>
+                <td>{{ staff.role }}</td>
+                <td>{{ staff.phone }}</td>
+                <td>
+                    {% if staff.is_active %}
+                        활성
+                    {% else %}
+                        비활성
+                    {% endif %}
+                </td>
+                
+                
+                <td>
+                 <form
+        method="POST"
+        action="/admin/staff/{{ staff.id }}/toggle"
+                 >
+        {% if staff.is_active %}
+            <button type="submit">비활성화</button>
+        {% else %}
+            <button type="submit">활성화</button>
+        {% endif %}
+                 </form>
+                </td>
+                
+                <td>
+                 <a href="/admin/staff/{{ staff.id }}/schedule">스케줄 관리</a>
+                </td>
+                
+                <td>
+                 <a href="/admin/staff/{{ staff.id }}/services">가능 시술 관리</a>
+                </td>
+                
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p>
+    <a href="/admin/calendar">예약 캘린더로 이동</a>
+</p>
+{% endblock %}

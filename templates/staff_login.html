@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}직원 로그인{% endblock %}
+
+{% block content %}
+<h1>직원 로그인</h1>
+
+<form method="post">
+    <p>
+        아이디:
+        <input type="text" name="username" required>
+    </p>
+
+    <p>
+        비밀번호:
+        <input type="password" name="password" required>
+    </p>
+
+    <button type="submit">로그인</button>
+</form>
+{% endblock %}

@@ -1,0 +1,47 @@
+<nav>
+    <a href="/?lang={{ lang|default('ko') }}">Home</a>
+
+    {% if not session.get("customer_id")
+          and not session.get("staff_id")
+          and not session.get("admin_logged_in") %}
+
+        |
+        <a href="/login?lang={{ lang|default('ko') }}">{{ text.customer_login if text is defined else "Customer Login" }}</a>
+        |
+        <a href="/signup?lang={{ lang|default('ko') }}">{{ text.signup if text is defined else "Sign Up" }}</a>
+        |
+        <a href="/staff/login">{{ text.staff_login if text is defined else "Staff Login" }}</a>
+        |
+        <a href="/admin/login">{{ text.admin_login if text is defined else "Admin Login" }}</a>
+
+    {% endif %}
+
+    {% if session.get("customer_id") %}
+
+        |
+        <a href="/booking?lang={{ lang|default('ko') }}">{{ text.book_now if text is defined else "Book Appointment" }}</a>
+        |
+        <a href="/my-bookings?lang={{ lang|default('ko') }}">{{ text.my_bookings if text is defined else "My Bookings" }}</a>
+        |
+        <a href="/logout">{{ text.logout if text is defined else "Log Out" }}</a>
+
+    {% endif %}
+
+    {% if session.get("staff_id") %}
+
+        |
+        <a href="/staff/dashboard">Staff Home</a>
+        |
+        <a href="/staff/logout">Staff Log Out</a>
+
+    {% endif %}
+
+    {% if session.get("admin_logged_in") %}
+
+        |
+        <a href="/admin">Admin Home</a>
+        |
+        <a href="/admin/logout">Admin Log Out</a>
+
+    {% endif %}
+</nav>

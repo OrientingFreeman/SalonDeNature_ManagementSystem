@@ -1,0 +1,15 @@
+{% extends "base.html" %} {% block title %}관리자 홈{% endblock %} {% block
+content %}
+<h1>Salon De Nature 관리자</h1>
+
+<ul>
+  <li><a href="/admin/calendar">예약 캘린더</a></li>
+  <li><a href="/admin/bookings/create">관리자 예약 생성</a></li>
+  <li><a href="/admin/customers">고객 관리</a></li>
+  <li><a href="/admin/staff">직원 관리</a></li>
+  <li><a href="/admin/services">시술 메뉴 관리</a></li>
+  <li><a href="/admin/settings">샵 설정</a></li>
+  <li><a href="/admin/users"> 관리자 계정 관리 </a></li>
+  <li><a href="/admin/revenue">매출 대시보드</a></li>
+</ul>
+{% endblock %}

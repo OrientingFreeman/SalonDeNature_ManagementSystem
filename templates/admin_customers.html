@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}고객 관리{% endblock %}
+
+{% block content %}
+<h1>고객 관리</h1>
+
+<h2>고객 추가</h2>
+
+<form method="POST" action="/admin/customers/create">
+    <p>이름: <input type="text" name="name" required></p>
+    <p>연락처: <input type="text" name="phone" required></p>
+    <p>이메일: <input type="email" name="email"></p>
+    <p>선호 스타일: <input type="text" name="preferred_style"></p>
+    <p>피부 민감 정보: <input type="text" name="skin_sensitivity"></p>
+    <p>이전 불만사항: <input type="text" name="complaint_note"></p>
+    <p>메모: <textarea name="memo"></textarea></p>
+
+    <button type="submit">고객 추가</button>
+</form>
+
+<hr>
+
+<h2>고객 목록</h2>
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>이름</th>
+            <th>연락처</th>
+            <th>이메일</th>
+            <th>방문</th>
+            <th>노쇼</th>
+            <th>예약제한</th>
+            <th>누적매출</th>
+            <th>메모</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+            <tr>
+                <td>{{ customer.id }}</td>
+                <td>
+                  <a href="/admin/customers/{{ customer.id }}">
+                   {{ customer.name }}
+                  </a>
+                </td>
+                <td>{{ customer.phone }}</td>
+                <td>{{ customer.email }}</td>
+                <td>{{ customer.visit_count }}</td>
+                <td>{{ customer.no_show_count }}</td>
+                <td>
+                    {% if customer.booking_restricted %}
+                        제한
+                    {% else %}
+                        정상
+                    {% endif %}
+                </td>
+                <td>{{ customer.total_revenue }}</td>
+                <td>{{ customer.memo }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p>
+    <a href="/admin/calendar">예약 캘린더</a> |
+    <a href="/admin/staff">직원 관리</a> |
+    <a href="/admin/services">시술 관리</a>
+</p>
+{% endblock %}

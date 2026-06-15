@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ text.booking_title }}{% endblock %}
+
+{% block content %}
+<h1>{{ text.booking_title }}</h1>
+
+<form method="POST" action="/booking?lang={{ lang }}">
+
+<p>
+    <a href="/booking?lang=ko">Korean</a> |
+    <a href="/booking?lang=en">English</a>
+</p>
+
+
+
+<p>
+        {{ text.logged_in_customer }}:
+        {{ current_customer.name }} / {{ current_customer.phone }}
+        <a href="/logout">{{ text.logout }}</a>
+</p>
+
+
+
+    <p>
+    {{ text.staff }}:
+        <select name="staff_id" id="staffSelect" required>
+            <option value="any">{{ text.any_staff }}</option>
+            {% for staff in staff_list %}
+                <option value="{{ staff.id }}">{{ staff.name }}</option>
+            {% endfor %}
+        </select>
+    </p>
+
+    <p>
+    {{ text.service }}:
+        <select name="service_id" id="serviceSelect" required>
+            {% for service in services %}
+                <option value="{{ service.id }}">
+                 {% if lang == "en" %}
+                     [{{ service.category|title }}] {{ service.name_en or service.name_ko }}
+                {% else %}
+                     [{{ service.category }}] {{ service.name_ko }}
+                 {% endif %}
+                / {{ service.duration_minutes }} min
+                / {{ service.price }} KRW
+                </option>
+            {% endfor %}
+        </select>
+    </p>
+
+
+
+    
+    <p>
+    {{ text.date }}:
+        <input type="date" id="bookingDate" required>
+    </p>
+
+    <p>
+    {{ text.time }}:
+        <select name="start_time" id="availableSlotSelect" required>
+            <option value="">{{ text.select_staff_service_date }}</option>
+        </select>
+    </p>
+
+    <button type="submit">{{ text.submit }}</button>
+
+</form>
+
+<script>
+const LANG = "{{ lang }}";
+const MESSAGES = {
+    ko: {
+        loading: "조회 중...",
+        selectStaffServiceDate: "직원/시술/날짜를 선택하세요",
+        lookupFailed: "조회 실패",
+        noAvailableTimes: "예약 가능한 시간이 없습니다"
+    },
+    en: {
+        loading: "Loading...",
+        selectStaffServiceDate: "Please select staff, service, and date",
+        lookupFailed: "Lookup failed",
+        noAvailableTimes: "No available times"
+    }
+};
+</script>
+
+<script>
+async function loadAvailableSlots() {
+    const staffId = document.getElementById("staffSelect").value;
+    const serviceId = document.getElementById("serviceSelect").value;
+    const date = document.getElementById("bookingDate").value;
+    const slotSelect = document.getElementById("availableSlotSelect");
+
+    slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].loading}</option>`;
+
+    if (!staffId || !serviceId || !date) {
+        slotSelect.innerHTML = '<option value="">{{ text.select_staff_service_date }}</option>';
+        return;
+    }
+
+    let url = "";
+
+    if (staffId === "any") {
+        url = `/api/bookings/available-slots-any?service_id=${serviceId}&date=${date}`;
+    } else {
+        url = `/api/bookings/available-slots?staff_id=${staffId}&service_id=${serviceId}&date=${date}`;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    slotSelect.innerHTML = "";
+
+    if (!data.ok) {
+        slotSelect.innerHTML = `<option value="">${data.message || MESSAGES[LANG].lookupFailed}</option>`;
+        return;
+    }
+
+    if (data.available_slots.length === 0) {
+        slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].noAvailableTimes}</option>`;
+        return;
+    }
+
+    data.available_slots.forEach(function(slot) {
+        const option = document.createElement("option");
+        option.value = `${date}T${slot}`;
+        option.textContent = slot;
+        slotSelect.appendChild(option);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("staffSelect").addEventListener("change", loadAvailableSlots);
+    document.getElementById("serviceSelect").addEventListener("change", loadAvailableSlots);
+    document.getElementById("bookingDate").addEventListener("change", loadAvailableSlots);
+});
+</script>
+{% endblock %}

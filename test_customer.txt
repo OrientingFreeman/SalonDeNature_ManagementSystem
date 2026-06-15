@@ -1,0 +1,8 @@
+curl -X POST http://127.0.0.1:5000/api/bookings \
+-H "Content-Type: application/json" \
+-d '{
+  "customer_id": 1,
+  "staff_id": 1,
+  "service_id": 2,
+  "start_time": "2026-06-01 10:00"
+}'

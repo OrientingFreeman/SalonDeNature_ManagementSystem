@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}고객 상세{% endblock %}
+
+{% block content %}
+<h1>고객 상세</h1>
+
+<h2>기본 정보</h2>
+
+<form method="POST" action="/admin/customers/{{ customer.id }}/update">
+    <p>이름: <input type="text" name="name" value="{{ customer.name }}" required></p>
+    <p>연락처: <input type="text" name="phone" value="{{ customer.phone }}" required></p>
+    <p>이메일: <input type="email" name="email" value="{{ customer.email or '' }}"></p>
+
+    <p>선호 스타일:</p>
+    <textarea name="preferred_style">{{ customer.preferred_style or '' }}</textarea>
+
+    <p>피부 민감 정보:</p>
+    <textarea name="skin_sensitivity">{{ customer.skin_sensitivity or '' }}</textarea>
+
+    <p>이전 불만사항:</p>
+    <textarea name="complaint_note">{{ customer.complaint_note or '' }}</textarea>
+
+    <p>메모:</p>
+    <textarea name="memo">{{ customer.memo or '' }}</textarea>
+
+    <p>
+        <button type="submit">고객 정보 저장</button>
+    </p>
+</form>
+
+<hr>
+
+<h2>고객 지표</h2>
+
+<ul>
+    <li>방문 횟수: {{ customer.visit_count }}</li>
+    <li>노쇼 횟수: {{ customer.no_show_count }}</li>
+    <li>예약 제한:
+        {% if customer.booking_restricted %}
+            제한 중
+        {% else %}
+            정상
+        {% endif %}
+    </li>
+    <li>누적 매출: {{ customer.total_revenue }}</li>
+</ul>
+
+<hr>
+
+<h2>예약 이력</h2>
+
+{% if bookings %}
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>날짜</th>
+                <th>시간</th>
+                <th>시술</th>
+                <th>직원</th>
+                <th>상태</th>
+                <th>가격</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.start_time.strftime("%Y-%m-%d") }}</td>
+                    <td>
+                        {{ booking.start_time.strftime("%H:%M") }}
+                        ~
+                        {{ booking.end_time.strftime("%H:%M") }}
+                    </td>
+                    <td>{{ booking.service.name_ko }}</td>
+                    <td>{{ booking.staff.name }}</td>
+                    <td>{{ booking.status }}</td>
+                    <td>{{ booking.service.price }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>예약 이력이 없습니다.</p>
+{% endif %}
+
+<p>
+    <a href="/admin/customers">고객 목록으로 돌아가기</a>
+</p>
+{% endblock %}

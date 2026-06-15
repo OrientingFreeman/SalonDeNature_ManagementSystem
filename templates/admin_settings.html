@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}샵 설정{% endblock %}
+
+{% block content %}
+<h1>샵 설정</h1>
+
+<form
+    method="POST"
+    action="/admin/settings/update"
+>
+
+    <h3>노쇼 제한 횟수</h3>
+
+    <input
+        type="number"
+        name="no_show_limit_count"
+        value="{{ settings.no_show_limit_count }}"
+    >
+
+    <hr>
+
+    <h3>예약금 사용</h3>
+
+    <input
+        type="checkbox"
+        name="deposit_enabled"
+        {% if settings.deposit_enabled %}
+        checked
+        {% endif %}
+    >
+    사용
+
+    <hr>
+
+    <h3>예약 승인 방식</h3>
+
+    <select name="booking_approval_mode">
+
+        <option
+            value="auto"
+            {% if settings.booking_approval_mode == "auto" %}
+            selected
+            {% endif %}
+        >
+            자동 승인
+        </option>
+
+        <option
+            value="manual"
+            {% if settings.booking_approval_mode == "manual" %}
+            selected
+            {% endif %}
+        >
+            수동 승인
+        </option>
+
+    </select>
+
+    <hr>
+
+    <button type="submit">
+        저장
+    </button>
+
+</form>
+{% endblock %}

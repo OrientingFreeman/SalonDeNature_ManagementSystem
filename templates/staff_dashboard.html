@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+}
+.modal-box {
+    background: #fff;
+    width: min(480px, 92vw);
+    margin: 12vh auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.modal-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+</style>
+
+<h1>직원 대시보드</h1>
+
+<p>{{ session.staff_name }}님</p>
+
+<h2>오늘 요약</h2>
+
+<ul>
+    <li>오늘 예약 수: {{ total_count }}건</li>
+    <li>오늘 완료 수: {{ completed_count }}건</li>
+    <li>오늘 예상 매출: {{ "{:,}".format(expected_revenue) }}원</li>
+</ul>
+
+<h2>오늘 예약</h2>
+
+{% if bookings %}
+
+<table border="1">
+
+<tr>
+    <th>시간</th>
+    <th>고객</th>
+    <th>서비스</th>
+    <th>상태</th>
+    <th>관리</th>
+</tr>
+
+{% for booking in bookings %}
+
+<tr>
+    <td>
+        {{ booking.start_time.strftime("%H:%M") }}
+    </td>
+
+    <td>
+        {{ booking.customer.name }}
+    </td>
+
+    <td>
+        {{ booking.service.name_ko }}
+    </td>
+
+    <td>
+        {{ booking.status }}
+    </td>
+
+    <td>
+        {% if booking.status == "confirmed" %}
+        <button onclick="openCompleteModal({{ booking.id }})">
+            완료
+        </button>
+        {% else %}
+        -
+        {% endif %}
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% else %}
+
+<p>오늘 예약이 없습니다.</p>
+
+{% endif %}
+
+<div id="completeModal" class="modal-backdrop">
+    <div class="modal-box">
+        <h3>시술 완료 처리</h3>
+        <p>이 예약을 완료 처리하시겠습니까?</p>
+        <div class="modal-actions">
+            <button onclick="closeModal('completeModal')">돌아가기</button>
+            <button onclick="confirmCompleteBooking()">완료 처리</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingCompleteBookingId = null;
+
+function openModal(id) {
+    document.getElementById(id).style.display = "block";
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = "none";
+}
+
+function openCompleteModal(id) {
+    pendingCompleteBookingId = id;
+    openModal("completeModal");
+}
+
+function confirmCompleteBooking() {
+    if (!pendingCompleteBookingId) return;
+
+    fetch(`/staff/booking/${pendingCompleteBookingId}/complete`,{
+        method:"POST"
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.ok){
+            location.reload();
+        } else {
+            alert("완료 처리 실패");
+        }
+    });
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("completeModal");
+    if (event.target === modal) {
+        closeModal("completeModal");
+    }
+};
+</script>
+
+{% endblock %}

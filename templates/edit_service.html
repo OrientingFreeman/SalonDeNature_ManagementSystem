@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}시술 수정{% endblock %}
+
+{% block content %}
+<h1>시술 수정</h1>
+
+<form method="POST" action="/admin/services/{{ service.id }}/update">
+
+    <p>
+        카테고리:
+        <select name="category">
+            <option value="nail" {% if service.category == "nail" %}selected{% endif %}>네일</option>
+            <option value="waxing" {% if service.category == "waxing" %}selected{% endif %}>왁싱</option>
+        </select>
+    </p>
+
+    <p>
+        한글명:
+        <input type="text" name="name_ko" value="{{ service.name_ko }}" required>
+    </p>
+
+    <p>
+        영문명:
+        <input type="text" name="name_en" value="{{ service.name_en or '' }}">
+    </p>
+
+    <p>
+        소요시간:
+        <select name="duration_minutes">
+            <option value="30" {% if service.duration_minutes == 30 %}selected{% endif %}>30분</option>
+            <option value="60" {% if service.duration_minutes == 60 %}selected{% endif %}>60분</option>
+            <option value="90" {% if service.duration_minutes == 90 %}selected{% endif %}>90분</option>
+            <option value="120" {% if service.duration_minutes == 120 %}selected{% endif %}>120분</option>
+        </select>
+    </p>
+
+    <p>
+        가격:
+        <input type="number" name="price" value="{{ service.price }}" required>
+    </p>
+
+    <p>
+        예약금 필요:
+        <input type="checkbox" name="deposit_required" {% if service.deposit_required %}checked{% endif %}>
+    </p>
+
+    <p>
+        예약금 금액:
+        <input type="number" name="deposit_amount" value="{{ service.deposit_amount }}">
+    </p>
+
+    <button type="submit">수정 저장</button>
+
+</form>
+
+<p>
+    <a href="/admin/services">시술 목록으로 돌아가기</a>
+</p>
+{% endblock %}

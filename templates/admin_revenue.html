@@ -1,0 +1,206 @@
+{% extends "base.html" %} {% block title %}매출 대시보드{% endblock %} {% block
+content %}
+
+<h1>매출 대시보드</h1>
+
+<form method="GET" action="/admin/revenue">
+  <p>
+    시작일:
+    <input type="date" name="start_date" value="{{ filter_start_date }}" />
+  </p>
+
+  <p>
+    종료일:
+    <input type="date" name="end_date" value="{{ filter_end_date }}" />
+  </p>
+
+  <button type="submit">기간 조회</button>
+</form>
+
+<p>
+  <a
+    href="/admin/revenue/export?start_date={{ filter_start_date }}&end_date={{ filter_end_date }}"
+  >
+    엑셀 다운로드
+  </a>
+</p>
+
+<h2>선택 기간 매출</h2>
+
+<ul>
+  <li>기간: {{ filter_start_date }} ~ {{ filter_end_date }}</li>
+  <li>매출: {{ filtered_revenue }}원</li>
+  <li>완료 건수: {{ filtered_bookings|length }}건</li>
+</ul>
+
+<h2>요약</h2>
+
+<ul>
+  <li>오늘 매출: {{ today_revenue }}원</li>
+  <li>이번 주 매출: {{ week_revenue }}원</li>
+  <li>이번 달 매출: {{ month_revenue }}원</li>
+  <li>전체 누적 매출: {{ total_revenue }}원</li>
+  <li>완료된 시술 건수: {{ completed_count }}건</li>
+</ul>
+
+<hr />
+
+<h2>직원별 매출 그래프</h2>
+
+<canvas id="staffRevenueChart" width="800" height="300"></canvas>
+
+<hr />
+
+<h2>직원별 매출</h2>
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>직원</th>
+      <th>시술 건수</th>
+      <th>매출</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for staff_name, revenue in staff_revenue.items() %}
+    <tr>
+      <td>{{ staff_name }}</td>
+      <td>{{ staff_count.get(staff_name, 0) }}건</td>
+      <td>{{ revenue }}원</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr />
+
+<h2>파트별 매출 그래프</h2>
+
+<canvas id="categoryRevenueChart" width="800" height="300"></canvas>
+
+<hr />
+
+<h2>파트별 매출</h2>
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>파트</th>
+      <th>시술 건수</th>
+      <th>매출</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for category, revenue in category_revenue.items() %}
+    <tr>
+      <td>{{ category }}</td>
+      <td>{{ category_count.get(category, 0) }}건</td>
+      <td>{{ revenue }}원</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr />
+
+<h2>일자별 매출 그래프</h2>
+
+<canvas id="dailyRevenueChart" width="800" height="300"></canvas>
+
+<hr />
+
+<h2>일자별 매출</h2>
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>날짜</th>
+      <th>완료 건수</th>
+      <th>매출</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for day, data in daily_revenue.items() %}
+    <tr>
+      <td>{{ day }}</td>
+      <td>{{ data.count }}건</td>
+      <td>{{ data.revenue }}원</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const chartLabels = {{ chart_labels | tojson }};
+    const chartValues = {{ chart_values | tojson }};
+
+    const ctx = document.getElementById("dailyRevenueChart");
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: "일자별 매출",
+                data: chartValues,
+                tension: 0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const staffChartLabels = {{ staff_chart_labels | tojson }};
+  const staffChartValues = {{ staff_chart_values | tojson }};
+
+  const staffCtx = document.getElementById("staffRevenueChart");
+
+  new Chart(staffCtx, {
+      type: "bar",
+      data: {
+          labels: staffChartLabels,
+          datasets: [{
+              label: "직원별 매출",
+              data: staffChartValues
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      }
+  });
+
+
+  const categoryChartLabels = {{ category_chart_labels | tojson }};
+  const categoryChartValues = {{ category_chart_values | tojson }};
+
+  const categoryCtx = document.getElementById("categoryRevenueChart");
+
+  new Chart(categoryCtx, {
+      type: "pie",
+      data: {
+          labels: categoryChartLabels,
+          datasets: [{
+              label: "파트별 매출",
+              data: categoryChartValues
+          }]
+      },
+      options: {
+          responsive: true
+      }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}직원별 가능 시술 관리{% endblock %}
+
+{% block content %}
+<h1>{{ staff.name }} 가능 시술 관리</h1>
+
+<form method="POST" action="/admin/staff/{{ staff.id }}/services/update">
+
+    {% for service in services %}
+        <p>
+            <label>
+                <input
+                    type="checkbox"
+                    name="service_ids"
+                    value="{{ service.id }}"
+                    {% if service.id in linked_service_ids %}
+                        checked
+                    {% endif %}
+                >
+                [{{ service.category }}]
+                {{ service.name_ko }}
+                / {{ service.duration_minutes }}분
+                / {{ service.price }}원
+                {% if not service.is_active %}
+                    (비활성)
+                {% endif %}
+            </label>
+        </p>
+    {% endfor %}
+
+    <button type="submit">저장</button>
+
+</form>
+
+<p>
+    <a href="/admin/staff">직원 목록으로 돌아가기</a>
+</p>
+{% endblock %}

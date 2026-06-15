@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}직원 스케줄 관리{% endblock %}
+
+{% block content %}
+<h1>{{ staff.name }} 스케줄 관리</h1>
+
+<form method="POST" action="/admin/staff/{{ staff.id }}/schedule/update">
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>요일</th>
+            <th>근무 여부</th>
+            <th>시작</th>
+            <th>종료</th>
+            <th>휴게 시작</th>
+            <th>휴게 종료</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set days = ["월", "화", "수", "목", "금", "토", "일"] %}
+
+        {% for day in range(7) %}
+            {% set schedule = schedule_map.get(day) %}
+
+            <tr>
+                <td>{{ days[day] }}</td>
+
+                <td>
+                    <input
+                        type="checkbox"
+                        name="is_working_{{ day }}"
+                        {% if schedule and schedule.is_working %}
+                            checked
+                        {% endif %}
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="start_time_{{ day }}"
+                        value="{% if schedule %}{{ schedule.start_time.strftime('%H:%M') }}{% else %}10:00{% endif %}"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="end_time_{{ day }}"
+                        value="{% if schedule %}{{ schedule.end_time.strftime('%H:%M') }}{% else %}19:00{% endif %}"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="break_start_time_{{ day }}"
+                        value="{% if schedule and schedule.break_start_time %}{{ schedule.break_start_time.strftime('%H:%M') }}{% endif %}"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="break_end_time_{{ day }}"
+                        value="{% if schedule and schedule.break_end_time %}{{ schedule.break_end_time.strftime('%H:%M') }}{% endif %}"
+                    >
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p>
+    <button type="submit">스케줄 저장</button>
+</p>
+
+</form>
+
+<p>
+    <a href="/admin/staff">직원 목록으로 돌아가기</a>
+</p>
+{% endblock %}

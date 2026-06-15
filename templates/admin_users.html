@@ -1,0 +1,45 @@
+{% extends "base.html" %} {% block content %}
+
+<h1>관리자 계정 관리</h1>
+
+<h2>관리자 생성</h2>
+
+<form method="POST" action="/admin/users/create">
+  <p>
+    아이디:
+    <input type="text" name="username" required />
+  </p>
+
+  <p>
+    비밀번호:
+    <input type="password" name="password" required />
+  </p>
+
+  <button type="submit">관리자 생성</button>
+</form>
+
+<hr />
+
+<h2>관리자 목록</h2>
+
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>아이디</th>
+    <th>최근 로그인</th>
+  </tr>
+
+  {% for user in users %}
+
+  <tr>
+    <td>{{ user.id }}</td>
+
+    <td>{{ user.username }}</td>
+
+    <td>{{ user.last_login_at }}</td>
+  </tr>
+
+  {% endfor %}
+</table>
+
+{% endblock %}

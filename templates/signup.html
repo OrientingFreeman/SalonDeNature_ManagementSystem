@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{{ text.signup }}{% endblock %}
+
+{% block content %}
+<p>
+    <a href="/signup?lang=ko">Korean</a> |
+    <a href="/signup?lang=en">English</a>
+</p>
+
+<h1>{{ text.signup }}</h1>
+
+<form method="POST" action="/signup?lang={{ lang }}">
+    <p>{{ text.name }}: <input type="text" name="name" required></p>
+    <p>{{ text.phone }}: <input type="text" name="phone" required></p>
+    <p>{{ text.password }}: <input type="password" name="password" required></p>
+
+    <button type="submit">{{ text.signup }}</button>
+</form>
+
+<p>
+    {{ text.already_have_account }}
+    <a href="/login?lang={{ lang }}">{{ text.login }}</a>
+</p>
+{% endblock %}

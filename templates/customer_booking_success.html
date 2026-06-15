@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}{{ text.success }}{% endblock %}
+
+{% block content %}
+<p>
+    <a href="/booking/success/{{ booking.id }}?lang=ko">Korean</a> |
+    <a href="/booking/success/{{ booking.id }}?lang=en">English</a>
+</p>
+
+<h1>{{ text.success }}</h1>
+
+<h2>{{ text.appointment_info }}</h2>
+
+<ul>
+    <li>{{ text.customer_name }}: {{ booking.customer.name }}</li>
+    <li>{{ text.phone }}: {{ booking.customer.phone }}</li>
+
+    <li>
+        {{ text.service }}:
+        {% if lang == "en" and booking.service.name_en %}
+            {{ booking.service.name_en }}
+        {% else %}
+            {{ booking.service.name_ko }}
+        {% endif %}
+    </li>
+
+    <li>{{ text.staff }}: {{ booking.staff.name }}</li>
+    <li>{{ text.booking_date }}: {{ booking.start_time.strftime("%Y-%m-%d") }}</li>
+    <li>
+        {{ text.booking_time }}:
+        {{ booking.start_time.strftime("%H:%M") }}
+        ~
+        {{ booking.end_time.strftime("%H:%M") }}
+    </li>
+    <li>{{ text.booking_status }}: {{ booking.status }}</li>
+</ul>
+
+<p>
+    {{ text.appointment_notice }}
+</p>
+
+<p>
+    <a href="/booking?lang={{ lang }}">{{ text.book_another }}</a>
+</p>
+
+<p>
+    <a href="/my-bookings?lang={{ lang }}">{{ text.view_my_bookings }}</a>
+</p>
+{% endblock %}

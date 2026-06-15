@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}시술 메뉴 관리{% endblock %}
+
+{% block content %}
+<h1>시술 메뉴 관리</h1>
+
+<h2>시술 추가</h2>
+
+<form method="POST" action="/admin/services/create">
+
+    <p>
+        카테고리:
+        <select name="category">
+            <option value="nail">네일</option>
+            <option value="waxing">왁싱</option>
+        </select>
+    </p>
+
+    <p>
+        한글명:
+        <input type="text" name="name_ko" required>
+    </p>
+
+    <p>
+        영문명:
+        <input type="text" name="name_en">
+    </p>
+
+    <p>
+        소요시간:
+        <select name="duration_minutes">
+            <option value="30">30분</option>
+            <option value="60">60분</option>
+            <option value="90">90분</option>
+            <option value="120">120분</option>
+        </select>
+    </p>
+
+    <p>
+        가격:
+        <input type="number" name="price" required>
+    </p>
+
+    <p>
+        예약금 필요:
+        <input type="checkbox" name="deposit_required">
+    </p>
+
+    <p>
+        예약금 금액:
+        <input type="number" name="deposit_amount" value="0">
+    </p>
+
+    <button type="submit">시술 추가</button>
+
+</form>
+
+<hr>
+
+<h2>시술 목록</h2>
+
+<table border="1" cellpadding="8">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>카테고리</th>
+            <th>한글명</th>
+            <th>영문명</th>
+            <th>소요시간</th>
+            <th>가격</th>
+            <th>예약금</th>
+            <th>활성 상태</th>
+            <th>관리</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for service in services %}
+            <tr>
+                <td>{{ service.id }}</td>
+                <td>{{ service.category }}</td>
+                <td>{{ service.name_ko }}</td>
+                <td>{{ service.name_en }}</td>
+                <td>{{ service.duration_minutes }}분</td>
+                <td>{{ service.price }}</td>
+                <td>
+                    {% if service.deposit_required %}
+                        필요 / {{ service.deposit_amount }}
+                    {% else %}
+                        없음
+                    {% endif %}
+                </td>
+                <td>
+                    {% if service.is_active %}
+                        활성
+                    {% else %}
+                        비활성
+                    {% endif %}
+                </td>
+                    
+                <td>
+                    <a href="/admin/services/{{ service.id }}/edit">수정</a>
+                    <br>
+                
+                    <form method="POST" action="/admin/services/{{ service.id }}/toggle">
+                        {% if service.is_active %}
+                            <button type="submit">비활성화</button>
+                        {% else %}
+                            <button type="submit">활성화</button>
+                        {% endif %}
+                    </form>
+                    
+                    <form
+                      method="POST"
+                      action="/admin/services/{{ service.id }}/delete"
+                      onsubmit="return confirm('정말 삭제하시겠습니까? 예약 이력이 있으면 비활성화 처리됩니다.');"
+                    >
+                    <button type="submit">삭제</button>
+                  </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p>
+    <a href="/admin/staff">직원 관리</a> |
+    <a href="/admin/calendar">예약 캘린더</a> |
+    <a href="/admin/settings">샵 설정</a>
+</p>
+{% endblock %}

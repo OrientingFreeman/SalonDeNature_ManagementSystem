@@ -21,4 +21,7 @@
     {{ text.no_account }}
     <a href="/signup?lang={{ lang }}">{{ text.signup }}</a>
 </p>
+
+<a href="{{ url_for('auth.kakao_login') }}">Continue with Kakao</a>
+
 {% endblock %}

@@ -5,8 +5,8 @@ from werkzeug.security import generate_password_hash
 
 
 def create_admin():
-    username = "admin"
-    password = "admin1234"
+    username = "admin1"
+    password = "admin0864"
 
     existing = AdminUser.query.filter_by(username=username).first()
 

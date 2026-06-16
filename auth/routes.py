@@ -124,8 +124,18 @@ def kakao_callback():
     token_json = token_response.json()
     access_token = token_json.get("access_token")
 
+    #if not access_token:
+        #return f"Failed to get Kakao access token: {token_json}", 400
+
     if not access_token:
-        return f"Failed to get Kakao access token: {token_json}", 400
+        return {
+            "status_code": token_response.status_code,
+            "kakao_response": token_json,
+            "sent_client_id": current_app.config["KAKAO_REST_API_KEY"],
+            "sent_redirect_uri": current_app.config["KAKAO_REDIRECT_URI"],
+            "received_code_prefix": code[:20],
+        }, 400
+
 
     user_response = requests.get(
         "https://kapi.kakao.com/v2/user/me",

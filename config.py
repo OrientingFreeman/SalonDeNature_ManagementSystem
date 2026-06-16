@@ -13,3 +13,4 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     KAKAO_REST_API_KEY = os.environ.get("KAKAO_REST_API_KEY")
     KAKAO_REDIRECT_URI = os.environ.get("KAKAO_REDIRECT_URI")
+    KAKAO_CLIENT_SECRET = os.environ.get("KAKAO_CLIENT_SECRET")

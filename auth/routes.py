@@ -113,6 +113,7 @@ def kakao_callback():
         data={
             "grant_type": "authorization_code",
             "client_id": current_app.config["KAKAO_REST_API_KEY"],
+            "client_secret": current_app.config["KAKAO_CLIENT_SECRET"],
             "redirect_uri": current_app.config["KAKAO_REDIRECT_URI"],
             "code": code,
         },

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session, current_app, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from extensions import db
@@ -27,8 +27,11 @@ def signup():
 
         existing_customer = Customer.query.filter_by(phone=phone).first()
 
+
+
         if existing_customer and existing_customer.password_hash:
-            return "이미 가입된 연락처입니다.", 400
+            flash("This phone number is already registered.")
+            return redirect(url_for("auth.signup", lang=session.get("lang", "en")))
 
         if existing_customer:
             customer = existing_customer
@@ -68,10 +71,12 @@ def login():
         customer = Customer.query.filter_by(phone=phone).first()
 
         if not customer or not customer.password_hash:
-            return "가입되지 않은 연락처입니다.", 400
+            flash("No account found with this phone number.")
+            return redirect(url_for("auth.login", lang=session.get("lang", "en")))
 
         if not check_password_hash(customer.password_hash, password):
-            return "비밀번호가 일치하지 않습니다.", 400
+            flash("Incorrect password.")
+            return redirect(url_for("auth.login", lang=session.get("lang", "en")))
 
         customer.last_login_at = datetime.utcnow()
         db.session.commit()
@@ -106,7 +111,8 @@ def kakao_callback():
     code = request.args.get("code")
 
     if not code:
-        return "Kakao login failed.", 400
+        flash("Kakao login failed. Please try again.")
+        return redirect(url_for("auth.login", lang=session.get("lang", "en")))
 
     token_response = requests.post(
         "https://kauth.kakao.com/oauth/token",
@@ -125,9 +131,10 @@ def kakao_callback():
     token_json = token_response.json()
     access_token = token_json.get("access_token")
 
-    #if not access_token:
-        #return f"Failed to get Kakao access token: {token_json}", 400
-
+    if not access_token:
+        flash("Kakao login failed. Please try again.")
+        return redirect(url_for("auth.login", lang=session.get("lang", "en")))
+    '''
     if not access_token:
         return {
             "status_code": token_response.status_code,
@@ -136,7 +143,7 @@ def kakao_callback():
             "sent_redirect_uri": current_app.config["KAKAO_REDIRECT_URI"],
             "received_code_prefix": code[:20],
         }, 400
-
+    '''
 
     user_response = requests.get(
         "https://kapi.kakao.com/v2/user/me",
@@ -182,3 +189,45 @@ def kakao_callback():
     session["lang"] = session.get("lang", "en")
 
     return redirect(url_for("customer_booking.customer_home", lang=session["lang"]))
+
+
+@auth_bp.route("/change-password", methods=["GET", "POST"])
+def customer_change_password():
+    if not session.get("customer_id"):
+        return redirect(url_for("auth.login", lang=session.get("lang", "en")))
+
+    customer = Customer.query.get(session["customer_id"])
+
+    if not customer:
+        session.pop("customer_id", None)
+        flash("Please log in again.")
+        return redirect(url_for("auth.login", lang=session.get("lang", "en")))
+
+    if customer.login_provider != "local" or not customer.password_hash:
+        flash("Password change is only available for accounts created with phone number and password.")
+        return redirect(url_for("customer_booking.my_bookings", lang=session.get("lang", "en")))
+
+    if request.method == "POST":
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        if not check_password_hash(customer.password_hash, current_password):
+            flash("Current password is incorrect.")
+            return redirect(url_for("auth.customer_change_password"))
+
+        if new_password != confirm_password:
+            flash("New passwords do not match.")
+            return redirect(url_for("auth.customer_change_password"))
+
+        if len(new_password) < 8:
+            flash("Password must be at least 8 characters.")
+            return redirect(url_for("auth.customer_change_password"))
+
+        customer.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+
+        flash("Password updated successfully.")
+        return redirect(url_for("customer_booking.my_bookings", lang=session.get("lang", "en")))
+
+    return render_template("customer_change_password.html")

@@ -1,6 +1,6 @@
 from datetime import datetime, date
 
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 
 from extensions import db
 from customers.models import Customer
@@ -12,7 +12,7 @@ from bookings.services import (
 )
 
 from translations import get_text, normalize_lang
-
+from staff.models import Staff
 
 def get_lang():
     lang = normalize_lang(request.args.get("lang", session.get("lang", "en")))
@@ -25,14 +25,25 @@ customer_booking_bp = Blueprint(
     __name__
 )
 
+
+
 @customer_booking_bp.route("/")
 def customer_home():
     lang = get_lang()
 
+    staffs = (
+       Staff.query
+        .filter_by(is_active=True)
+        .order_by(Staff.display_order.asc())
+        .limit(3)
+        .all()
+    )
+
     return render_template(
         "customer_home.html",
         lang=lang,
-        text=get_text(lang)
+        text=get_text(lang),
+        staffs=staffs
     )
 
 
@@ -51,13 +62,16 @@ def customer_booking_page():
     if session.get("customer_id"):
         current_customer = Customer.query.get(session["customer_id"])
     
+    selected_staff_id = request.args.get("staff_id", type=int)
+
     return render_template(
         "customer_booking.html",
         staff_list=staff_list,
         services=services,
         lang=lang,
         text=get_text(lang),
-        current_customer=current_customer
+        current_customer=current_customer,
+        selected_staff_id=selected_staff_id
     )
 
 
@@ -165,7 +179,18 @@ def my_bookings():
     )
 
 
+@customer_booking_bp.route("/staff/<int:staff_id>")
+def staff_profile(staff_id):
+    lang = get_lang()
 
+    staff = Staff.query.get_or_404(staff_id)
+
+    return render_template(
+        "staff_profile.html",
+        staff=staff,
+        lang=lang,
+        text=get_text(lang)
+    )
 
 
 

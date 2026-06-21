@@ -36,16 +36,49 @@ def create_customers():
 
 def create_staff():
     staff_a = Staff(
-        name="Staff A",
+        name="Elena",
+        username="elena",
+        password_hash=generate_password_hash("staff1234"),
+
         role="staff",
         phone="010-1111-2222",
+
+        position="Senior Nail Artist",
+        introduction="""
+Luxury nail specialist with 8 years of experience.
+Expert in gel nail and bridal nail design.
+""",
+
+        specialties="Gel Nail, Nail Art, Bridal Nail",
+        career_years=8,
+
+        profile_image="/static/images/staff1.jpg",
+
+        display_order=1,
+
         is_active=True
     )
 
     staff_b = Staff(
-        name="Staff B",
+        name="Sophia",
+        username="sophia",
+        password_hash=generate_password_hash("staff1234"),
+
         role="staff",
         phone="010-3333-4444",
+
+        position="Gel Specialist",
+        introduction="""
+Specialized in premium gel care and modern nail trends.
+""",
+
+        specialties="Gel Nail, Premium Care",
+        career_years=5,
+
+        profile_image="/static/images/staff2.jpg",
+
+        display_order=2,
+
         is_active=True
     )
 

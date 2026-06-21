@@ -1,50 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}{{ text.success }}{% endblock %}
+{% block title %}
+Booking Confirmed
+{% endblock %}
 
 {% block content %}
-<p>
-    <a href="/booking/success/{{ booking.id }}?lang=ko">Korean</a> |
-    <a href="/booking/success/{{ booking.id }}?lang=en">English</a>
-</p>
 
-<h1>{{ text.success }}</h1>
+<section class="success-section">
 
-<h2>{{ text.appointment_info }}</h2>
+    <div class="success-card">
 
-<ul>
-    <li>{{ text.customer_name }}: {{ booking.customer.name }}</li>
-    <li>{{ text.phone }}: {{ booking.customer.phone }}</li>
+        <div class="success-icon">
+            ✓
+        </div>
 
-    <li>
-        {{ text.service }}:
-        {% if lang == "en" and booking.service.name_en %}
-            {{ booking.service.name_en }}
-        {% else %}
-            {{ booking.service.name_ko }}
-        {% endif %}
-    </li>
+        <h1>
+            Booking Confirmed
+        </h1>
 
-    <li>{{ text.staff }}: {{ booking.staff.name }}</li>
-    <li>{{ text.booking_date }}: {{ booking.start_time.strftime("%Y-%m-%d") }}</li>
-    <li>
-        {{ text.booking_time }}:
-        {{ booking.start_time.strftime("%H:%M") }}
-        ~
-        {{ booking.end_time.strftime("%H:%M") }}
-    </li>
-    <li>{{ text.booking_status }}: {{ booking.status }}</li>
-</ul>
+        <p class="success-message">
+            Your appointment has been successfully reserved.
+        </p>
 
-<p>
-    {{ text.appointment_notice }}
-</p>
+        <div class="booking-summary">
 
-<p>
-    <a href="/booking?lang={{ lang }}">{{ text.book_another }}</a>
-</p>
+            <div class="summary-row">
+                <span>Artist</span>
+                <strong>{{ booking.staff.name }}</strong>
+            </div>
 
-<p>
-    <a href="/my-bookings?lang={{ lang }}">{{ text.view_my_bookings }}</a>
-</p>
+            <div class="summary-row">
+                <span>Service</span>
+                <strong>
+                {% if lang == "en" and booking.service.name_en %}
+                    {{ booking.service.name_en }}
+                {% else %}
+                    {{ booking.service.name_ko }}
+                {% endif %}
+                </strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Date</span>
+                <strong>
+                    {{ booking.start_time.strftime("%Y-%m-%d") }}
+                </strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Time</span>
+                <strong>
+                    {{ booking.start_time.strftime("%H:%M") }}
+                    ~
+                    {{ booking.end_time.strftime("%H:%M") }}
+                </strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Status</span>
+                <strong>
+                    {{ booking.status }}
+                </strong>
+            </div>
+
+        </div>
+
+        
+        
+        <div class="success-actions">
+
+            <a class="btn-primary"
+               href="/my-bookings?lang={{ lang }}">
+                View My Bookings
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
 {% endblock %}

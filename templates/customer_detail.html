@@ -1,89 +1,240 @@
 {% extends "base.html" %}
 
-{% block title %}고객 상세{% endblock %}
+{% block title %}Customer Detail{% endblock %}
 
 {% block content %}
-<h1>고객 상세</h1>
 
-<h2>기본 정보</h2>
+<section class="admin-services-section customer-detail-section">
 
-<form method="POST" action="/admin/customers/{{ customer.id }}/update">
-    <p>이름: <input type="text" name="name" value="{{ customer.name }}" required></p>
-    <p>연락처: <input type="text" name="phone" value="{{ customer.phone }}" required></p>
-    <p>이메일: <input type="email" name="email" value="{{ customer.email or '' }}"></p>
+    <div class="admin-page-header">
+        <p class="eyebrow">CUSTOMER DETAIL</p>
+        <h1>{{ customer.name }}</h1>
+        <p>Review customer information, risk indicators, preferences, and booking history.</p>
+    </div>
 
-    <p>선호 스타일:</p>
-    <textarea name="preferred_style">{{ customer.preferred_style or '' }}</textarea>
+    <div class="customer-detail-layout">
+        <form method="POST" action="/admin/customers/{{ customer.id }}/update" class="admin-form-card customer-detail-form">
+            <h2>Basic Information</h2>
 
-    <p>피부 민감 정보:</p>
-    <textarea name="skin_sensitivity">{{ customer.skin_sensitivity or '' }}</textarea>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="name">Name</label>
+                    <input id="name" type="text" name="name" value="{{ customer.name }}" required>
+                </div>
 
-    <p>이전 불만사항:</p>
-    <textarea name="complaint_note">{{ customer.complaint_note or '' }}</textarea>
+                <div>
+                    <label for="phone">Phone</label>
+                    <input id="phone" type="text" name="phone" value="{{ customer.phone }}" required>
+                </div>
+            </div>
 
-    <p>메모:</p>
-    <textarea name="memo">{{ customer.memo or '' }}</textarea>
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" value="{{ customer.email or '' }}">
 
-    <p>
-        <button type="submit">고객 정보 저장</button>
-    </p>
-</form>
+            <label for="preferred_style">Preferred Style</label>
+            <textarea id="preferred_style" name="preferred_style" rows="3">{{ customer.preferred_style or '' }}</textarea>
 
-<hr>
+            <label for="skin_sensitivity">Skin Sensitivity</label>
+            <textarea id="skin_sensitivity" name="skin_sensitivity" rows="3">{{ customer.skin_sensitivity or '' }}</textarea>
 
-<h2>고객 지표</h2>
+            <label for="complaint_note">Complaint Note</label>
+            <textarea id="complaint_note" name="complaint_note" rows="3">{{ customer.complaint_note or '' }}</textarea>
 
-<ul>
-    <li>방문 횟수: {{ customer.visit_count }}</li>
-    <li>노쇼 횟수: {{ customer.no_show_count }}</li>
-    <li>예약 제한:
-        {% if customer.booking_restricted %}
-            제한 중
+            <label for="memo">Memo</label>
+            <textarea id="memo" name="memo" rows="4">{{ customer.memo or '' }}</textarea>
+
+            <div class="admin-form-actions">
+                <a href="/admin/customers" class="booking-action-btn">Back</a>
+                <button type="submit" class="btn-primary">Save Customer</button>
+            </div>
+        </form>
+
+        <aside class="customer-metric-panel">
+            <div class="admin-form-card">
+                <h2>Customer Metrics</h2>
+
+                <div class="customer-metric-grid">
+                    <div>
+                        <span>Visits</span>
+                        <strong>{{ customer.visit_count }}</strong>
+                    </div>
+
+                    <div>
+                        <span>No Show</span>
+                        <strong>{{ customer.no_show_count }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Revenue</span>
+                        <strong>₩{{ "{:,}".format(customer.total_revenue or 0) }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Restriction</span>
+                        {% if customer.booking_restricted %}
+                            <strong class="metric-danger">Restricted</strong>
+                        {% else %}
+                            <strong>Normal</strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <section class="admin-form-card customer-booking-history">
+        <div class="admin-section-header">
+            <h2>Booking History</h2>
+            <p>{{ bookings|length }} bookings</p>
+        </div>
+
+        {% if bookings %}
+            <div class="table-scroll">
+                <table class="admin-data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Service</th>
+                            <th>Staff</th>
+                            <th>Status</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+                                <td>{{ booking.start_time.strftime("%Y-%m-%d") }}</td>
+                                <td>{{ booking.start_time.strftime("%H:%M") }} ~ {{ booking.end_time.strftime("%H:%M") }}</td>
+                                <td>{{ booking.service.name_ko }}</td>
+                                <td>{{ booking.staff.name }}</td>
+                                <td>{{ booking.status }}</td>
+                                <td>₩{{ "{:,}".format(booking.service.price) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            정상
+            <p class="empty-note">No booking history.</p>
         {% endif %}
-    </li>
-    <li>누적 매출: {{ customer.total_revenue }}</li>
-</ul>
+    </section>
 
-<hr>
+    <div class="admin-form-card password-reset-card">
+    <h2>Password Reset</h2>
 
-<h2>예약 이력</h2>
+    {% if customer.login_provider == "local" %}
+    <form method="POST"
+          action="/admin/customers/{{ customer.id }}/reset-password">
 
-{% if bookings %}
-    <table border="1" cellpadding="8">
-        <thead>
-            <tr>
-                <th>날짜</th>
-                <th>시간</th>
-                <th>시술</th>
-                <th>직원</th>
-                <th>상태</th>
-                <th>가격</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.start_time.strftime("%Y-%m-%d") }}</td>
-                    <td>
-                        {{ booking.start_time.strftime("%H:%M") }}
-                        ~
-                        {{ booking.end_time.strftime("%H:%M") }}
-                    </td>
-                    <td>{{ booking.service.name_ko }}</td>
-                    <td>{{ booking.staff.name }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td>{{ booking.service.price }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>예약 이력이 없습니다.</p>
-{% endif %}
+        <label>Temporary Password</label>
+        <input type="password"
+               name="new_password"
+               minlength="8"
+               required>
 
-<p>
-    <a href="/admin/customers">고객 목록으로 돌아가기</a>
-</p>
+        <label>Confirm Password</label>
+        <input type="password"
+               name="confirm_password"
+               minlength="8"
+               required>
+
+        <button type="submit"
+                class="btn-primary"
+                onclick="return confirm('Reset this customer password?')">
+            Reset Password
+        </button>
+    </form>
+
+    {% else %}
+
+    <div class="social-login-note">
+        <strong>{{ customer.login_provider|title }}</strong>
+        account
+
+        <p>
+            Password reset is not available for social login accounts.
+        </p>
+    </div>
+
+    {% endif %}
+</div>
+
+</section>
+
+<style>
+.customer-detail-layout{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:24px;
+    align-items:start;
+    margin-bottom:24px;
+}
+.customer-detail-form h2,
+.customer-metric-panel h2,
+.customer-booking-history h2{
+    margin-top:0;
+    color:var(--forest);
+}
+.customer-detail-form .form-grid.two-columns{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
+}
+.customer-metric-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+}
+.customer-metric-grid div{
+    background:#F9F7F2;
+    border-radius:14px;
+    padding:16px;
+}
+.customer-metric-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+}
+.customer-metric-grid strong{
+    display:block;
+    margin-top:4px;
+    color:var(--forest);
+    font-size:24px;
+}
+.customer-metric-grid .metric-danger{
+    color:#9b2c2c;
+}
+.table-scroll{
+    overflow-x:auto;
+}
+.admin-data-table{
+    width:100%;
+    border-collapse:collapse;
+}
+.admin-data-table th,
+.admin-data-table td{
+    padding:14px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+.admin-data-table th{
+    color:var(--forest);
+    background:#F9F7F2;
+}
+.empty-note{
+    color:#777;
+}
+@media(max-width:900px){
+    .customer-detail-layout{
+        grid-template-columns:1fr;
+    }
+    .customer-detail-form .form-grid.two-columns{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
 {% endblock %}

@@ -68,17 +68,3 @@ class StaffSchedule(db.Model):
     is_working = db.Column(db.Boolean, default=True)
 
     staff = db.relationship("Staff", backref="schedules")
-
-class StaffTimeOff(db.Model):
-    __tablename__ = "staff_time_offs"
-
-    id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.Integer, db.ForeignKey("staff.id"), nullable=False)
-
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime, nullable=False)
-
-    reason = db.Column(db.String(200), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    staff = db.relationship("Staff", backref="time_offs")

@@ -1,191 +1,295 @@
 {% extends "base.html" %}
 
-{% block title %}관리자 예약 생성{% endblock %}
+{% block title %}Admin Create Booking{% endblock %}
 
 {% block content %}
-<h1>관리자 예약 생성</h1>
 
-<form method="POST" action="/admin/bookings/create">
+{% if request.args.get("embedded") == "1" %}
+<style>
+    .navbar{
+        display:none !important;
+    }
 
-<p>
-    기존 고객:
-    <select name="customer_id" id="customerSelect" onchange="toggleNewCustomerForm()">
-        <option value="">신규 고객으로 입력</option>
-        {% for customer in customers %}
-            <option value="{{ customer.id }}">
-                {{ customer.name }} / {{ customer.phone }}
-            </option>
-        {% endfor %}
-    </select>
-</p>
+    body{
+        padding-top:0 !important;
+    }
 
-<div id="newCustomerForm">
-    <p>
-        신규 고객 이름:
-        <input type="text" name="new_customer_name">
-    </p>
-
-    <p>
-        신규 고객 연락처:
-        <input type="text" name="new_customer_phone">
-    </p>
-</div>
+    .admin-create-booking-section{
+        margin-top:24px !important;
+    }
+</style>
+{% endif %}
 
 
-    <p>
-        직원:
-        <select name="staff_id" id="staffSelect" required>
-            <option value="any">직원 지정 안함</option>
-            {% for staff in staff_list %}
-                <option value="{{ staff.id }}">
-                    {{ staff.name }}
-                </option>
-            {% endfor %}
-        </select>
-    </p>
+<section class="admin-create-booking-section">
 
-    <p>
-        시술:
-        <select name="service_id" id="serviceSelect" required>
-            {% for service in services %}
-                <option value="{{ service.id }}">
-                    [{{ service.category }}] {{ service.name_ko }}
-                    / {{ service.duration_minutes }}분
-                    / {{ service.price }}원
-                </option>
-            {% endfor %}
-        </select>
-    </p>
+    <div class="admin-page-header compact">
+        <p class="eyebrow">ADMIN BOOKING</p>
+        <h1>Create Booking</h1>
+        <p>Create a reservation manually from the admin calendar.</p>
+    </div>
 
-    <p>
-                예약 날짜:
-        <input type="date" id="bookingDate" required>
-    </p>
+    <form method="POST" action="/admin/bookings/create" class="admin-form-card admin-booking-create-card">
 
-    <p>
-              예약 가능 시간:
-        <select name="start_time" id="availableSlotSelect" required>
-          <option value="">직원/시술/날짜를 선택하세요</option>
-        </select>
-    </p>
+        <div class="booking-create-group">
+            <h2>Customer</h2>
 
-    <button type="submit">예약 생성</button>
+            <label for="customerSelect">Existing Customer</label>
+            <select name="customer_id" id="customerSelect">
+                <option value="">Enter as new customer</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}">
+                        {{ customer.name }} / {{ customer.phone }}
+                    </option>
+                {% endfor %}
+            </select>
 
-</form>
+            <div id="newCustomerForm" class="new-customer-box">
+                <div class="form-grid two-columns">
+                    <div>
+                        <label for="new_customer_name">New Customer Name</label>
+                        <input id="new_customer_name" type="text" name="new_customer_name">
+                    </div>
 
-<p>
-    <a href="/admin/calendar">예약 캘린더로 돌아가기</a>
-</p>
+                    <div>
+                        <label for="new_customer_phone">New Customer Phone</label>
+                        <input id="new_customer_phone" type="text" name="new_customer_phone">
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="booking-create-group">
+            <h2>Service Assignment</h2>
 
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="staffSelect">Staff</label>
+                    <select name="staff_id" id="staffSelect" required>
+                        <option value="any">Any available staff</option>
+                        {% for staff in staff_list %}
+                            <option value="{{ staff.id }}">
+                                {{ staff.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="serviceSelect">Service</label>
+                    <select name="service_id" id="serviceSelect" required>
+                        {% for service in services %}
+                            <option value="{{ service.id }}">
+                                [{{ service.category }}] {{ service.name_ko }}
+                                / {{ service.duration_minutes }} min
+                                / ₩{{ "{:,}".format(service.price) }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="booking-create-group">
+            <h2>Reservation Time</h2>
+
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="bookingDate">Booking Date</label>
+                    <input type="date" id="bookingDate" required>
+                </div>
+
+                <div>
+                    <label for="availableSlotSelect">Available Slot</label>
+                    <select name="start_time" id="availableSlotSelect" required>
+                        <option value="">Select staff, service, and date</option>
+                    </select>
+                </div>
+            </div>
+
+            <p class="booking-create-help">
+                Available slots are calculated from staff schedules, linked services, existing bookings, and service duration.
+            </p>
+        </div>
+
+        <div class="admin-form-actions">
+            <a href="/admin/calendar" class="booking-action-btn">Back to Calendar</a>
+            <button type="submit" class="btn-primary">Create Booking</button>
+        </div>
+
+    </form>
+
+</section>
+
+<style>
+.admin-create-booking-section{
+    max-width:860px;
+    margin:50px auto;
+    padding:0 24px;
+}
+
+.admin-page-header.compact{
+    margin-bottom:28px;
+}
+
+.admin-page-header.compact h1{
+    font-size:42px;
+}
+
+.admin-booking-create-card{
+    padding:34px;
+}
+
+.booking-create-group{
+    padding-bottom:28px;
+    margin-bottom:28px;
+    border-bottom:1px solid #eee;
+}
+
+.booking-create-group:last-of-type{
+    border-bottom:none;
+    margin-bottom:0;
+}
+
+.booking-create-group h2{
+    margin:0 0 18px;
+    color:var(--forest);
+    font-size:24px;
+}
+
+.admin-booking-create-card label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+}
+
+.admin-booking-create-card input,
+.admin-booking-create-card select{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+    background:white;
+}
+
+.admin-booking-create-card .form-grid.two-columns{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
+}
+
+.new-customer-box{
+    margin-top:20px;
+    padding:20px;
+    border-radius:16px;
+    background:#F9F7F2;
+}
+
+.booking-create-help{
+    margin:14px 0 0;
+    color:#777;
+    font-size:14px;
+}
+
+@media(max-width:768px){
+    .admin-create-booking-section{
+        margin:36px auto;
+        padding:0 18px;
+    }
+
+    .admin-booking-create-card{
+        padding:26px;
+    }
+
+    .admin-booking-create-card .form-grid.two-columns{
+        grid-template-columns:1fr;
+    }
+
+    .admin-form-actions{
+        flex-direction:column;
+    }
+
+    .admin-form-actions a,
+    .admin-form-actions button{
+        width:100%;
+        text-align:center;
+    }
+}
+</style>
 
 <script>
 function toggleNewCustomerForm() {
     const customerSelect = document.getElementById("customerSelect");
     const newCustomerForm = document.getElementById("newCustomerForm");
+    const newCustomerName = document.getElementById("new_customer_name");
 
     if (customerSelect.value) {
         newCustomerForm.style.display = "none";
+        newCustomerName.required = false;
     } else {
         newCustomerForm.style.display = "block";
+        newCustomerName.required = true;
     }
 }
 
-document.addEventListener("DOMContentLoaded", toggleNewCustomerForm);
-</script>
-
-<script>
-function toggleNewCustomerForm() {
-    const customerSelect = document.getElementById("customerSelect");
-    const newCustomerForm = document.getElementById("newCustomerForm");
-
-    if (customerSelect.value) {
-        newCustomerForm.style.display = "none";
-    } else {
-        newCustomerForm.style.display = "block";
-    }
-}
-    
 async function loadAvailableSlots() {
     const staffId = document.getElementById("staffSelect").value;
     const serviceId = document.getElementById("serviceSelect").value;
     const date = document.getElementById("bookingDate").value;
     const slotSelect = document.getElementById("availableSlotSelect");
-    
-    slotSelect.innerHTML = '<option value="">조회 중...</option>';
-    
+
+    slotSelect.innerHTML = '<option value="">Loading...</option>';
+
     if (!staffId || !serviceId || !date) {
-        slotSelect.innerHTML = '<option value="">직원/시술/날짜를 선택하세요</option>';
-        return;
-    }
-    
-    
-    if (staffId === "any") {
-
-    const response = await fetch(
-        `/api/bookings/available-slots-any?service_id=${serviceId}&date=${date}`
-    );
-
-    const data = await response.json();
-
-    slotSelect.innerHTML = "";
-
-    if (!data.available_slots.length) {
-        slotSelect.innerHTML =
-            '<option value="">예약 가능 시간 없음</option>';
+        slotSelect.innerHTML = '<option value="">Select staff, service, and date</option>';
         return;
     }
 
-    data.available_slots.forEach(slot => {
+    try {
+        let url;
 
-        const option =
-            document.createElement("option");
+        if (staffId === "any") {
+            url = `/api/bookings/available-slots-any?service_id=${serviceId}&date=${date}`;
+        } else {
+            url = `/api/bookings/available-slots?staff_id=${staffId}&service_id=${serviceId}&date=${date}`;
+        }
 
-        option.value =
-            `${date}T${slot}`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-        option.textContent = slot;
+        slotSelect.innerHTML = "";
 
-        slotSelect.appendChild(option);
+        if (!data.ok && staffId !== "any") {
+            slotSelect.innerHTML = `<option value="">${data.message || "Failed to load slots"}</option>`;
+            return;
+        }
 
-    });
+        if (!data.available_slots || data.available_slots.length === 0) {
+            slotSelect.innerHTML = '<option value="">No available slots</option>';
+            return;
+        }
 
-    return;
+        data.available_slots.forEach(function(slot) {
+            const option = document.createElement("option");
+            option.value = `${date}T${slot}`;
+            option.textContent = slot;
+            slotSelect.appendChild(option);
+        });
+    } catch (error) {
+        slotSelect.innerHTML = '<option value="">Failed to load slots</option>';
     }
-    
-    
-
-    const url = `/api/bookings/available-slots?staff_id=${staffId}&service_id=${serviceId}&date=${date}`;
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    slotSelect.innerHTML = "";
-
-    if (!data.ok) {
-        slotSelect.innerHTML = `<option value="">${data.message || "조회 실패"}</option>`;
-        return;
-    }
-
-    if (data.available_slots.length === 0) {
-        slotSelect.innerHTML = '<option value="">예약 가능한 시간이 없습니다</option>';
-        return;
-    }
-
-    data.available_slots.forEach(function(slot) {
-        const option = document.createElement("option");
-        option.value = `${date}T${slot}`;
-        option.textContent = slot;
-        slotSelect.appendChild(option);
-    });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
     toggleNewCustomerForm();
 
+    document.getElementById("customerSelect").addEventListener("change", toggleNewCustomerForm);
     document.getElementById("staffSelect").addEventListener("change", loadAvailableSlots);
     document.getElementById("serviceSelect").addEventListener("change", loadAvailableSlots);
     document.getElementById("bookingDate").addEventListener("change", loadAvailableSlots);
 });
 </script>
+
 {% endblock %}

@@ -3,27 +3,103 @@
 {% block title %}Salon De Nature{% endblock %}
 
 {% block content %}
-<p>
-    <a href="/?lang=en">English</a> |
-    <a href="/?lang=ko">Korean</a>
-</p>
 
-<h1>Salon De Nature</h1>
+<section class="hero">
 
-<p>Beauty appointment service</p>
+    <div class="hero-text">
 
-<ul>
+        <h1>
+            Salon De Nature
+        </h1>
+
+        <p class="hero-subtitle">
+            Your Moment of Organic Luxury
+        </p>
+
+        <p class="hero-description">
+            Premium nail care inspired by nature,
+            elegance, and relaxation.
+        </p>
+
     {% if session.get("customer_id") %}
-    <li><a href="/booking?lang={{ lang }}">{{ text.book_now }}</a></li>
-    <li><a href="/my-bookings?lang={{ lang }}">{{ text.my_bookings }}</a></li>
+
+    <a href="/booking?lang={{ lang }}" class="btn-primary">
+        {{ text.book_now }}
+    </a>
+
+    {% elif session.get("admin_logged_in") %}
+
+    <a href="/admin" class="btn-primary">
+        Admin Dashboard
+    </a>
+
+    {% elif session.get("staff_id") %}
+
+    <a href="/staff/dashboard" class="btn-primary">
+        Staff Dashboard
+    </a>
+
+    {% else %}
+
+    <a href="/login?lang={{ lang }}" class="btn-primary">
+        Login & Book
+    </a>
     {% endif %}
-    {% if not session.get("customer_id")
-          and not session.get("staff_id")
-          and not session.get("admin_logged_in") %}
-    <li><a href="/login?lang={{ lang }}">{{ text.customer_login }}</a></li>
-    <li><a href="/signup?lang={{ lang }}">{{ text.customer_signup }}</a></li>
-    <li><a href="/staff/login">{{ text.staff_login }}</a></li>
-    <li><a href="/admin/login">{{ text.admin_login }}</a></li>
-    {% endif %}
-</ul>
+    </div>
+
+</section>
+
+<section class="services-preview">
+
+  <h2>Signature Services</h2>
+
+  <div class="service-grid">
+
+    <div class="service-card">
+      <h3>Premium Gel</h3>
+      <p>Elegant and long-lasting nail care.</p>
+    </div>
+
+    <div class="service-card">
+      <h3>Nail Art</h3>
+      <p>Personalized artistic design.</p>
+    </div>
+
+    <div class="service-card">
+      <h3>Pedicure</h3>
+      <p>Relaxing foot treatment.</p>
+    </div>
+
+  </div>
+
+</section>
+
+<section class="staff-preview">
+
+    <h2>Meet Our Artists</h2>
+
+    <div class="staff-grid">
+
+        {% for staff in staffs %}
+
+        <div class="staff-card">
+
+            <img src="{{ staff.profile_image or '/static/images/staff-placeholder.jpg' }}">
+
+            <h3>{{ staff.name }}</h3>
+
+            <p>{{ staff.position }}</p>
+
+            <a href="/staff/{{ staff.id }}?lang={{ lang }}">
+                View Profile
+            </a>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
 {% endblock %}

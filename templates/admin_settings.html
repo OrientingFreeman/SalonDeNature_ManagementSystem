@@ -1,67 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}샵 설정{% endblock %}
+{% block title %}Shop Settings{% endblock %}
 
 {% block content %}
-<h1>샵 설정</h1>
 
-<form
-    method="POST"
-    action="/admin/settings/update"
->
+<section class="admin-services-section admin-settings-section">
 
-    <h3>노쇼 제한 횟수</h3>
+    <div class="admin-page-header">
+        <p class="eyebrow">SHOP SETTINGS</p>
+        <h1>Shop Settings</h1>
+        <p>Configure no-show policy, deposit usage, and booking approval mode.</p>
+    </div>
 
-    <input
-        type="number"
-        name="no_show_limit_count"
-        value="{{ settings.no_show_limit_count }}"
-    >
+    <form method="POST" action="/admin/settings/update" class="admin-form-card settings-card">
 
-    <hr>
+        <div class="settings-row">
+            <div>
+                <h2>No-show Limit</h2>
+                <p>Customers can be restricted after reaching this no-show count.</p>
+            </div>
+            <input
+                type="number"
+                name="no_show_limit_count"
+                value="{{ settings.no_show_limit_count }}"
+                min="0"
+                required
+            >
+        </div>
 
-    <h3>예약금 사용</h3>
+        <div class="settings-row">
+            <div>
+                <h2>Deposit</h2>
+                <p>When disabled, service deposit settings should be cleared and hidden.</p>
+            </div>
+            <label class="settings-toggle">
+                <input
+                    type="checkbox"
+                    name="deposit_enabled"
+                    {% if settings.deposit_enabled %}checked{% endif %}
+                >
+                <span>Use deposit</span>
+            </label>
+        </div>
 
-    <input
-        type="checkbox"
-        name="deposit_enabled"
-        {% if settings.deposit_enabled %}
-        checked
-        {% endif %}
-    >
-    사용
+        <div class="settings-row">
+            <div>
+                <h2>Booking Approval</h2>
+                <p>Choose whether customer reservations are confirmed automatically or manually.</p>
+            </div>
+            <select name="booking_approval_mode">
+                <option value="auto" {% if settings.booking_approval_mode == "auto" %}selected{% endif %}>
+                    Auto approval
+                </option>
+                <option value="manual" {% if settings.booking_approval_mode == "manual" %}selected{% endif %}>
+                    Manual approval
+                </option>
+            </select>
+        </div>
 
-    <hr>
+        <div class="admin-form-actions">
+            <button type="submit" class="btn-primary">Save Settings</button>
+        </div>
 
-    <h3>예약 승인 방식</h3>
+    </form>
 
-    <select name="booking_approval_mode">
+</section>
 
-        <option
-            value="auto"
-            {% if settings.booking_approval_mode == "auto" %}
-            selected
-            {% endif %}
-        >
-            자동 승인
-        </option>
+<style>
+.settings-card{
+    max-width:860px;
+    margin:0 auto;
+}
+.settings-row{
+    display:grid;
+    grid-template-columns:1fr 260px;
+    gap:30px;
+    align-items:center;
+    padding:28px 0;
+    border-bottom:1px solid #eee;
+}
+.settings-row:first-child{
+    padding-top:0;
+}
+.settings-row:last-of-type{
+    border-bottom:none;
+}
+.settings-row h2{
+    margin:0;
+    color:var(--forest);
+    font-size:24px;
+}
+.settings-row p{
+    margin:6px 0 0;
+    color:#777;
+}
+.settings-row input[type="number"],
+.settings-row select{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+}
+.settings-toggle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--forest);
+    font-weight:800;
+}
+.settings-toggle input{
+    width:18px;
+    height:18px;
+    accent-color:var(--forest);
+}
+@media(max-width:768px){
+    .settings-row{
+        grid-template-columns:1fr;
+        gap:14px;
+    }
+}
+</style>
 
-        <option
-            value="manual"
-            {% if settings.booking_approval_mode == "manual" %}
-            selected
-            {% endif %}
-        >
-            수동 승인
-        </option>
-
-    </select>
-
-    <hr>
-
-    <button type="submit">
-        저장
-    </button>
-
-</form>
 {% endblock %}

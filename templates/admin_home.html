@@ -1,15 +1,77 @@
-{% extends "base.html" %} {% block title %}관리자 홈{% endblock %} {% block
-content %}
-<h1>Salon De Nature 관리자</h1>
+{% extends "base.html" %}
 
-<ul>
-  <li><a href="/admin/calendar">예약 캘린더</a></li>
-  <li><a href="/admin/bookings/create">관리자 예약 생성</a></li>
-  <li><a href="/admin/customers">고객 관리</a></li>
-  <li><a href="/admin/staff">직원 관리</a></li>
-  <li><a href="/admin/services">시술 메뉴 관리</a></li>
-  <li><a href="/admin/settings">샵 설정</a></li>
-  <li><a href="/admin/users"> 관리자 계정 관리 </a></li>
-  <li><a href="/admin/revenue">매출 대시보드</a></li>
-</ul>
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<section class="admin-dashboard">
+
+    <div class="admin-hero">
+        <p class="eyebrow">ADMIN PANEL</p>
+        <h1>Salon De Nature</h1>
+        <p>Manage bookings, staff, customers and revenue.</p>
+    </div>
+
+    <div class="admin-stat-grid">
+        <div class="admin-stat-card">
+            <h3>Today</h3>
+            <span>{{ today_booking_count }}</span>
+
+        </div>
+
+        <div class="admin-stat-card">
+            <h3>Pending</h3>
+            <span>{{ pending_count }}</span>
+
+        </div>
+
+        <div class="admin-stat-card">
+            <h3>Revenue</h3>
+            <span>₩{{ "{:,}".format(today_revenue) }}</span>
+        </div>
+
+    </div>
+
+    <h2 class="admin-section-title">
+        Management
+    </h2>
+
+    <div class="admin-menu-grid">
+
+        <a href="/admin/calendar" class="admin-menu-card">
+            Reservation Calendar
+        </a>
+
+        <a href="/admin/bookings/create" class="admin-menu-card">
+            Create Reservation
+        </a>
+
+        <a href="/admin/customers" class="admin-menu-card">
+            Customer Management
+        </a>
+
+        <a href="/admin/staff" class="admin-menu-card">
+            Staff Management
+        </a>
+
+        <a href="/admin/services" class="admin-menu-card">
+            Service Management
+        </a>
+
+        <a href="/admin/users" class="admin-menu-card">
+            Admin Accounts
+        </a>
+
+        <a href="/admin/revenue" class="admin-menu-card">
+            Revenue Dashboard
+        </a>
+
+        <a href="/admin/settings" class="admin-menu-card">
+            Shop Settings
+        </a>
+
+    </div>
+
+</section>
+
 {% endblock %}

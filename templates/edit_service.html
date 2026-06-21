@@ -1,60 +1,102 @@
 {% extends "base.html" %}
 
-{% block title %}시술 수정{% endblock %}
+{% block title %}Edit Service{% endblock %}
 
 {% block content %}
-<h1>시술 수정</h1>
 
-<form method="POST" action="/admin/services/{{ service.id }}/update">
+<section class="admin-form-section service-edit-section">
 
-    <p>
-        카테고리:
-        <select name="category">
-            <option value="nail" {% if service.category == "nail" %}selected{% endif %}>네일</option>
-            <option value="waxing" {% if service.category == "waxing" %}selected{% endif %}>왁싱</option>
-        </select>
-    </p>
+    <div class="admin-page-header">
+        <p class="eyebrow">SERVICE MANAGEMENT</p>
+        <h1>Edit Service</h1>
+        <p>Update service menu information, pricing, duration, deposit settings, and visibility.</p>
+    </div>
 
-    <p>
-        한글명:
-        <input type="text" name="name_ko" value="{{ service.name_ko }}" required>
-    </p>
+    <div class="admin-form-card service-edit-card">
+        <form method="POST" action="/admin/services/{{ service.id }}/update" class="admin-service-form">
 
-    <p>
-        영문명:
-        <input type="text" name="name_en" value="{{ service.name_en or '' }}">
-    </p>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="nail" {% if service.category == "nail" %}selected{% endif %}>Nail</option>
+                        <option value="waxing" {% if service.category == "waxing" %}selected{% endif %}>Waxing</option>
+                    </select>
+                </div>
 
-    <p>
-        소요시간:
-        <select name="duration_minutes">
-            <option value="30" {% if service.duration_minutes == 30 %}selected{% endif %}>30분</option>
-            <option value="60" {% if service.duration_minutes == 60 %}selected{% endif %}>60분</option>
-            <option value="90" {% if service.duration_minutes == 90 %}selected{% endif %}>90분</option>
-            <option value="120" {% if service.duration_minutes == 120 %}selected{% endif %}>120분</option>
-        </select>
-    </p>
+                <div>
+                    <label for="duration_minutes">Duration</label>
+                    <select id="duration_minutes" name="duration_minutes" required>
+                        <option value="30" {% if service.duration_minutes == 30 %}selected{% endif %}>30 min</option>
+                        <option value="60" {% if service.duration_minutes == 60 %}selected{% endif %}>60 min</option>
+                        <option value="90" {% if service.duration_minutes == 90 %}selected{% endif %}>90 min</option>
+                        <option value="120" {% if service.duration_minutes == 120 %}selected{% endif %}>120 min</option>
+                    </select>
+                </div>
+            </div>
 
-    <p>
-        가격:
-        <input type="number" name="price" value="{{ service.price }}" required>
-    </p>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="name_ko">Korean Name</label>
+                    <input id="name_ko" type="text" name="name_ko" value="{{ service.name_ko }}" required>
+                </div>
 
-    <p>
-        예약금 필요:
-        <input type="checkbox" name="deposit_required" {% if service.deposit_required %}checked{% endif %}>
-    </p>
+                <div>
+                    <label for="name_en">English Name</label>
+                    <input id="name_en" type="text" name="name_en" value="{{ service.name_en or '' }}">
+                </div>
+            </div>
 
-    <p>
-        예약금 금액:
-        <input type="number" name="deposit_amount" value="{{ service.deposit_amount }}">
-    </p>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="price">Price</label>
+                    <input id="price" type="number" name="price" value="{{ service.price }}" min="0" required>
+                </div>
 
-    <button type="submit">수정 저장</button>
+            {% if settings.deposit_enabled %}
+                <div>
+                    <label for="deposit_amount">Deposit Amount</label>
+                    <input
+    type="number"
+    name="deposit_amount"
+    id="deposit_amount"
+    value="{{ service.deposit_amount }}"
+    {% if not service.deposit_required %}disabled{% endif %}
+>
+                </div>
+            {% endif %}
+            </div>
+            
+            {% if settings.deposit_enabled %}
+            <label class="checkbox-row service-checkbox-row">
+                <input
+    type="checkbox"
+    name="deposit_required"
+    id="deposit_required"
+    {% if service.deposit_required %}checked{% endif %}
+>
+                <span>Deposit required</span>
+            </label>
+            {% endif %}
 
-</form>
+            <div class="service-edit-status-box">
+                <span>Current Status</span>
+                {% if service.is_active %}
+                    <strong class="status-badge status-confirmed">Active</strong>
+                {% else %}
+                    <strong class="status-badge status-cancelled">Inactive</strong>
+                {% endif %}
+                <p>Status is changed from the Service List using the Activate/Deactivate button.</p>
+            </div>
 
-<p>
-    <a href="/admin/services">시술 목록으로 돌아가기</a>
-</p>
+            <div class="admin-form-actions">
+                <a href="/admin/services" class="booking-action-btn">Cancel</a>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+
+        </form>
+    </div>
+
+</section>
+
 {% endblock %}

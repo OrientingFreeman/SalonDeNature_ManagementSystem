@@ -2,7 +2,7 @@ from datetime import datetime, time
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from extensions import db
 from models import Staff, Booking
@@ -112,6 +112,49 @@ def staff_dashboard():
 )
     
 
+@staff_bp.route("/calendar")
+@staff_required
+def staff_calendar():
+
+    staff_id = session["staff_id"]
+
+    target_date = request.args.get(
+        "date",
+        datetime.today().strftime("%Y-%m-%d")
+    )
+
+    selected_date = datetime.strptime(
+        target_date,
+        "%Y-%m-%d"
+    ).date()
+
+    start_of_day = datetime.combine(
+        selected_date,
+        time.min
+    )
+
+    end_of_day = datetime.combine(
+        selected_date,
+        time.max
+    )
+
+    bookings = (
+        Booking.query
+        .filter(
+            Booking.staff_id == staff_id,
+            Booking.start_time >= start_of_day,
+            Booking.start_time <= end_of_day
+        )
+        .order_by(Booking.start_time)
+        .all()
+    )
+
+    return render_template(
+        "staff_calendar.html",
+        bookings=bookings,
+        target_date=target_date
+    )
+
 
 @staff_bp.route("/logout")
 def staff_logout():
@@ -138,3 +181,56 @@ def complete_booking(booking_id):
         return {"ok": False}, 400
 
     return {"ok": True}
+
+
+@staff_bp.route(
+    "/change-password",
+    methods=["GET", "POST"]
+)
+@staff_required
+def change_password():
+
+    staff = Staff.query.get(
+        session["staff_id"]
+    )
+
+    if request.method == "POST":
+
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        if not check_password_hash(
+            staff.password_hash,
+            current_password
+        ):
+            flash("Current password is incorrect.")
+            return redirect(
+                url_for("staff.change_password")
+            )
+
+        if new_password != confirm_password:
+            flash("New passwords do not match.")
+            return redirect(
+                url_for("staff.change_password")
+            )
+
+        if len(new_password) < 8:
+            flash("Password must be at least 8 characters.")
+            return redirect(
+                url_for("staff.change_password")
+            )
+
+        staff.password_hash = generate_password_hash(
+            new_password
+        )
+
+        db.session.commit()
+
+        flash("Password updated successfully.")
+
+        return redirect("/staff/dashboard")
+
+    return render_template(
+        "staff_change_password.html"
+    )

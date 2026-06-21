@@ -1,72 +1,322 @@
 {% extends "base.html" %}
 
-{% block title %}고객 관리{% endblock %}
+{% block title %}Customer Management{% endblock %}
 
 {% block content %}
-<h1>고객 관리</h1>
 
-<h2>고객 추가</h2>
+<section class="admin-services-section admin-customers-section">
 
-<form method="POST" action="/admin/customers/create">
-    <p>이름: <input type="text" name="name" required></p>
-    <p>연락처: <input type="text" name="phone" required></p>
-    <p>이메일: <input type="email" name="email"></p>
-    <p>선호 스타일: <input type="text" name="preferred_style"></p>
-    <p>피부 민감 정보: <input type="text" name="skin_sensitivity"></p>
-    <p>이전 불만사항: <input type="text" name="complaint_note"></p>
-    <p>메모: <textarea name="memo"></textarea></p>
+    <div class="admin-page-header">
+        <p class="eyebrow">CUSTOMER MANAGEMENT</p>
+        <h1>Customers</h1>
+        <p>Manage customer profiles, preferences, no-show history, and reservation restrictions.</p>
+    </div>
 
-    <button type="submit">고객 추가</button>
-</form>
+    <div class="admin-form-card customer-create-card">
+        <h2>Add New Customer</h2>
 
-<hr>
+        <form method="POST" action="/admin/customers/create" class="admin-customer-form">
 
-<h2>고객 목록</h2>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="name">Name</label>
+                    <input id="name" type="text" name="name" required>
+                </div>
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>이름</th>
-            <th>연락처</th>
-            <th>이메일</th>
-            <th>방문</th>
-            <th>노쇼</th>
-            <th>예약제한</th>
-            <th>누적매출</th>
-            <th>메모</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for customer in customers %}
-            <tr>
-                <td>{{ customer.id }}</td>
-                <td>
-                  <a href="/admin/customers/{{ customer.id }}">
-                   {{ customer.name }}
-                  </a>
-                </td>
-                <td>{{ customer.phone }}</td>
-                <td>{{ customer.email }}</td>
-                <td>{{ customer.visit_count }}</td>
-                <td>{{ customer.no_show_count }}</td>
-                <td>
-                    {% if customer.booking_restricted %}
-                        제한
-                    {% else %}
-                        정상
-                    {% endif %}
-                </td>
-                <td>{{ customer.total_revenue }}</td>
-                <td>{{ customer.memo }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <div>
+                    <label for="phone">Phone</label>
+                    <input id="phone" type="text" name="phone" required>
+                </div>
+            </div>
 
-<p>
-    <a href="/admin/calendar">예약 캘린더</a> |
-    <a href="/admin/staff">직원 관리</a> |
-    <a href="/admin/services">시술 관리</a>
-</p>
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="email">Email</label>
+                    <input id="email" type="email" name="email">
+                </div>
+
+                <div>
+                    <label for="preferred_style">Preferred Style</label>
+                    <input id="preferred_style" type="text" name="preferred_style">
+                </div>
+            </div>
+
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="skin_sensitivity">Skin Sensitivity</label>
+                    <input id="skin_sensitivity" type="text" name="skin_sensitivity">
+                </div>
+
+                <div>
+                    <label for="complaint_note">Complaint Note</label>
+                    <input id="complaint_note" type="text" name="complaint_note">
+                </div>
+            </div>
+
+            <div>
+                <label for="memo">Memo</label>
+                <textarea id="memo" name="memo" rows="4"></textarea>
+            </div>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn-primary">Add Customer</button>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="admin-section-header">
+        <h2>Customer List</h2>
+        <p>{{ customers|length }} customers registered</p>
+    </div>
+
+    {% if customers %}
+        <div class="customer-card-grid">
+            {% for customer in customers %}
+                <article class="customer-admin-card">
+                    <div class="customer-card-header">
+                        <div>
+                            <h3>
+                                <a href="/admin/customers/{{ customer.id }}">
+                                    {{ customer.name }}
+                                </a>
+                            </h3>
+                            <p>{{ customer.phone }}</p>
+                        </div>
+
+                        {% if customer.booking_restricted %}
+                            <span class="status-badge status-cancelled">Restricted</span>
+                        {% else %}
+                            <span class="status-badge status-confirmed">Normal</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="customer-meta-grid">
+                        <div>
+                            <span>Visits</span>
+                            <strong>{{ customer.visit_count }}</strong>
+                        </div>
+
+                        <div>
+                            <span>No Show</span>
+                            <strong>{{ customer.no_show_count }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Revenue</span>
+                            <strong>₩{{ "{:,}".format(customer.total_revenue or 0) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="customer-detail-list">
+                        <p>
+                            <span>Email</span>
+                            <strong>{{ customer.email or "-" }}</strong>
+                        </p>
+
+                        <p>
+                            <span>Preferred Style</span>
+                            <strong>{{ customer.preferred_style or "-" }}</strong>
+                        </p>
+
+                        <p>
+                            <span>Skin Sensitivity</span>
+                            <strong>{{ customer.skin_sensitivity or "-" }}</strong>
+                        </p>
+
+                        <p>
+                            <span>Complaint Note</span>
+                            <strong>{{ customer.complaint_note or "-" }}</strong>
+                        </p>
+
+                        <p>
+                            <span>Memo</span>
+                            <strong>{{ customer.memo or "-" }}</strong>
+                        </p>
+                    </div>
+
+                    <div class="customer-card-actions">
+                        <a href="/admin/customers/{{ customer.id }}" class="booking-action-btn">
+                            View Detail
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="admin-form-card empty-customer-card">
+            <h2>No customers</h2>
+            <p>No customers have been registered yet.</p>
+        </div>
+    {% endif %}
+
+    <div class="admin-bottom-links">
+        <a href="/admin/calendar">Reservation Calendar</a>
+        <span>|</span>
+        <a href="/admin/staff">Staff Management</a>
+        <span>|</span>
+        <a href="/admin/services">Service Management</a>
+    </div>
+
+</section>
+
+<style>
+.admin-customers-section{
+    max-width:1200px;
+}
+
+.customer-create-card{
+    margin-bottom:56px;
+}
+
+.customer-create-card h2{
+    margin-top:0;
+    color:var(--forest);
+}
+
+.admin-customer-form .form-grid.two-columns{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
+}
+
+.customer-card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+    gap:24px;
+}
+
+.customer-admin-card{
+    background:white;
+    border-radius:18px;
+    padding:26px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.customer-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+}
+
+.customer-card-header h3{
+    margin:0;
+    color:var(--forest);
+    font-size:24px;
+}
+
+.customer-card-header h3 a:hover{
+    color:var(--gold);
+}
+
+.customer-card-header p{
+    margin:6px 0 0;
+    color:#777;
+}
+
+.customer-meta-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:12px;
+}
+
+.customer-meta-grid div{
+    background:#F9F7F2;
+    border-radius:14px;
+    padding:14px;
+}
+
+.customer-meta-grid span{
+    display:block;
+    margin-bottom:4px;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.customer-meta-grid strong{
+    display:block;
+    color:var(--forest);
+    font-size:16px;
+}
+
+.customer-detail-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.customer-detail-list p{
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:12px;
+    margin:0;
+    padding-bottom:10px;
+    border-bottom:1px solid #eee;
+}
+
+.customer-detail-list p:last-child{
+    border-bottom:none;
+    padding-bottom:0;
+}
+
+.customer-detail-list span{
+    color:var(--sage);
+    font-weight:700;
+    font-size:13px;
+}
+
+.customer-detail-list strong{
+    color:var(--charcoal);
+    font-weight:500;
+    word-break:break-word;
+}
+
+.customer-card-actions{
+    margin-top:auto;
+    display:flex;
+    justify-content:flex-end;
+}
+
+.empty-customer-card{
+    text-align:center;
+}
+
+.empty-customer-card h2{
+    margin-top:0;
+    color:var(--forest);
+}
+
+@media(max-width:768px){
+    .admin-customer-form .form-grid.two-columns{
+        grid-template-columns:1fr;
+        gap:0;
+    }
+
+    .customer-card-grid{
+        grid-template-columns:1fr;
+    }
+
+    .customer-meta-grid{
+        grid-template-columns:1fr;
+    }
+
+    .customer-detail-list p{
+        grid-template-columns:1fr;
+        gap:4px;
+    }
+
+    .customer-card-actions .booking-action-btn{
+        width:100%;
+        text-align:center;
+    }
+}
+</style>
+
 {% endblock %}

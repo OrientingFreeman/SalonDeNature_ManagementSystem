@@ -1,110 +1,199 @@
 {% extends "base.html" %}
 
+{% block title %}Staff Dashboard{% endblock %}
+
 {% block content %}
-<style>
-.modal-backdrop {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.45);
-}
-.modal-box {
-    background: #fff;
-    width: min(480px, 92vw);
-    margin: 12vh auto;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-.modal-actions {
-    margin-top: 16px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-</style>
 
-<h1>직원 대시보드</h1>
+<section class="admin-services-section staff-dashboard-section">
 
-<p>{{ session.staff_name }}님</p>
+    <div class="admin-page-header">
+        <p class="eyebrow">STAFF DASHBOARD</p>
+        <h1>Today’s Schedule</h1>
+        <p>{{ session.staff_name }}님, assigned reservations for today.</p>
+    </div>
 
-<h2>오늘 요약</h2>
+    <div class="staff-dashboard-top-actions">
+        <a href="/staff/calendar" class="btn-primary">
+            View Calendar
+        </a>
+    </div>
 
-<ul>
-    <li>오늘 예약 수: {{ total_count }}건</li>
-    <li>오늘 완료 수: {{ completed_count }}건</li>
-    <li>오늘 예상 매출: {{ "{:,}".format(expected_revenue) }}원</li>
-</ul>
+    <div class="admin-stat-grid staff-dashboard-stat-grid">
+        <div class="admin-stat-card">
+            <span>{{ total_count }}</span>
+            <p>Today Bookings</p>
+        </div>
 
-<h2>오늘 예약</h2>
+        <div class="admin-stat-card">
+            <span>{{ completed_count }}</span>
+            <p>Completed</p>
+        </div>
 
-{% if bookings %}
+        <div class="admin-stat-card">
+            <span>₩{{ "{:,}".format(expected_revenue) }}</span>
+            <p>Expected Revenue</p>
+        </div>
+    </div>
 
-<table border="1">
+    <div class="admin-section-header">
+        <h2>Today’s Reservations</h2>
+        <p>{{ bookings|length }} bookings</p>
+    </div>
 
-<tr>
-    <th>시간</th>
-    <th>고객</th>
-    <th>서비스</th>
-    <th>상태</th>
-    <th>관리</th>
-</tr>
+    {% if bookings %}
+        <div class="staff-booking-list">
+            {% for booking in bookings %}
+                <article class="staff-booking-card">
+                    <div class="booking-time-block">
+                        <span>{{ booking.start_time.strftime("%H:%M") }}</span>
+                    </div>
 
-{% for booking in bookings %}
+                    <div class="staff-booking-body">
+                        <div class="staff-booking-main">
+                            <div>
+                                <h3>{{ booking.customer.name }}</h3>
+                                <p>{{ booking.service.name_ko }}</p>
+                            </div>
 
-<tr>
-    <td>
-        {{ booking.start_time.strftime("%H:%M") }}
-    </td>
+                            {% if booking.status == "confirmed" %}
+                                <span class="status-badge status-confirmed">Confirmed</span>
+                            {% elif booking.status == "completed" %}
+                                <span class="status-badge status-completed">Completed</span>
+                            {% elif booking.status == "pending" %}
+                                <span class="status-badge status-pending">Pending</span>
+                            {% else %}
+                                <span class="status-badge status-cancelled">{{ booking.status }}</span>
+                            {% endif %}
+                        </div>
 
-    <td>
-        {{ booking.customer.name }}
-    </td>
+                        <div class="staff-booking-actions">
+                            {% if booking.status == "confirmed" %}
+                                <button type="button" class="btn-primary" onclick="openCompleteModal({{ booking.id }})">
+                                    Complete
+                                </button>
+                            {% else %}
+                                <span class="booking-locked-note">No action available</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="admin-form-card empty-staff-booking-card">
+            <h2>No bookings</h2>
+            <p>There are no reservations assigned today.</p>
+        </div>
+    {% endif %}
 
-    <td>
-        {{ booking.service.name_ko }}
-    </td>
-
-    <td>
-        {{ booking.status }}
-    </td>
-
-    <td>
-        {% if booking.status == "confirmed" %}
-        <button onclick="openCompleteModal({{ booking.id }})">
-            완료
-        </button>
-        {% else %}
-        -
-        {% endif %}
-    </td>
-
-</tr>
-
-{% endfor %}
-
-</table>
-
-{% else %}
-
-<p>오늘 예약이 없습니다.</p>
-
-{% endif %}
+</section>
 
 <div id="completeModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3>시술 완료 처리</h3>
-        <p>이 예약을 완료 처리하시겠습니까?</p>
+        <h3>Complete Booking</h3>
+        <p>Mark this reservation as completed?</p>
         <div class="modal-actions">
-            <button onclick="closeModal('completeModal')">돌아가기</button>
-            <button onclick="confirmCompleteBooking()">완료 처리</button>
+            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">Back</button>
+            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">Complete</button>
         </div>
     </div>
 </div>
+
+<style>
+.staff-dashboard-stat-grid{
+    margin-bottom:44px;
+}
+.staff-booking-list{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+.staff-booking-card{
+    display:grid;
+    grid-template-columns:130px 1fr;
+    gap:20px;
+    background:white;
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.booking-time-block{
+    padding:18px;
+    border-radius:16px;
+    background:#F9F7F2;
+    color:var(--forest);
+    text-align:center;
+    align-self:start;
+}
+.booking-time-block span{
+    font-size:28px;
+    font-weight:800;
+}
+.staff-booking-main{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+}
+.staff-booking-main h3{
+    margin:0;
+    color:var(--forest);
+}
+.staff-booking-main p{
+    margin:6px 0 0;
+    color:#777;
+}
+.staff-booking-actions{
+    margin-top:20px;
+}
+.booking-locked-note{
+    color:#777;
+    font-weight:700;
+}
+.empty-staff-booking-card{
+    text-align:center;
+}
+.empty-staff-booking-card h2{
+    margin-top:0;
+    color:var(--forest);
+}
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    z-index:1000;
+    inset:0;
+    background:rgba(0,0,0,.45);
+}
+.modal-box{
+    background:white;
+    width:min(480px, 92vw);
+    margin:12vh auto;
+    padding:28px;
+    border-radius:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.2);
+}
+.modal-box h3{
+    margin-top:0;
+    color:var(--forest);
+}
+.modal-actions{
+    margin-top:22px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
+@media(max-width:768px){
+    .staff-booking-card{
+        grid-template-columns:1fr;
+    }
+    .staff-booking-main{
+        display:block;
+    }
+    .staff-booking-main .status-badge{
+        margin-top:12px;
+    }
+}
+</style>
 
 <script>
 let pendingCompleteBookingId = null;

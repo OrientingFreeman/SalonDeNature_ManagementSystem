@@ -1,45 +1,120 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
 
-<h1>관리자 계정 관리</h1>
+{% block title %}Admin Users{% endblock %}
 
-<h2>관리자 생성</h2>
+{% block content %}
 
-<form method="POST" action="/admin/users/create">
-  <p>
-    아이디:
-    <input type="text" name="username" required />
-  </p>
+<section class="admin-services-section admin-users-section">
 
-  <p>
-    비밀번호:
-    <input type="password" name="password" required />
-  </p>
+    <div class="admin-page-header">
+        <p class="eyebrow">ADMIN USERS</p>
+        <h1>Admin Accounts</h1>
+        <p>Create and review administrator accounts.</p>
+    </div>
 
-  <button type="submit">관리자 생성</button>
-</form>
+    <div class="admin-form-card admin-user-create-card">
+        <h2>Create Admin</h2>
 
-<hr />
+        <form method="POST" action="/admin/users/create" class="admin-user-form">
+            <div class="form-grid two-columns">
+                <div>
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" required>
+                </div>
 
-<h2>관리자 목록</h2>
+                <div>
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" required>
+                </div>
+            </div>
 
-<table border="1">
-  <tr>
-    <th>ID</th>
-    <th>아이디</th>
-    <th>최근 로그인</th>
-  </tr>
+            <div class="admin-form-actions">
+                <button type="submit" class="btn-primary">Create Admin</button>
+            </div>
+        </form>
+    </div>
 
-  {% for user in users %}
+    <div class="admin-section-header">
+        <h2>Admin List</h2>
+        <p>{{ users|length }} admins registered</p>
+    </div>
 
-  <tr>
-    <td>{{ user.id }}</td>
+    <div class="admin-user-grid">
+        {% for user in users %}
+            <article class="admin-user-card">
+                <div>
+                    <span class="service-category-badge">Admin</span>
+                    <h3>{{ user.username }}</h3>
+                    <p>ID: {{ user.id }}</p>
+                </div>
 
-    <td>{{ user.username }}</td>
+                <div class="admin-user-login">
+                    <span>Last Login</span>
+                    <strong>{{ user.last_login_at or "-" }}</strong>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
 
-    <td>{{ user.last_login_at }}</td>
-  </tr>
+</section>
 
-  {% endfor %}
-</table>
+<style>
+.admin-user-create-card{
+    margin-bottom:56px;
+}
+.admin-user-create-card h2{
+    margin-top:0;
+    color:var(--forest);
+}
+.admin-user-form .form-grid.two-columns{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
+}
+.admin-user-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:24px;
+}
+.admin-user-card{
+    background:white;
+    border-radius:18px;
+    padding:26px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.admin-user-card h3{
+    margin:16px 0 4px;
+    color:var(--forest);
+    font-size:24px;
+}
+.admin-user-card p{
+    margin:0;
+    color:#777;
+}
+.admin-user-login{
+    margin-top:22px;
+    padding:14px;
+    border-radius:14px;
+    background:#F9F7F2;
+}
+.admin-user-login span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+}
+.admin-user-login strong{
+    display:block;
+    margin-top:4px;
+    color:var(--forest);
+    word-break:break-word;
+}
+@media(max-width:768px){
+    .admin-user-form .form-grid.two-columns{
+        grid-template-columns:1fr;
+    }
+}
+</style>
 
 {% endblock %}

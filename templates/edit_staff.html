@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Staff{% endblock %}
+
+{% block content %}
+
+<section class="admin-form-section">
+
+    <div class="admin-form-card">
+
+        <p class="eyebrow">STAFF PROFILE</p>
+
+        <h1>Edit Artist</h1>
+
+        <form method="POST" action="/admin/staff/{{ staff.id }}/update" enctype="multipart/form-data">
+
+            <label>Name</label>
+            <input type="text" name="name" value="{{ staff.name }}" required>
+
+            <label>Username</label>
+            <input type="text" name="username" value="{{ staff.username or '' }}">
+
+            <label>New Password</label>
+            <input type="password" name="password" placeholder="Leave blank to keep current password">
+
+            <label>Role</label>
+            <select name="role">
+                <option value="staff" {% if staff.role == "staff" %}selected{% endif %}>Staff</option>
+                <option value="owner" {% if staff.role == "owner" %}selected{% endif %}>Owner</option>
+            </select>
+
+            <label>Phone</label>
+            <input type="text" name="phone" value="{{ staff.phone or '' }}">
+
+            <label>Position</label>
+            <input type="text" name="position" value="{{ staff.position or '' }}">
+
+            <label>Specialties</label>
+            <input type="text" name="specialties" value="{{ staff.specialties or '' }}">
+
+            <label>Career Years</label>
+            <input type="number" name="career_years" value="{{ staff.career_years or '' }}">
+
+            <label>Profile Image</label>
+            <input type="file" name="profile_image" accept="image/*">
+            <input type="hidden" name="current_profile_image" value="{{ staff.profile_image }}">
+
+            {% if staff.profile_image %}
+            <div class="current-image-preview">
+                <p>Current Image</p>
+
+                <img src="{{ staff.profile_image }}"
+                   alt="{{ staff.name }}"
+                   style="width:120px;height:120px;object-fit:cover;border-radius:16px;">
+
+                <p>{{ staff.profile_image.split('/')[-1] }}</p>
+
+                <button type="submit"
+                    class="btn-danger"
+                    formaction="/admin/staff/{{ staff.id }}/image/delete"
+                    formmethod="POST"
+                    onclick="return confirm('Delete current image?');">
+                    Delete Image
+                </button>
+            </div>
+            {% endif %}
+
+
+            <label>Display Order</label>
+            <input type="number" name="display_order" value="{{ staff.display_order or 0 }}">
+
+            <label>Introduction</label>
+            <textarea name="introduction" rows="6">{{ staff.introduction or '' }}</textarea>
+
+            <div class="admin-form-actions">
+                <a class="btn-secondary" href="/admin/staff">Back</a>
+                <button class="btn-primary" type="submit">Save Changes</button>
+            </div>
+
+        </form>
+
+    </div>
+
+</section>
+
+{% endblock %}

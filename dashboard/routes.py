@@ -8,7 +8,10 @@ from flask import (
     redirect,
     url_for,
     session,
-    send_file
+    send_file,
+    flash,
+    jsonify,
+    current_app
 )
 
 from functools import wraps
@@ -21,12 +24,16 @@ from bookings.models import Booking, Service, StaffService
 from bookings.services import (
     create_booking,
     find_available_staff_for_service,
-    get_available_slots_any_staff
+    get_available_slots_any_staff,
+    reschedule_booking,
+    admin_update_booking_assignment
 )
-from staff.models import Staff, StaffSchedule
+from staff.models import Staff, StaffSchedule, StaffTimeOff
 from customers.models import Customer
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
+import os
 
 def admin_required(func):
     @wraps(func)
@@ -39,13 +46,49 @@ def admin_required(func):
 
     return wrapper
 
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+
+
+def allowed_image(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/admin")
 @admin_required
 def dashboard_home():
-    return render_template("admin_home.html")
+    today = date.today()
+
+    day_start = datetime.combine(today, time.min)
+    day_end = datetime.combine(today, time.max)
+
+    today_booking_count = Booking.query.filter(
+        Booking.start_time >= day_start,
+        Booking.start_time <= day_end
+    ).count()
+
+    pending_count = Booking.query.filter_by(
+        status="pending"
+    ).count()
+
+    completed_today = Booking.query.filter(
+        Booking.status == "completed",
+        Booking.start_time >= day_start,
+        Booking.start_time <= day_end
+    ).all()
+
+    today_revenue = sum(
+        booking.service.price
+        for booking in completed_today
+    )
+
+    return render_template(
+        "admin_home.html",
+        today_booking_count=today_booking_count,
+        pending_count=pending_count,
+        today_revenue=today_revenue
+    )
 
 
 @dashboard_bp.route("/admin/login", methods=["GET", "POST"])
@@ -67,7 +110,8 @@ def admin_login():
 
             return redirect("/admin")
 
-        return "관리자 로그인 실패", 400
+        flash("관리자 로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.")
+        return redirect(url_for("dashboard.admin_login"))
 
     return render_template("admin_login.html")
 
@@ -97,10 +141,15 @@ def admin_calendar():
         Booking.start_time <= day_end
     ).order_by(Booking.start_time.asc()).all()
 
+    staff_list = Staff.query.filter_by(is_active=True).all()
+    services = Service.query.filter_by(is_active=True).all()
+
     return render_template(
         "admin_calendar.html",
         target_date=target_date,
-        bookings=bookings
+        bookings=bookings,
+        staff_list=staff_list,
+        services=services
     )
 
 
@@ -127,13 +176,19 @@ def update_settings():
         request.form["no_show_limit_count"]
     )
 
-    settings.deposit_enabled = (
-        request.form.get("deposit_enabled") == "on"
-    )
+    deposit_enabled = request.form.get("deposit_enabled") == "on"
+    settings.deposit_enabled = deposit_enabled
 
     settings.booking_approval_mode = (
         request.form["booking_approval_mode"]
     )
+
+    if not deposit_enabled:
+        services = Service.query.all()
+
+        for service in services:
+            service.deposit_required = False
+            service.deposit_amount = 0
 
     db.session.commit()
 
@@ -161,6 +216,39 @@ def create_staff_admin():
     password = request.form["password"]
     role = request.form.get("role", "staff")
     phone = request.form.get("phone")
+    position = request.form.get("position")
+    introduction = request.form.get("introduction")
+    specialties = request.form.get("specialties")
+
+    career_years = request.form.get("career_years")
+    display_order = request.form.get("display_order", 0)
+
+    career_years = int(career_years) if career_years else None
+    display_order = int(display_order) if display_order else 0
+
+    
+    profile_image_url = None
+    file = request.files.get("profile_image")
+    if file and file.filename:
+        if allowed_image(file.filename):
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"{timestamp}_{filename}"
+            upload_folder = os.path.join(
+                current_app.root_path,
+                "static",
+                "uploads",
+                "staff"
+            )
+            os.makedirs(upload_folder, exist_ok=True)
+            save_path = os.path.join(upload_folder, filename)
+            file.save(save_path)
+            profile_image_url = f"/static/uploads/staff/{filename}"
+        else:
+            flash("Only image files are allowed.", "error")
+            return redirect(url_for("dashboard.admin_staff"))
+
+    profile_image_url=profile_image_url
 
     existing_staff = Staff.query.filter_by(username=username).first()
 
@@ -173,10 +261,93 @@ def create_staff_admin():
         password_hash=generate_password_hash(password),
         role=role,
         phone=phone,
-        is_active=True
+        is_active=True,
+        position = position,
+        introduction = introduction,
+        specialties = specialties,
+        career_years = career_years,
+        profile_image=profile_image_url,
+        display_order = display_order
     )
 
     db.session.add(staff)
+    db.session.commit()
+
+    return redirect(url_for("dashboard.admin_staff"))
+
+
+@dashboard_bp.route("/admin/staff/<int:staff_id>/edit")
+@admin_required
+def edit_staff_page(staff_id):
+    staff = Staff.query.get_or_404(staff_id)
+
+    return render_template(
+        "edit_staff.html",
+        staff=staff
+    )
+
+
+@dashboard_bp.route("/admin/staff/<int:staff_id>/update", methods=["POST"])
+@admin_required
+def update_staff_admin(staff_id):
+    staff = Staff.query.get_or_404(staff_id)
+
+    staff.name = request.form["name"]
+    staff.username = request.form.get("username")
+    staff.role = request.form.get("role", "staff")
+    staff.phone = request.form.get("phone")
+
+    staff.position = request.form.get("position")
+    staff.introduction = request.form.get("introduction")
+    staff.specialties = request.form.get("specialties")
+
+    profile_image_url = staff.profile_image
+    delete_profile_image = request.form.get("delete_profile_image") == "on"
+
+    if delete_profile_image:
+        profile_image_url = None
+
+
+    file = request.files.get("profile_image")
+
+    if file and file.filename:
+        if not allowed_image(file.filename):
+            flash("Only image files are allowed.", "error")
+            return redirect(
+                url_for(
+                    "dashboard.edit_staff_page",
+                    staff_id=staff.id
+                )
+            )
+
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{filename}"
+
+        upload_folder = os.path.join(
+            current_app.root_path,
+            "static",
+            "uploads",
+            "staff"
+        )
+        os.makedirs(upload_folder, exist_ok=True)
+
+        save_path = os.path.join(upload_folder, filename)
+        file.save(save_path)
+
+        profile_image_url = f"/static/uploads/staff/{filename}"
+
+    career_years = request.form.get("career_years")
+    display_order = request.form.get("display_order")
+
+    staff.career_years = int(career_years) if career_years else None
+    staff.display_order = int(display_order) if display_order else 0
+    staff.profile_image = profile_image_url
+    
+    new_password = request.form.get("password")
+    if new_password:
+        staff.password_hash = generate_password_hash(new_password)
+
     db.session.commit()
 
     return redirect(url_for("dashboard.admin_staff"))
@@ -196,6 +367,29 @@ def toggle_staff_active(staff_id):
 
     return redirect(url_for("dashboard.admin_staff"))
 
+@dashboard_bp.route("/admin/staff/<int:staff_id>/image/delete", methods=["POST"])
+@admin_required
+def delete_staff_image(staff_id):
+    staff = Staff.query.get_or_404(staff_id)
+
+    if staff.profile_image:
+        image_path = staff.profile_image.lstrip("/")
+
+        full_path = os.path.join(
+            current_app.root_path,
+            image_path
+        )
+
+        if os.path.exists(full_path):
+            os.remove(full_path)
+
+        staff.profile_image = None
+        db.session.commit()
+
+    return redirect(
+        url_for("dashboard.edit_staff_page", staff_id=staff.id)
+    )
+
 
 
 @dashboard_bp.route("/admin/staff/<int:staff_id>/schedule")
@@ -214,12 +408,17 @@ def staff_schedule_page(staff_id):
         schedule.day_of_week: schedule
         for schedule in schedules
     }
+    time_offs = StaffTimeOff.query.filter_by(
+        staff_id=staff_id).order_by(StaffTimeOff.start_time.desc()).all()
 
+    # Then pass it to the template:
     return render_template(
         "staff_schedule.html",
         staff=staff,
-        schedule_map=schedule_map
+        schedule_map=schedule_map,
+        time_offs=time_offs
     )
+
 
 
 @dashboard_bp.route("/admin/staff/<int:staff_id>/schedule/update", methods=["POST"])
@@ -280,10 +479,12 @@ def update_staff_schedule(staff_id):
 @admin_required
 def admin_services():
     services = Service.query.order_by(Service.id.asc()).all()
+    settings = ShopSettings.query.first()
 
     return render_template(
         "admin_services.html",
-        services=services
+        services=services,
+        settings=settings
     )
 
 
@@ -296,8 +497,16 @@ def create_service_admin():
     duration_minutes = int(request.form["duration_minutes"])
     price = int(request.form["price"])
 
-    deposit_required = request.form.get("deposit_required") == "on"
-    deposit_amount = int(request.form.get("deposit_amount") or 0)
+    settings = ShopSettings.query.first()
+    deposit_enabled = settings.deposit_enabled if settings else False
+
+    if deposit_enabled:
+        deposit_required = request.form.get("deposit_required") == "on"
+        deposit_amount = int(request.form.get("deposit_amount") or 0) if deposit_required else 0
+    else:
+        deposit_required = False
+        deposit_amount = 0
+
 
     service = Service(
         category=category,
@@ -332,13 +541,15 @@ def toggle_service_active(service_id):
 @admin_required
 def edit_service_page(service_id):
     service = Service.query.get(service_id)
-
+    
     if not service:
         return redirect(url_for("dashboard.admin_services"))
+    settings = ShopSettings.query.first()
 
     return render_template(
         "edit_service.html",
-        service=service
+        service=service,
+        settings=settings
     )
 
 
@@ -350,13 +561,24 @@ def update_service_admin(service_id):
     if not service:
         return redirect(url_for("dashboard.admin_services"))
 
+    settings = ShopSettings.query.first()
+    deposit_enabled = settings.deposit_enabled if settings else False
+
     service.category = request.form["category"]
     service.name_ko = request.form["name_ko"]
     service.name_en = request.form.get("name_en")
     service.duration_minutes = int(request.form["duration_minutes"])
     service.price = int(request.form["price"])
-    service.deposit_required = request.form.get("deposit_required") == "on"
-    service.deposit_amount = int(request.form.get("deposit_amount") or 0)
+
+    if deposit_enabled:
+        service.deposit_required = request.form.get("deposit_required") == "on"
+        if service.deposit_required:
+            service.deposit_amount = int(request.form.get("deposit_amount") or 0)
+        else:
+            service.deposit_amount = 0
+    else:
+        service.deposit_required = False
+        service.deposit_amount = 0
 
     db.session.commit()
 
@@ -808,3 +1030,240 @@ def export_revenue_excel():
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+
+@dashboard_bp.route("/admin/staff/<int:staff_id>/time-off/create", methods=["POST"])
+@admin_required
+def create_staff_time_off(staff_id):
+    staff = Staff.query.get(staff_id)
+
+    if not staff:
+        flash("Staff member not found.")
+        return redirect(url_for("dashboard.admin_staff"))
+
+    off_date_str = request.form.get("off_date")
+    start_time_str = request.form.get("start_time")
+    end_time_str = request.form.get("end_time")
+    reason = request.form.get("reason")
+    is_full_day = request.form.get("is_full_day") == "on"
+
+    if not off_date_str:
+        flash("Please select a date.")
+        return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+    off_date = datetime.strptime(off_date_str, "%Y-%m-%d").date()
+
+    if is_full_day:
+        time_off_start = datetime.combine(off_date, time.min)
+        time_off_end = datetime.combine(off_date, time.max)
+    else:
+        if not start_time_str or not end_time_str:
+            flash("Please enter both start and end times.")
+            return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+        time_off_start = datetime.combine(off_date, datetime.strptime(start_time_str, "%H:%M").time())
+        time_off_end = datetime.combine(off_date, datetime.strptime(end_time_str, "%H:%M").time())
+
+    if time_off_end <= time_off_start:
+        flash("End time must be later than start time.")
+        return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+    conflicting_booking = Booking.query.filter(
+        Booking.staff_id == staff_id,
+        Booking.status.in_(["pending", "confirmed"]),
+        Booking.start_time < time_off_end,
+        Booking.end_time > time_off_start
+    ).first()
+
+    if conflicting_booking:
+        flash("This staff member already has a booking during the selected time off period. Please cancel or reschedule that booking first.")
+        return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+    overlapping_time_off = StaffTimeOff.query.filter(
+        StaffTimeOff.staff_id == staff_id,
+        StaffTimeOff.start_time < time_off_end,
+        StaffTimeOff.end_time > time_off_start
+    ).first()
+
+    if overlapping_time_off:
+        flash("This time off period overlaps with an existing time off entry.")
+        return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+    time_off = StaffTimeOff(
+        staff_id=staff_id,
+        start_time=time_off_start,
+        end_time=time_off_end,
+        reason=reason
+    )
+
+    db.session.add(time_off)
+    db.session.commit()
+
+    flash("Staff time off has been registered.")
+    return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+
+@dashboard_bp.route("/admin/staff/<int:staff_id>/time-off/<int:time_off_id>/delete", methods=["POST"])
+@admin_required
+def delete_staff_time_off(staff_id, time_off_id):
+    time_off = StaffTimeOff.query.filter_by(id=time_off_id, staff_id=staff_id).first()
+
+    if not time_off:
+        flash("Time off entry not found.")
+        return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+    db.session.delete(time_off)
+    db.session.commit()
+
+    flash("Staff time off has been deleted.")
+    return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
+
+
+@dashboard_bp.route("/admin/bookings/<int:booking_id>/reschedule", methods=["POST"])
+@admin_required
+def admin_reschedule_booking(booking_id):
+    data = request.get_json() or {}
+    new_start_time_str = data.get("new_start_time")
+
+    if not new_start_time_str:
+        return jsonify({
+            "ok": False,
+            "message": "Please select a new date and time."
+        }), 400
+
+    try:
+        new_start_time = datetime.fromisoformat(new_start_time_str)
+    except ValueError:
+        return jsonify({
+            "ok": False,
+            "message": "Invalid date/time format."
+        }), 400
+
+    result = reschedule_booking(
+        booking_id=booking_id,
+        new_start_time=new_start_time
+    )
+
+    status_code = 200 if result.get("ok") else 400
+    return jsonify(result), status_code
+
+
+@dashboard_bp.route("/admin/bookings/<int:booking_id>/assignment", methods=["POST"])
+@admin_required
+def admin_update_booking_assignment_route(booking_id):
+    data = request.get_json() or {}
+
+    staff_id_raw = data.get("staff_id")
+    service_id_raw = data.get("service_id")
+    new_start_time_str = data.get("new_start_time")
+
+    if not staff_id_raw or not service_id_raw or not new_start_time_str:
+        return jsonify({
+            "ok": False,
+            "message": "Please select staff, service, date, and time."
+        }), 400
+
+    try:
+        staff_id = int(staff_id_raw)
+        service_id = int(service_id_raw)
+        new_start_time = datetime.fromisoformat(new_start_time_str)
+    except ValueError:
+        return jsonify({
+            "ok": False,
+            "message": "Invalid request data."
+        }), 400
+
+    result = admin_update_booking_assignment(
+        booking_id=booking_id,
+        staff_id=staff_id,
+        service_id=service_id,
+        new_start_time=new_start_time
+    )
+
+    status_code = 200 if result.get("ok") else 400
+    return jsonify(result), status_code
+
+
+@dashboard_bp.route("/admin/change-password", methods=["GET", "POST"])
+@admin_required
+def admin_change_password():
+
+    admin = AdminUser.query.get(
+        session["admin_user_id"]
+    )
+
+    if request.method == "POST":
+
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        if not check_password_hash(
+            admin.password_hash,
+            current_password
+        ):
+            flash("Current password is incorrect.")
+            return redirect(url_for(
+                "dashboard.admin_change_password"
+            ))
+
+        if new_password != confirm_password:
+            flash("New passwords do not match.")
+            return redirect(url_for(
+                "dashboard.admin_change_password"
+            ))
+
+        if len(new_password) < 8:
+            flash("Password must be at least 8 characters.")
+            return redirect(url_for(
+                "dashboard.admin_change_password"
+            ))
+
+        admin.password_hash = generate_password_hash(
+            new_password
+        )
+
+        db.session.commit()
+
+        flash("Password updated successfully.")
+
+        return redirect("/admin")
+
+    return render_template(
+        "admin_change_password.html"
+    )
+
+
+@dashboard_bp.route("/admin/customers/<int:customer_id>/reset-password", methods=["POST"])
+@admin_required
+def reset_customer_password(customer_id):
+    customer = Customer.query.get(customer_id)
+
+    if not customer:
+        flash("Customer not found.")
+        return redirect(url_for("dashboard.admin_customers"))
+
+    if customer.login_provider != "local":
+        flash("Password reset is only available for local accounts.")
+        return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
+
+    new_password = request.form.get("new_password")
+    confirm_password = request.form.get("confirm_password")
+
+    if not new_password or not confirm_password:
+        flash("Please enter and confirm the new password.")
+        return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.")
+        return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
+
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters.")
+        return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
+
+    customer.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+
+    flash("Customer password has been reset.")
+    return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))

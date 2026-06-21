@@ -1,106 +1,329 @@
 {% extends "base.html" %}
 
-{% block title %}직원 관리{% endblock %}
+{% block title %}Staff Management{% endblock %}
 
 {% block content %}
-<h1>직원 관리</h1>
 
-<h2>직원 추가</h2>
+<section class="admin-staff-page">
 
-<form method="POST" action="/admin/staff/create">
-    <p>
-        이름:
-        <input type="text" name="name" required>
-    </p>
+    <div class="admin-staff-header">
+        <p class="eyebrow">ADMIN PANEL</p>
+        <h1>Staff Management</h1>
+        <p class="admin-staff-subtitle">
+            Manage artists, profiles, schedules, and available services.
+        </p>
+    </div>
 
-    <p>
-        직원 아이디:
-        <input type="text" name="username" required>
-    </p>
+    <div class="admin-staff-layout">
 
-    <p>
-        비밀번호:
-        <input type="password" name="password" required>
-    </p>
+        <section class="admin-staff-form-card">
+            <h2>Add New Artist</h2>
 
+            <form method="POST" action="/admin/staff/create" enctype="multipart/form-data">
 
-    <p>
-        역할:
-        <select name="role">
-            <option value="staff">직원</option>
-        </select>
-    </p>
+                <div class="admin-form-grid">
 
-    <p>
-        연락처:
-        <input type="text" name="phone">
-    </p>
+                    <div>
+                        <label>Name</label>
+                        <input type="text" name="name" required>
+                    </div>
 
-    <button type="submit">직원 추가</button>
-</form>
+                    <div>
+                        <label>Username</label>
+                        <input type="text" name="username" required>
+                    </div>
 
-<hr>
+                    <div>
+                        <label>Password</label>
+                        <input type="password" name="password" required>
+                    </div>
 
-<h2>직원 목록</h2>
+                    <div>
+                        <label>Role</label>
+                        <select name="role">
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>이름</th>
-            <th>아이디</th>
-            <th>역할</th>
-            <th>연락처</th>
-            <th>활성 상태</th>
-            <th>관리</th>
-            <th>스케줄</th>
-            <th>가능 시술</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for staff in staff_list %}
-            <tr>
-                <td>{{ staff.id }}</td>
-                <td>{{ staff.name }}</td>
-                <td>{{ staff.username or "-" }}</td>
-                <td>{{ staff.role }}</td>
-                <td>{{ staff.phone }}</td>
-                <td>
-                    {% if staff.is_active %}
-                        활성
-                    {% else %}
-                        비활성
-                    {% endif %}
-                </td>
-                
-                
-                <td>
-                 <form
-        method="POST"
-        action="/admin/staff/{{ staff.id }}/toggle"
-                 >
-        {% if staff.is_active %}
-            <button type="submit">비활성화</button>
-        {% else %}
-            <button type="submit">활성화</button>
-        {% endif %}
-                 </form>
-                </td>
-                
-                <td>
-                 <a href="/admin/staff/{{ staff.id }}/schedule">스케줄 관리</a>
-                </td>
-                
-                <td>
-                 <a href="/admin/staff/{{ staff.id }}/services">가능 시술 관리</a>
-                </td>
-                
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                    <div>
+                        <label>Phone</label>
+                        <input type="text" name="phone">
+                    </div>
 
-<p>
-    <a href="/admin/calendar">예약 캘린더로 이동</a>
-</p>
+                    <div>
+                        <label>Position</label>
+                        <input type="text" name="position" placeholder="Senior Nail Artist">
+                    </div>
+
+                    <div>
+                        <label>Specialties</label>
+                        <input type="text" name="specialties" placeholder="Gel Nail, Nail Art">
+                    </div>
+
+                    <div>
+                        <label>Career Years</label>
+                        <input type="number" name="career_years" min="0">
+                    </div>
+
+                    <div>
+                        <label>Profile Image URL</label>
+                        <input type="file" name="profile_image" accept="image/*">
+                    </div>
+
+                    <div>
+                        <label>Display Order</label>
+                        <input type="number" name="display_order" value="0">
+                    </div>
+
+                </div>
+
+                <label>Introduction</label>
+                <textarea name="introduction" rows="4" placeholder="Short artist introduction"></textarea>
+
+                <div class="admin-form-actions">
+                    <button type="submit" class="btn-primary">
+                        Add Artist
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <section class="admin-staff-list-section">
+            <div class="admin-staff-list-header">
+                <h2>Artists</h2>
+                <a class="btn-secondary" href="/admin/calendar">
+                    Reservation Calendar
+                </a>
+            </div>
+
+            <div class="admin-staff-grid">
+
+                {% for staff in staff_list %}
+
+                <article class="admin-staff-card">
+
+                    <div class="admin-staff-card-top">
+
+                        <img
+                            src="{{ staff.profile_image or '/static/images/staff-placeholder.jpg' }}"
+                            alt="{{ staff.name }}"
+                            class="admin-staff-image"
+                        >
+
+                        <div>
+                            <h3>{{ staff.name }}</h3>
+                            <p class="admin-staff-position">
+                                {{ staff.position or "Nail Artist" }}
+                            </p>
+
+                            {% if staff.specialties %}
+                            <p class="admin-staff-specialties">
+                                {{ staff.specialties }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="admin-staff-meta">
+
+                        <div>
+                            <span>Username</span>
+                            <strong>{{ staff.username or "-" }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Phone</span>
+                            <strong>{{ staff.phone or "-" }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Status</span>
+                            {% if staff.is_active %}
+                                <strong class="status-badge status-confirmed">Active</strong>
+                            {% else %}
+                                <strong class="status-badge status-cancelled">Inactive</strong>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="admin-staff-actions">
+
+                        <a class="booking-action-btn"
+                           href="/admin/staff/{{ staff.id }}/edit">
+                            Edit
+                        </a>
+
+                        <a class="booking-action-btn"
+                           href="/admin/staff/{{ staff.id }}/schedule">
+                            Schedule
+                        </a>
+
+                        <a class="booking-action-btn"
+                           href="/admin/staff/{{ staff.id }}/services">
+                            Services
+                        </a>
+
+                        <form method="POST"
+                              action="/admin/staff/{{ staff.id }}/toggle">
+                            {% if staff.is_active %}
+                                <button type="submit" class="booking-action-btn danger">
+                                    Disable
+                                </button>
+                            {% else %}
+                                <button type="submit" class="booking-action-btn">
+                                    Activate
+                                </button>
+                            {% endif %}
+                        </form>
+
+                    </div>
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+        </section>
+
+    </div>
+
+</section>
+
+<style>
+.admin-staff-page{
+    max-width:1200px;
+    margin:80px auto;
+    padding:0 24px;
+}
+
+.admin-staff-header{
+    text-align:center;
+    margin-bottom:50px;
+}
+
+.admin-staff-header h1{
+    margin-bottom:10px;
+}
+
+.admin-staff-subtitle{
+    color:var(--sage);
+    font-size:15px;
+}
+
+.admin-staff-layout{
+    display:flex;
+    flex-direction:column;
+    gap:40px;
+}
+
+.admin-staff-form-card,
+.admin-staff-card{
+    background:white;
+    border-radius:20px;
+    padding:32px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+
+.admin-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+}
+
+.admin-staff-form-card label{
+    display:block;
+    margin:14px 0 8px;
+    font-weight:600;
+    color:var(--forest);
+}
+
+.admin-staff-form-card input,
+.admin-staff-form-card select,
+.admin-staff-form-card textarea{
+    width:100%;
+    padding:13px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:14px;
+}
+
+.admin-staff-list-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.admin-staff-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:24px;
+}
+
+.admin-staff-card-top{
+    display:flex;
+    gap:20px;
+    align-items:center;
+}
+
+.admin-staff-image{
+    width:120px;
+    height:120px;
+    border-radius:18px;
+    object-fit:cover;
+    background:#f4f1eb;
+}
+
+.admin-staff-position{
+    color:var(--sage);
+    font-weight:600;
+    margin:4px 0;
+}
+
+.admin-staff-specialties{
+    color:#666;
+    font-size:14px;
+}
+
+.admin-staff-meta{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-top:24px;
+}
+
+.admin-staff-meta span{
+    display:block;
+    color:var(--sage);
+    font-size:13px;
+    margin-bottom:4px;
+}
+
+.admin-staff-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:24px;
+}
+
+.admin-staff-actions form{
+    margin:0;
+}
+
+@media(max-width:900px){
+    .admin-form-grid,
+    .admin-staff-grid,
+    .admin-staff-meta{
+        grid-template-columns:1fr;
+    }
+
+    .admin-staff-card-top{
+        align-items:flex-start;
+    }
+}
+</style>
+
 {% endblock %}

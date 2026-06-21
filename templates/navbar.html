@@ -1,47 +1,83 @@
-<nav>
-    <a href="/?lang={{ lang|default('ko') }}">Home</a>
+<nav class="navbar">
 
-    {% if not session.get("customer_id")
-          and not session.get("staff_id")
-          and not session.get("admin_logged_in") %}
+    <div class="nav-left">
 
-        |
-        <a href="/login?lang={{ lang|default('ko') }}">{{ text.customer_login if text is defined else "Customer Login" }}</a>
-        |
-        <a href="/signup?lang={{ lang|default('ko') }}">{{ text.signup if text is defined else "Sign Up" }}</a>
-        |
-        <a href="/staff/login">{{ text.staff_login if text is defined else "Staff Login" }}</a>
-        |
-        <a href="/admin/login">{{ text.admin_login if text is defined else "Admin Login" }}</a>
+        <div class="logo">
+            <a href="/">
+                Salon De Nature
+            </a>
+        </div>
 
-    {% endif %}
+        <div class="nav-links">
 
-    {% if session.get("customer_id") %}
+            {% if session.get("customer_id") %}
+                <a href="/booking">Book Appointment</a>
+                <a href="/my-bookings">My Bookings</a>
+                <a href="/change-password">Account</a>
+            {% endif %}
 
-        |
-        <a href="/booking?lang={{ lang|default('ko') }}">{{ text.book_now if text is defined else "Book Appointment" }}</a>
-        |
-        <a href="/my-bookings?lang={{ lang|default('ko') }}">{{ text.my_bookings if text is defined else "My Bookings" }}</a>
-        |
-        <a href="/logout">{{ text.logout if text is defined else "Log Out" }}</a>
+            {% if session.get("staff_id") %}
+                <a href="/staff/dashboard">Dashboard</a>
+                <a href="/staff/calendar">Calendar</a>
+                <a href="/staff/change-password">Account</a>
+            {% endif %}
 
-    {% endif %}
+            {% if session.get("admin_logged_in") %}
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/calendar">Calendar</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/services">Services</a>
+                <a href="/admin/staff">Staff</a>
+                <a href="/admin/revenue">Revenue</a>
+                <a href="/admin/settings">Settings</a>
+                <a href="/admin/users">AdminAccount</a>
+                <a href="/admin/change-password">My Account</a>
+            {% endif %}
 
-    {% if session.get("staff_id") %}
+        </div>
 
-        |
-        <a href="/staff/dashboard">Staff Home</a>
-        |
-        <a href="/staff/logout">Staff Log Out</a>
+    </div>
 
-    {% endif %}
+    <div class="nav-right">
 
-    {% if session.get("admin_logged_in") %}
+        {% if not session.get("customer_id")
+              and not session.get("staff_id")
+              and not session.get("admin_logged_in") %}
 
-        |
-        <a href="/admin">Admin Home</a>
-        |
-        <a href="/admin/logout">Admin Log Out</a>
+            <a href="/login">Login</a>
 
-    {% endif %}
+            <a class="btn-book" href="/signup">
+                Sign Up
+            </a>
+
+            <a href="/staff/login">
+                {{ text.staff_login if text is defined else "Staff Login" }}
+            </a>
+
+            <a href="/admin/login">
+                {{ text.admin_login if text is defined else "Admin Login" }}
+            </a>
+
+        {% endif %}
+
+        {% if session.get("customer_id") %}
+            <a class="btn-book" href="/logout">
+                Log Out
+            </a>
+        {% endif %}
+
+        {% if session.get("staff_id") %}
+            <a class="btn-book" href="/staff/logout">
+                Log Out
+            </a>
+        {% endif %}
+
+        {% if session.get("admin_logged_in") %}
+            <a class="btn-book" href="/admin/logout">
+                Log Out
+            </a>
+        {% endif %}
+
+    </div>
+
 </nav>

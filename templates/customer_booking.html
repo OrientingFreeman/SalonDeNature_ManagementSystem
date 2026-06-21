@@ -3,70 +3,392 @@
 {% block title %}{{ text.booking_title }}{% endblock %}
 
 {% block content %}
-<h1>{{ text.booking_title }}</h1>
 
-<form method="POST" action="/booking?lang={{ lang }}">
+<style>
+.booking-shell{
+    max-width:1100px;
+    margin:70px auto 100px;
+    padding:0 24px;
+}
 
-<p>
-    <a href="/booking?lang=ko">Korean</a> |
-    <a href="/booking?lang=en">English</a>
-</p>
+.booking-hero-panel{
+    text-align:center;
+    margin-bottom:42px;
+}
 
+.booking-hero-panel .eyebrow{
+    color:var(--gold);
+    letter-spacing:2px;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+}
 
+.booking-hero-panel h1{
+    color:var(--forest);
+    font-size:52px;
+    margin:12px 0 10px;
+}
 
-<p>
-        {{ text.logged_in_customer }}:
-        {{ current_customer.name }} / {{ current_customer.phone }}
-        <a href="/logout">{{ text.logout }}</a>
-</p>
+.booking-hero-panel p{
+    color:var(--sage);
+    font-size:16px;
+}
 
+.booking-steps-premium{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    margin-top:26px;
+    flex-wrap:wrap;
+}
 
+.booking-steps-premium span{
+    padding:8px 14px;
+    border-radius:999px;
+    background:#fff;
+    color:var(--sage);
+    font-size:13px;
+    box-shadow:0 3px 14px rgba(0,0,0,.05);
+}
 
-    <p>
-    {{ text.staff }}:
-        <select name="staff_id" id="staffSelect" required>
-            <option value="any">{{ text.any_staff }}</option>
-            {% for staff in staff_list %}
-                <option value="{{ staff.id }}">{{ staff.name }}</option>
-            {% endfor %}
-        </select>
-    </p>
+.booking-card-premium{
+    background:white;
+    border-radius:24px;
+    padding:42px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
 
-    <p>
-    {{ text.service }}:
-        <select name="service_id" id="serviceSelect" required>
-            {% for service in services %}
-                <option value="{{ service.id }}">
-                 {% if lang == "en" %}
-                     [{{ service.category|title }}] {{ service.name_en or service.name_ko }}
-                {% else %}
-                     [{{ service.category }}] {{ service.name_ko }}
-                 {% endif %}
-                / {{ service.duration_minutes }} min
-                / {{ service.price }} KRW
-                </option>
-            {% endfor %}
-        </select>
-    </p>
+.booking-section-title{
+    margin:34px 0 16px;
+}
 
+.booking-section-title:first-of-type{
+    margin-top:0;
+}
 
+.booking-section-title span{
+    color:var(--gold);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+}
 
-    
-    <p>
-    {{ text.date }}:
-        <input type="date" id="bookingDate" required>
-    </p>
+.booking-section-title h2{
+    color:var(--forest);
+    font-size:28px;
+    margin:6px 0 0;
+}
 
-    <p>
-    {{ text.time }}:
-        <select name="start_time" id="availableSlotSelect" required>
-            <option value="">{{ text.select_staff_service_date }}</option>
-        </select>
-    </p>
+.choice-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:18px;
+}
 
-    <button type="submit">{{ text.submit }}</button>
+.choice-card{
+    border:1px solid #ece8df;
+    background:#fbfaf7;
+    border-radius:18px;
+    padding:20px;
+    cursor:pointer;
+    transition:.2s ease;
+}
 
-</form>
+.choice-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(0,0,0,.07);
+}
+
+.choice-card.active{
+    border-color:var(--forest);
+    background:#f3f7f5;
+    box-shadow:0 8px 22px rgba(26,60,52,.12);
+}
+
+.artist-choice{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.artist-choice img{
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border-radius:14px;
+}
+
+.choice-card h3{
+    margin:0 0 6px;
+    color:var(--forest);
+    font-size:18px;
+}
+
+.choice-card p{
+    margin:0;
+    color:#666;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.artist-info-card{
+    display:none;
+    gap:20px;
+    align-items:center;
+    background:#F9F7F2;
+    border-radius:18px;
+    padding:20px;
+    margin-top:18px;
+}
+
+.artist-info-card img{
+    width:104px;
+    height:104px;
+    object-fit:cover;
+    border-radius:16px;
+}
+
+.artist-info-card h3{
+    margin:0 0 4px;
+    color:var(--forest);
+}
+
+.artist-info-card p{
+    margin:4px 0;
+    color:#666;
+}
+
+.artist-info-card a{
+    display:inline-block;
+    margin-top:6px;
+    color:var(--forest);
+    font-weight:700;
+}
+
+.date-time-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:22px;
+}
+
+.booking-input{
+    width:100%;
+    padding:16px 18px;
+    border:1px solid #ddd;
+    border-radius:14px;
+    font-size:15px;
+    background:#fff;
+}
+
+.time-slots{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:14px;
+}
+
+.time-slot-btn{
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    background:#f1f1ee;
+    color:#333;
+    cursor:pointer;
+    font-weight:600;
+    transition:.2s;
+}
+
+.time-slot-btn:hover{
+    background:#dce9e2;
+}
+
+.time-slot-btn.active{
+    background:var(--forest);
+    color:white;
+}
+
+.time-slot-message{
+    color:#777;
+    margin:0;
+}
+
+.booking-actions{
+    margin-top:42px;
+    display:flex;
+    justify-content:center;
+}
+
+.booking-actions .btn-primary{
+    min-width:220px;
+}
+
+.language-switcher{
+    text-align:center;
+    margin-bottom:28px;
+    font-size:14px;
+    color:var(--sage);
+}
+
+.language-switcher a{
+    color:var(--sage);
+    font-weight:500;
+}
+
+.hidden-select{
+    display:none;
+}
+
+@media(max-width:768px){
+    .booking-card-premium{
+        padding:26px;
+    }
+
+    .booking-hero-panel h1{
+        font-size:40px;
+    }
+}
+</style>
+
+<section class="booking-shell">
+
+    <div class="booking-hero-panel">
+        <div class="language-switcher">
+                <a href="/booking?lang=ko">Korean</a>
+                <span>|</span>
+                <a href="/booking?lang=en">English</a>
+        </div>
+        <p class="eyebrow">Appointment</p>
+        <h1>Reserve Your Time</h1>
+        <p>Choose your artist, service, and preferred time for a calm beauty experience.</p>
+
+        <div class="booking-steps-premium">
+            <span>1. Artist</span>
+            <span>2. Service</span>
+            <span>3. Date</span>
+            <span>4. Time</span>
+        </div>
+    </div>
+
+    <div class="booking-card-premium">
+        <form method="POST" action="/booking?lang={{ lang }}">
+
+            
+
+            <div class="booking-section-title">
+                <span>Step 1</span>
+                <h2>Choose Your Artist</h2>
+            </div>
+
+            <select name="staff_id" id="staffSelect" class="hidden-select" required>
+                <option value="any" {% if not selected_staff_id %}selected{% endif %}>{{ text.any_staff }}</option>
+                {% for staff in staff_list %}
+                    <option value="{{ staff.id }}"
+                        data-name="{{ staff.name }}"
+                        data-position="{{ staff.position or 'Nail Artist' }}"
+                        data-specialties="{{ staff.specialties or '' }}"
+                        data-image="{{ staff.profile_image or '/static/images/staff-placeholder.jpg' }}"
+                        {% if selected_staff_id and staff.id == selected_staff_id %}selected{% endif %}>
+                        {{ staff.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <div class="choice-grid" id="artistChoiceGrid">
+                <div class="choice-card artist-choice {% if not selected_staff_id %}active{% endif %}" data-staff-id="any">
+                    <img src="/static/images/staff-placeholder.jpg" alt="Any Staff">
+                    <div>
+                        <h3>{{ text.any_staff }}</h3>
+                        <p>Let us assign the best available artist for your appointment.</p>
+                    </div>
+                </div>
+
+                {% for staff in staff_list %}
+                    <div class="choice-card artist-choice {% if selected_staff_id and staff.id == selected_staff_id %}active{% endif %}"
+                         data-staff-id="{{ staff.id }}">
+                        <img src="{{ staff.profile_image or '/static/images/staff-placeholder.jpg' }}" alt="{{ staff.name }}">
+                        <div>
+                            <h3>{{ staff.name }}</h3>
+                            <p>{{ staff.position or 'Nail Artist' }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div id="artistInfo" class="artist-info-card">
+                <img id="artistImage" src="" alt="Artist">
+                <div>
+                    <h3 id="artistName"></h3>
+                    <p id="artistPosition"></p>
+                    <p id="artistSpecialties"></p>
+                    <a id="artistProfileLink" href="#">View Profile</a>
+                </div>
+            </div>
+
+            <div class="booking-section-title">
+                <span>Step 2</span>
+                <h2>Select Service</h2>
+            </div>
+
+            <select name="service_id" id="serviceSelect" class="hidden-select" required>
+                {% for service in services %}
+                    <option value="{{ service.id }}" {% if loop.first %}selected{% endif %}>
+                        {% if lang == "en" %}
+                            [{{ service.category|title }}] {{ service.name_en or service.name_ko }}
+                        {% else %}
+                            [{{ service.category }}] {{ service.name_ko }}
+                        {% endif %}
+                        / {{ service.duration_minutes }} min / {{ service.price }} KRW
+                    </option>
+                {% endfor %}
+            </select>
+
+            <div class="choice-grid" id="serviceChoiceGrid">
+                {% for service in services %}
+                    <div class="choice-card {% if loop.first %}active{% endif %}" data-service-id="{{ service.id }}">
+                        <h3>
+                            {% if lang == "en" %}
+                                {{ service.name_en or service.name_ko }}
+                            {% else %}
+                                {{ service.name_ko }}
+                            {% endif %}
+                        </h3>
+                        <p>{{ service.duration_minutes }} min / {{ service.price }} KRW</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="booking-section-title">
+                <span>Step 3</span>
+                <h2>Pick a Date</h2>
+            </div>
+
+            <input type="text" name="date" id="bookingDate" class="booking-input" placeholder="Select date" required>
+
+            <div class="booking-section-title">
+                <span>Step 4</span>
+                <h2>Available Time</h2>
+            </div>
+
+            <div id="timeSlotsContainer" class="time-slots">
+                <p class="time-slot-message">{{ text.select_staff_service_date }}</p>
+            </div>
+
+            <select id="availableSlotSelect" name="start_time" required style="display:none;">
+                <option value="">{{ text.select_staff_service_date }}</option>
+            </select>
+
+            <div class="booking-actions">
+                <button class="btn-primary" type="submit">
+                    Confirm Booking
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</section>
 
 <script>
 const LANG = "{{ lang }}";
@@ -84,19 +406,20 @@ const MESSAGES = {
         noAvailableTimes: "No available times"
     }
 };
-</script>
 
-<script>
 async function loadAvailableSlots() {
     const staffId = document.getElementById("staffSelect").value;
     const serviceId = document.getElementById("serviceSelect").value;
     const date = document.getElementById("bookingDate").value;
     const slotSelect = document.getElementById("availableSlotSelect");
+    const container = document.getElementById("timeSlotsContainer");
 
     slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].loading}</option>`;
+    container.innerHTML = `<p class="time-slot-message">${MESSAGES[LANG].loading}</p>`;
 
     if (!staffId || !serviceId || !date) {
-        slotSelect.innerHTML = '<option value="">{{ text.select_staff_service_date }}</option>';
+        slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].selectStaffServiceDate}</option>`;
+        container.innerHTML = `<p class="time-slot-message">${MESSAGES[LANG].selectStaffServiceDate}</p>`;
         return;
     }
 
@@ -112,29 +435,115 @@ async function loadAvailableSlots() {
     const data = await response.json();
 
     slotSelect.innerHTML = "";
+    container.innerHTML = "";
 
     if (!data.ok) {
-        slotSelect.innerHTML = `<option value="">${data.message || MESSAGES[LANG].lookupFailed}</option>`;
+        const message = data.message || MESSAGES[LANG].lookupFailed;
+        slotSelect.innerHTML = `<option value="">${message}</option>`;
+        container.innerHTML = `<p class="time-slot-message">${message}</p>`;
         return;
     }
 
     if (data.available_slots.length === 0) {
         slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].noAvailableTimes}</option>`;
+        container.innerHTML = `<p class="time-slot-message">${MESSAGES[LANG].noAvailableTimes}</p>`;
         return;
     }
 
+    slotSelect.innerHTML = `<option value="">${MESSAGES[LANG].selectStaffServiceDate}</option>`;
+
     data.available_slots.forEach(function(slot) {
+        const startTimeValue = `${date}T${slot}`;
+
         const option = document.createElement("option");
-        option.value = `${date}T${slot}`;
+        option.value = startTimeValue;
         option.textContent = slot;
         slotSelect.appendChild(option);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "time-slot-btn";
+        button.textContent = slot;
+
+        button.addEventListener("click", function() {
+            document.querySelectorAll(".time-slot-btn").forEach(function(btn) {
+                btn.classList.remove("active");
+            });
+
+            button.classList.add("active");
+            slotSelect.value = startTimeValue;
+        });
+
+        container.appendChild(button);
     });
 }
 
+function updateArtistInfo() {
+    const select = document.getElementById("staffSelect");
+    const option = select.options[select.selectedIndex];
+    const card = document.getElementById("artistInfo");
+
+    if (!option || option.value === "any") {
+        card.style.display = "none";
+        return;
+    }
+
+    document.getElementById("artistImage").src = option.dataset.image;
+    document.getElementById("artistName").textContent = option.dataset.name;
+    document.getElementById("artistPosition").textContent = option.dataset.position;
+    document.getElementById("artistSpecialties").textContent = option.dataset.specialties;
+    document.getElementById("artistProfileLink").href = `/staff/${option.value}?lang=${LANG}`;
+
+    card.style.display = "flex";
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("staffSelect").addEventListener("change", loadAvailableSlots);
-    document.getElementById("serviceSelect").addEventListener("change", loadAvailableSlots);
+    document.querySelectorAll("[data-staff-id]").forEach(function(card) {
+        card.addEventListener("click", function() {
+            document.querySelectorAll("[data-staff-id]").forEach(function(item) {
+                item.classList.remove("active");
+            });
+
+            card.classList.add("active");
+            document.getElementById("staffSelect").value = card.dataset.staffId;
+            updateArtistInfo();
+            loadAvailableSlots();
+        });
+    });
+
+    document.querySelectorAll("[data-service-id]").forEach(function(card) {
+        card.addEventListener("click", function() {
+            document.querySelectorAll("[data-service-id]").forEach(function(item) {
+                item.classList.remove("active");
+            });
+
+            card.classList.add("active");
+            document.getElementById("serviceSelect").value = card.dataset.serviceId;
+            loadAvailableSlots();
+        });
+    });
+
     document.getElementById("bookingDate").addEventListener("change", loadAvailableSlots);
+
+    updateArtistInfo();
+});
+
+flatpickr("#bookingDate", {
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    onChange: function() {
+        loadAvailableSlots();
+    }
+});
+
+document.querySelector("form").addEventListener("submit", function(event) {
+    const slotSelect = document.getElementById("availableSlotSelect");
+
+    if (!slotSelect.value) {
+        event.preventDefault();
+        alert(MESSAGES[LANG].selectStaffServiceDate);
+    }
 });
 </script>
+
 {% endblock %}

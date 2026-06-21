@@ -1,7 +1,7 @@
 from datetime import datetime, date, time, timedelta
 
 from bookings.models import Booking, BookingEvent, Service, StaffService
-from staff.models import StaffSchedule, Staff, StaffTimeOff
+from staff.models import StaffSchedule, Staff
 from customers.models import Customer
 from extensions import db
 from dashboard.models import ShopSettings
@@ -49,16 +49,6 @@ def is_during_break(slot_start, slot_end, schedule):
     break_end = datetime.combine(slot_start.date(), schedule.break_end_time)
 
     return has_time_overlap(slot_start, slot_end, break_start, break_end)
-
-
-def is_during_time_off(slot_start, slot_end, staff_id):
-    time_off = StaffTimeOff.query.filter(
-        StaffTimeOff.staff_id == staff_id,
-        StaffTimeOff.start_time < slot_end,
-        StaffTimeOff.end_time > slot_start
-    ).first()
-
-    return time_off is not None
 
 
 def generate_time_slots(work_start, work_end, service_duration):
@@ -282,9 +272,6 @@ def get_available_slots(staff_id, service_id, target_date):
         if is_during_break(slot_start, slot_end, schedule):
             continue
 
-        if is_during_time_off(slot_start, slot_end, staff_id):
-            continue
-
         is_overlapped = False
 
         for booking in existing_bookings:
@@ -396,13 +383,6 @@ def create_booking(customer_id, staff_id, service_id, start_time):
             "ok": False,
             "error": "DURING_BREAK_TIME",
             "message": "직원 휴게시간과 겹치는 예약입니다."
-        }
-
-    if is_during_time_off(start_time, end_time, staff_id):
-        return {
-            "ok": False,
-            "error": "STAFF_TIME_OFF",
-            "message": "This time is blocked by staff time off."
         }
 
     overlapped_booking = Booking.query.filter(
@@ -538,9 +518,6 @@ def create_booking_check_only(staff_id, service_id, start_time):
         return {"ok": False}
 
     if is_during_break(start_time, end_time, schedule):
-        return {"ok": False}
-
-    if is_during_time_off(start_time, end_time, staff_id):
         return {"ok": False}
 
     overlapped_booking = Booking.query.filter(
@@ -766,158 +743,4 @@ def update_deposit_status(booking_id, deposit_status):
         "booking_id": booking.id,
         "deposit_payment_status": booking.deposit_payment_status,
         "deposit_paid": booking.deposit_paid
-    }
-
-
-
-def admin_update_booking_assignment(booking_id, staff_id, service_id, new_start_time):
-    booking = Booking.query.get(booking_id)
-
-    if not booking:
-        return {
-            "ok": False,
-            "error": "BOOKING_NOT_FOUND",
-            "message": "Booking not found."
-        }
-
-    if booking.status not in ["pending", "confirmed"]:
-        return {
-            "ok": False,
-            "error": "BOOKING_NOT_EDITABLE",
-            "message": "Only pending or confirmed bookings can be edited."
-        }
-
-    staff = Staff.query.get(staff_id)
-    if not staff or not staff.is_active:
-        return {
-            "ok": False,
-            "error": "STAFF_NOT_FOUND_OR_INACTIVE",
-            "message": "Staff member not found or inactive."
-        }
-
-    service = Service.query.get(service_id)
-    if not service or not service.is_active:
-        return {
-            "ok": False,
-            "error": "SERVICE_NOT_FOUND_OR_INACTIVE",
-            "message": "Service not found or inactive."
-        }
-
-    if not is_valid_service_duration(service.duration_minutes):
-        return {
-            "ok": False,
-            "error": "INVALID_SERVICE_DURATION",
-            "message": "Invalid service duration."
-        }
-
-    staff_service = StaffService.query.filter_by(
-        staff_id=staff_id,
-        service_id=service_id
-    ).first()
-
-    if not staff_service:
-        return {
-            "ok": False,
-            "error": "STAFF_CANNOT_DO_SERVICE",
-            "message": "This staff member cannot perform the selected service."
-        }
-
-    new_end_time = new_start_time + timedelta(minutes=service.duration_minutes)
-
-    weekday = new_start_time.date().weekday()
-
-    schedule = StaffSchedule.query.filter_by(
-        staff_id=staff_id,
-        day_of_week=weekday,
-        is_working=True
-    ).first()
-
-    if not schedule:
-        return {
-            "ok": False,
-            "error": "STAFF_NOT_WORKING",
-            "message": "This staff member is not working on the selected date."
-        }
-
-    work_start = datetime.combine(new_start_time.date(), schedule.start_time)
-    work_end = datetime.combine(new_start_time.date(), schedule.end_time)
-
-    if new_start_time < work_start or new_end_time > work_end:
-        return {
-            "ok": False,
-            "error": "OUTSIDE_WORKING_HOURS",
-            "message": "The selected time is outside staff working hours."
-        }
-
-    if is_during_break(new_start_time, new_end_time, schedule):
-        return {
-            "ok": False,
-            "error": "DURING_BREAK_TIME",
-            "message": "The selected time overlaps with staff break time."
-        }
-
-    if is_during_time_off(new_start_time, new_end_time, staff_id):
-        return {
-            "ok": False,
-            "error": "STAFF_TIME_OFF",
-            "message": "The selected time is blocked by staff time off."
-        }
-
-    overlapped_booking = Booking.query.filter(
-        Booking.id != booking_id,
-        Booking.staff_id == staff_id,
-        Booking.status.in_(["pending", "confirmed"]),
-        Booking.start_time < new_end_time,
-        Booking.end_time > new_start_time
-    ).first()
-
-    if overlapped_booking:
-        return {
-            "ok": False,
-            "error": "BOOKING_TIME_OVERLAPPED",
-            "message": "Another booking already exists during the selected time."
-        }
-
-    old_staff_id = booking.staff_id
-    old_service_id = booking.service_id
-    old_start = booking.start_time
-    old_end = booking.end_time
-
-    booking.staff_id = staff_id
-    booking.service_id = service_id
-    booking.start_time = new_start_time
-    booking.end_time = new_end_time
-
-    settings = ShopSettings.query.first()
-    deposit_enabled = settings.deposit_enabled if settings else False
-
-    if deposit_enabled and service.deposit_required:
-        if booking.deposit_payment_status == "none":
-            booking.deposit_payment_status = "required"
-    else:
-        booking.deposit_payment_status = "none"
-        booking.deposit_paid = False
-        booking.deposit_payment_link = None
-        booking.deposit_note = None
-
-    event = BookingEvent(
-        booking_id=booking.id,
-        event_type="assignment_changed",
-        memo=(
-            f"staff {old_staff_id}->{staff_id}, "
-            f"service {old_service_id}->{service_id}, "
-            f"time {old_start}~{old_end} -> {booking.start_time}~{booking.end_time}"
-        )
-    )
-
-    db.session.add(event)
-    db.session.commit()
-
-    return {
-        "ok": True,
-        "booking_id": booking.id,
-        "staff_id": booking.staff_id,
-        "service_id": booking.service_id,
-        "start_time": booking.start_time.isoformat(),
-        "end_time": booking.end_time.isoformat()
     }

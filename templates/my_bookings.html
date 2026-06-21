@@ -4,121 +4,216 @@
 
 {% block content %}
 <style>
-.modal-backdrop {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.45);
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(4px);
 }
-.modal-box {
-    background: #fff;
-    width: min(520px, 92vw);
-    margin: 10vh auto;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+
+.modal-box{
+    background:white;
+    width:min(640px, 92vw);
+    margin:8vh auto;
+    padding:40px;
+    border-radius:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);
 }
-.modal-actions {
-    margin-top: 16px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+
+.modal-box h3{
+    margin:0 0 12px;
+    color:var(--forest);
+    font-size:36px;
 }
-.action-cell button {
-    display: inline-block;
-    margin: 2px;
+
+.modal-box p{
+    margin:0 0 28px;
+    color:#666;
+}
+
+.modal-form-group{
+    margin-bottom:18px;
+}
+
+.modal-form-group label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:700;
+    color:var(--forest);
+}
+
+.modal-box input,
+.modal-box select{
+    width:100%;
+    padding:14px 16px;
+    border:1px solid #ddd;
+    border-radius:14px;
+    font-size:15px;
+    background:white;
+}
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:30px;
+}
+
+.modal-actions button{
+    min-width:140px;
+    border:1px solid var(--sage);
+    background:white;
+    color:var(--forest);
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.modal-actions button:last-child{
+    background:var(--forest);
+    color:white;
+    border-color:var(--forest);
+}
+
+.modal-actions button:hover{
+    opacity:.9;
+}
+
+.action-cell button{
+    display:inline-block;
+    margin:2px;
+}
+
+@media(max-width:768px){
+    .modal-box{
+        padding:28px;
+        margin:6vh auto;
+    }
+
+    .modal-box h3{
+        font-size:28px;
+    }
+
+    .modal-actions{
+        flex-direction:column;
+    }
+
+    .modal-actions button{
+        width:100%;
+    }
 }
 </style>
 
-<p>
-    <a href="/my-bookings?lang=ko">Korean</a> |
-    <a href="/my-bookings?lang=en">English</a>
-</p>
-
-<h1>{{ text.my_bookings }}</h1>
-
-<p>
-    {{ customer.name }} / {{ customer.phone }}
-    <a href="/logout">Logout</a>
-</p>
 
 {% if bookings %}
-    <h2>{{ text.booking_list }}</h2>
+<section class="my-bookings-section">
+    
+    <div class="language-switcher">
+    <a href="/my-bookings?lang=ko">Korean</a>
+    <span>|</span>
+    <a href="/my-bookings?lang=en">English</a>
+    </div>
+    
+    <div class="my-bookings-header">
+        <p class="eyebrow">Reservations</p>
+        <h1>{{ text.my_bookings }}</h1>
+        <p class="booking-subtitle">
+        Manage your upcoming appointments
+        </p>
 
-    <table border="1" cellpadding="8">
-        <thead>
-            <tr>
-                <th>{{ text.booking_date }}</th>
-                <th>{{ text.booking_time }}</th>
-                <th>{{ text.service }}</th>
-                <th>{{ text.staff }}</th>
-                <th>{{ text.booking_status }}</th>
-                <th>{{ text.manage if text.manage is defined else 'Manage' }}</th>
-            </tr>
-        </thead>
-        <tbody>
+
+    </div>
+
+    {% if bookings %}
+        <div class="booking-card-list">
+
             {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.start_time.strftime("%Y-%m-%d") }}</td>
-                    <td>
-                        {{ booking.start_time.strftime("%H:%M") }}
-                        ~
-                        {{ booking.end_time.strftime("%H:%M") }}
-                    </td>
-                    <td>
+            <div class="my-booking-card">
+
+                <div class="booking-card-main">
+                    <h3>
                         {% if lang == "en" and booking.service.name_en %}
                             {{ booking.service.name_en }}
                         {% else %}
                             {{ booking.service.name_ko }}
                         {% endif %}
-                    </td>
-                    <td>{{ booking.staff.name }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td class="action-cell">
-                        {% if booking.status in ["pending", "confirmed"] %}
-                            <button onclick="openCancelModal({{ booking.id }})">
-                                {{ text.cancel }}
-                            </button>
-                            <button onclick="openRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
-                                {{ text.reschedule }}
-                            </button>
+                    </h3>
 
-                            {% if booking.start_time > now %}
-                                {% set hours_until_booking = (booking.start_time - now).total_seconds() / 3600 %}
+                    <p>{{ booking.staff.name }}</p>
+                </div>
 
-                                {% if hours_until_booking <= 2 %}
-                                    <button onclick="openLateNoticeModal({{ booking.id }})">
-                                        {{ text.late_notice }}
-                                    </button>
-                                {% else %}
-                                    <small style="color: gray;">
-                                    {% if lang == "en" %}
-                                        Late notice is available from 2 hours before your appointment.
-                                    {% else %}
-                                        예약 시작 2시간 전부터 지각 예정 알림을 보낼 수 있습니다.
-                                    {% endif %}
-                                    </small>
-                                {% endif %}
+                <div class="booking-card-meta">
+                    <div>
+                        <span>Date</span>
+                        <strong>{{ booking.start_time.strftime("%Y-%m-%d") }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Time</span>
+                        <strong>
+                            {{ booking.start_time.strftime("%H:%M") }}
+                            ~
+                            {{ booking.end_time.strftime("%H:%M") }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong class="status-badge status-{{ booking.status }}">
+                            {{ booking.status }}
+                        </strong>
+                    </div>
+                </div>
+
+
+                
+
+
+                <div class="booking-card-actions">
+                    {% if booking.status in ["pending", "confirmed"] %}
+                        <button class="booking-action-btn danger"
+                        onclick="openCancelModal({{ booking.id }})">
+                            Cancel
+                        </button>
+
+                        <button class="booking-action-btn"
+                        onclick="openRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
+                            Reschedule
+                        </button>
+                        {% if booking.start_time > now %}
+                            {% set hours_until_booking = (booking.start_time - now).total_seconds() / 3600 %}
+
+                            {% if hours_until_booking <= 2 %}
+                                <button class="btn-secondary" onclick="openLateNoticeModal({{ booking.id }})">
+                                    {{ text.late_notice }}
+                                </button>
                             {% endif %}
-                        {% else %}
-                            -
                         {% endif %}
-                    </td>
-                </tr>
+                    {% endif %}
+                </div>
+
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+
+        </div>
+    {% else %}
+        <p class="empty-message">{{ text.no_bookings }}</p>
+    {% endif %}
+
+    <div class="my-bookings-bottom">
+        <a class="btn-primary" href="/booking?lang={{ lang }}">{{ text.go_booking }}</a>
+    </div>
+
+</section>
 {% else %}
     <p>{{ text.no_bookings }}</p>
 {% endif %}
 
-<p>
-    <a href="/booking?lang={{ lang }}">{{ text.go_booking }}</a>
-</p>
 
 <div id="cancelModal" class="modal-backdrop">
     <div class="modal-box">
@@ -136,13 +231,13 @@
         <h3 id="rescheduleModalTitle"></h3>
         <p id="rescheduleModalMessage"></p>
 
-        <div>
-            <label id="rescheduleDateLabel"></label><br>
+        <div class="modal-form-group">
+            <label id="rescheduleDateLabel"></label>
             <input type="date" id="modalRescheduleDate" onchange="loadModalRescheduleSlots()">
         </div>
 
-        <div>
-            <label id="rescheduleTimeLabel"></label><br>
+        <div class="modal-form-group">
+            <label id="rescheduleTimeLabel"></label>
             <select id="modalRescheduleSlot">
                 <option value=""></option>
             </select>

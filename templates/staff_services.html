@@ -1,39 +1,222 @@
 {% extends "base.html" %}
 
-{% block title %}직원별 가능 시술 관리{% endblock %}
+{% block title %}Staff Service Management{% endblock %}
 
 {% block content %}
-<h1>{{ staff.name }} 가능 시술 관리</h1>
 
-<form method="POST" action="/admin/staff/{{ staff.id }}/services/update">
+<section class="admin-services-section staff-service-section">
 
-    {% for service in services %}
-        <p>
-            <label>
-                <input
-                    type="checkbox"
-                    name="service_ids"
-                    value="{{ service.id }}"
-                    {% if service.id in linked_service_ids %}
-                        checked
-                    {% endif %}
-                >
-                [{{ service.category }}]
-                {{ service.name_ko }}
-                / {{ service.duration_minutes }}분
-                / {{ service.price }}원
-                {% if not service.is_active %}
-                    (비활성)
+    <div class="admin-page-header">
+        <p class="eyebrow">STAFF SERVICE MANAGEMENT</p>
+        <h1>{{ staff.name }} Services</h1>
+        <p>Select the services this staff member can perform.</p>
+    </div>
+
+    <div class="admin-form-card staff-service-profile-card">
+        <div>
+            <h2>{{ staff.name }}</h2>
+            <p>
+                {% if staff.position %}
+                    {{ staff.position }}
+                {% else %}
+                    Staff Member
                 {% endif %}
-            </label>
-        </p>
-    {% endfor %}
+            </p>
+        </div>
 
-    <button type="submit">저장</button>
+        <div class="staff-service-count">
+            <span>Linked Services</span>
+            <strong>{{ linked_service_ids|length }}</strong>
+        </div>
+    </div>
 
-</form>
+    <form method="POST" action="/admin/staff/{{ staff.id }}/services/update" class="staff-service-form">
 
-<p>
-    <a href="/admin/staff">직원 목록으로 돌아가기</a>
-</p>
+        <div class="admin-section-header">
+            <h2>Available Services</h2>
+            <p>{{ services|length }} services registered</p>
+        </div>
+
+        <div class="staff-service-grid">
+            {% for service in services %}
+                <label class="staff-service-card {% if service.id in linked_service_ids %}selected{% endif %} {% if not service.is_active %}inactive{% endif %}">
+                    <input
+                        type="checkbox"
+                        name="service_ids"
+                        value="{{ service.id }}"
+                        {% if service.id in linked_service_ids %}
+                            checked
+                        {% endif %}
+                    >
+
+                    <div class="staff-service-card-body">
+                        <div class="service-card-top">
+                            <span class="service-category-badge">{{ service.category|title }}</span>
+
+                            {% if service.is_active %}
+                                <span class="status-badge status-confirmed">Active</span>
+                            {% else %}
+                                <span class="status-badge status-cancelled">Inactive</span>
+                            {% endif %}
+                        </div>
+
+                        <h3>{{ service.name_ko }}</h3>
+
+                        {% if service.name_en %}
+                            <p class="service-ko-name">{{ service.name_en }}</p>
+                        {% endif %}
+
+                        <div class="service-meta-grid">
+                            <div>
+                                <span>Duration</span>
+                                <strong>{{ service.duration_minutes }} min</strong>
+                            </div>
+
+                            <div>
+                                <span>Price</span>
+                                <strong>₩{{ "{:,}".format(service.price) }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Deposit</span>
+                                {% if service.deposit_required %}
+                                    <strong>₩{{ "{:,}".format(service.deposit_amount) }}</strong>
+                                {% else %}
+                                    <strong>None</strong>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            {% endfor %}
+        </div>
+
+        <div class="admin-form-actions staff-service-actions">
+            <a href="/admin/staff" class="booking-action-btn">Back to Staff</a>
+            <button type="submit" class="btn-primary">Save Services</button>
+        </div>
+
+    </form>
+
+</section>
+
+<style>
+.staff-service-profile-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+    margin-bottom:44px;
+}
+
+.staff-service-profile-card h2{
+    margin:0;
+    color:var(--forest);
+}
+
+.staff-service-profile-card p{
+    margin:6px 0 0;
+    color:#777;
+}
+
+.staff-service-count{
+    min-width:140px;
+    padding:18px 22px;
+    border-radius:16px;
+    background:#F9F7F2;
+    text-align:center;
+}
+
+.staff-service-count span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.staff-service-count strong{
+    display:block;
+    margin-top:4px;
+    color:var(--forest);
+    font-size:28px;
+}
+
+.staff-service-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:24px;
+}
+
+.staff-service-card{
+    display:block;
+    cursor:pointer;
+}
+
+.staff-service-card input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.staff-service-card-body{
+    background:white;
+    border:2px solid transparent;
+    border-radius:18px;
+    padding:26px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+    transition:.2s;
+    min-height:100%;
+}
+
+.staff-service-card:hover .staff-service-card-body{
+    transform:translateY(-2px);
+}
+
+.staff-service-card.selected .staff-service-card-body{
+    border-color:var(--forest);
+    background:#f7fbf8;
+}
+
+.staff-service-card.inactive .staff-service-card-body{
+    opacity:.58;
+}
+
+.staff-service-card h3{
+    margin:0;
+    color:var(--forest);
+    font-size:22px;
+}
+
+.staff-service-actions{
+    margin-top:40px;
+}
+
+@media(max-width:768px){
+    .staff-service-profile-card{
+        display:block;
+    }
+
+    .staff-service-count{
+        margin-top:20px;
+        width:100%;
+    }
+
+    .staff-service-grid{
+        grid-template-columns:1fr;
+    }
+
+    .staff-service-actions{
+        flex-direction:column;
+    }
+
+    .staff-service-actions a,
+    .staff-service-actions button{
+        width:100%;
+        text-align:center;
+    }
+}
+</style>
+
 {% endblock %}

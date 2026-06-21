@@ -1,21 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}직원 로그인{% endblock %}
+{% block title %}Staff Login{% endblock %}
 
 {% block content %}
-<h1>직원 로그인</h1>
 
-<form method="post">
-    <p>
-        아이디:
-        <input type="text" name="username" required>
-    </p>
+<section class="auth-section staff-auth-section">
+    <div class="auth-card">
+        <p class="eyebrow">STAFF ACCESS</p>
+        <h1>Staff Login</h1>
+        <p class="auth-subtitle">Sign in to view and manage today’s assigned reservations.</p>
 
-    <p>
-        비밀번호:
-        <input type="password" name="password" required>
-    </p>
+        <form method="POST" class="auth-form">
+            <label for="username">Username</label>
+            <input id="username" type="text" name="username" required autocomplete="username">
 
-    <button type="submit">로그인</button>
-</form>
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" required autocomplete="current-password">
+
+            <button type="submit" class="btn-primary auth-submit">Login</button>
+        </form>
+    </div>
+</section>
+
+<style>
+.auth-section{
+    min-height:70vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:80px 24px;
+}
+.auth-card{
+    width:min(460px, 100%);
+    background:white;
+    border-radius:22px;
+    padding:44px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.auth-card h1{
+    margin:8px 0 10px;
+    color:var(--forest);
+    font-size:44px;
+}
+.auth-subtitle{
+    margin:0 0 30px;
+    color:#777;
+}
+.auth-form label{
+    display:block;
+    margin:18px 0 8px;
+    color:var(--forest);
+    font-weight:700;
+}
+.auth-form input{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+}
+.auth-submit{
+    width:100%;
+    margin-top:30px;
+}
+</style>
+
 {% endblock %}

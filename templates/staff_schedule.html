@@ -1,85 +1,191 @@
 {% extends "base.html" %}
 
-{% block title %}직원 스케줄 관리{% endblock %}
+{% block title %}Staff Schedule Management{% endblock %}
 
 {% block content %}
-<h1>{{ staff.name }} 스케줄 관리</h1>
 
-<form method="POST" action="/admin/staff/{{ staff.id }}/schedule/update">
+<section class="admin-services-section staff-schedule-section">
 
-<table border="1" cellpadding="8">
-    <thead>
-        <tr>
-            <th>요일</th>
-            <th>근무 여부</th>
-            <th>시작</th>
-            <th>종료</th>
-            <th>휴게 시작</th>
-            <th>휴게 종료</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% set days = ["월", "화", "수", "목", "금", "토", "일"] %}
+    <div class="admin-page-header">
+        <p class="eyebrow">STAFF SCHEDULE MANAGEMENT</p>
+        <h1>{{ staff.name }} Schedule</h1>
+        <p>Manage weekly working hours, break times, full-day off, and half-day blocked time.</p>
+    </div>
 
-        {% for day in range(7) %}
-            {% set schedule = schedule_map.get(day) %}
+    <form method="POST" action="/admin/staff/{{ staff.id }}/schedule/update" class="staff-schedule-form">
 
-            <tr>
-                <td>{{ days[day] }}</td>
+        {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+        {% set days_ko = ["월", "화", "수", "목", "금", "토", "일"] %}
 
-                <td>
-                    <input
-                        type="checkbox"
-                        name="is_working_{{ day }}"
-                        {% if schedule and schedule.is_working %}
-                            checked
-                        {% endif %}
-                    >
-                </td>
+        <div class="staff-schedule-grid">
+            {% for day in range(7) %}
+                {% set schedule = schedule_map.get(day) %}
+                {% set is_working = schedule and schedule.is_working %}
 
-                <td>
-                    <input
-                        type="time"
-                        name="start_time_{{ day }}"
-                        value="{% if schedule %}{{ schedule.start_time.strftime('%H:%M') }}{% else %}10:00{% endif %}"
-                    >
-                </td>
+                <div class="staff-schedule-card {% if not is_working %}off{% endif %}" data-schedule-card>
+                    <div class="staff-schedule-card-header">
+                        <div>
+                            <span class="schedule-day-ko">{{ days_ko[day] }}</span>
+                            <h3>{{ days[day] }}</h3>
+                        </div>
 
-                <td>
-                    <input
-                        type="time"
-                        name="end_time_{{ day }}"
-                        value="{% if schedule %}{{ schedule.end_time.strftime('%H:%M') }}{% else %}19:00{% endif %}"
-                    >
-                </td>
+                        <label class="schedule-toggle">
+                            <input type="checkbox" name="is_working_{{ day }}" data-working-toggle {% if is_working %}checked{% endif %}>
+                            <span>Working</span>
+                        </label>
+                    </div>
 
-                <td>
-                    <input
-                        type="time"
-                        name="break_start_time_{{ day }}"
-                        value="{% if schedule and schedule.break_start_time %}{{ schedule.break_start_time.strftime('%H:%M') }}{% endif %}"
-                    >
-                </td>
+                    <div class="schedule-time-grid">
+                        <div>
+                            <label>Start</label>
+                            <input type="time" name="start_time_{{ day }}" value="{% if schedule %}{{ schedule.start_time.strftime('%H:%M') }}{% else %}10:00{% endif %}">
+                        </div>
+                        <div>
+                            <label>End</label>
+                            <input type="time" name="end_time_{{ day }}" value="{% if schedule %}{{ schedule.end_time.strftime('%H:%M') }}{% else %}19:00{% endif %}">
+                        </div>
+                        <div>
+                            <label>Break Start</label>
+                            <input type="time" name="break_start_time_{{ day }}" value="{% if schedule and schedule.break_start_time %}{{ schedule.break_start_time.strftime('%H:%M') }}{% endif %}">
+                        </div>
+                        <div>
+                            <label>Break End</label>
+                            <input type="time" name="break_end_time_{{ day }}" value="{% if schedule and schedule.break_end_time %}{{ schedule.break_end_time.strftime('%H:%M') }}{% endif %}">
+                        </div>
+                    </div>
 
-                <td>
-                    <input
-                        type="time"
-                        name="break_end_time_{{ day }}"
-                        value="{% if schedule and schedule.break_end_time %}{{ schedule.break_end_time.strftime('%H:%M') }}{% endif %}"
-                    >
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                    <p class="schedule-off-note">Day off</p>
+                </div>
+            {% endfor %}
+        </div>
 
-<p>
-    <button type="submit">스케줄 저장</button>
-</p>
+        <div class="admin-form-actions staff-schedule-actions">
+            <a href="/admin/staff" class="booking-action-btn">Back to Staff</a>
+            <button type="submit" class="btn-primary">Save Weekly Schedule</button>
+        </div>
 
-</form>
+    </form>
 
-<p>
-    <a href="/admin/staff">직원 목록으로 돌아가기</a>
-</p>
+    <div class="admin-section-header timeoff-section-header">
+        <h2>Time Off / Half Day</h2>
+        <p>Block staff availability for a specific date or time range.</p>
+    </div>
+
+    <div class="admin-form-card timeoff-create-card">
+        <form method="POST" action="/admin/staff/{{ staff.id }}/time-off/create" class="timeoff-form">
+            <div class="form-grid four-columns">
+                <div>
+                    <label>Date</label>
+                    <input type="date" name="off_date" required>
+                </div>
+                <div>
+                    <label>Start Time</label>
+                    <input id="start_time" type="time" name="start_time" value="10:00">
+                </div>
+                <div>
+                    <label>End Time</label>
+                    <input id="end_time" type="time" name="end_time" value="19:00">
+                </div>
+                <div>
+                    <label>Reason</label>
+                    <input type="text" name="reason" placeholder="Off / Half day / Personal">
+                </div>
+            </div>
+
+            <label class="checkbox-row timeoff-full-day-row">
+                <input type="checkbox" name="is_full_day" id="is_full_day">
+                <span>Full day off</span>
+            </label>
+
+            <p class="timeoff-help">
+                If there is already a pending or confirmed booking during this time, registration will be blocked.
+            </p>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn-primary">Register Time Off</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="timeoff-list">
+        {% if time_offs %}
+            {% for time_off in time_offs %}
+                <article class="timeoff-card">
+                    <div>
+                        <span class="service-category-badge">Blocked</span>
+                        <h3>{{ time_off.start_time.strftime("%Y-%m-%d") }}</h3>
+                        <p>{{ time_off.start_time.strftime("%H:%M") }} ~ {{ time_off.end_time.strftime("%H:%M") }}</p>
+                        <p>{{ time_off.reason or "No reason provided" }}</p>
+                    </div>
+
+                    <form method="POST" action="/admin/staff/{{ staff.id }}/time-off/{{ time_off.id }}/delete" onsubmit="return confirm('Delete this time off entry?');">
+                        <button type="submit" class="booking-action-btn danger">Delete</button>
+                    </form>
+                </article>
+            {% endfor %}
+        {% else %}
+            <div class="admin-form-card empty-timeoff-card">
+                <h2>No time off registered</h2>
+                <p>This staff member has no blocked time yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</section>
+
+<style>
+.staff-schedule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px;}
+.staff-schedule-card{background:white;border-radius:18px;padding:26px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.staff-schedule-card.off{background:#f7f7f4;opacity:.72;}
+.staff-schedule-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px;}
+.schedule-day-ko{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#f4efe3;color:#8a6400;font-weight:800;margin-bottom:10px;}
+.staff-schedule-card h3{margin:0;color:var(--forest);font-size:24px;}
+.schedule-toggle{display:flex;align-items:center;gap:8px;color:var(--forest);font-weight:700;cursor:pointer;white-space:nowrap;}
+.schedule-toggle input{width:18px;height:18px;accent-color:var(--forest);}
+.schedule-time-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.schedule-time-grid label,.timeoff-form label{display:block;margin-bottom:8px;color:var(--forest);font-weight:700;font-size:13px;}
+.schedule-time-grid input,.timeoff-form input{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;font-size:15px;background:white;}
+.staff-schedule-card.off .schedule-time-grid{display:none;}
+.schedule-off-note{display:none;margin:12px 0 0;padding:14px;border-radius:14px;background:#eeeeea;color:#777;font-weight:700;text-align:center;}
+.staff-schedule-card.off .schedule-off-note{display:block;}
+.staff-schedule-actions{margin-top:40px;}
+.timeoff-section-header{margin-top:64px;}
+.timeoff-create-card{margin-bottom:28px;}
+.timeoff-form .form-grid.four-columns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;}
+.timeoff-full-day-row{margin-top:20px;}
+.timeoff-help{margin:14px 0 0;color:#777;font-size:14px;}
+.timeoff-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;}
+.timeoff-card{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;background:white;border-radius:18px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.timeoff-card h3{margin:14px 0 6px;color:var(--forest);}
+.timeoff-card p{margin:4px 0;color:#777;}
+.empty-timeoff-card{text-align:center;}
+.empty-timeoff-card h2{margin-top:0;color:var(--forest);}
+@media(max-width:900px){.timeoff-form .form-grid.four-columns{grid-template-columns:1fr;}.timeoff-card{display:block;}.timeoff-card form{margin-top:18px;}}
+@media(max-width:768px){.staff-schedule-grid{grid-template-columns:1fr;}.schedule-time-grid{grid-template-columns:1fr;}.staff-schedule-actions{flex-direction:column;}.staff-schedule-actions a,.staff-schedule-actions button{width:100%;text-align:center;}}
+</style>
+
+<script>
+document.querySelectorAll("[data-schedule-card]").forEach(function(card) {
+    const toggle = card.querySelector("[data-working-toggle]");
+    function syncScheduleCard() {
+        if (toggle.checked) { card.classList.remove("off"); }
+        else { card.classList.add("off"); }
+    }
+    toggle.addEventListener("change", syncScheduleCard);
+    syncScheduleCard();
+});
+
+const fullDayCheckbox = document.getElementById("is_full_day");
+const timeOffStart = document.getElementById("start_time");
+const timeOffEnd = document.getElementById("end_time");
+
+function syncFullDayOff() {
+    const isFullDay = fullDayCheckbox.checked;
+    timeOffStart.disabled = isFullDay;
+    timeOffEnd.disabled = isFullDay;
+}
+fullDayCheckbox.addEventListener("change", syncFullDayOff);
+syncFullDayOff();
+</script>
+
 {% endblock %}

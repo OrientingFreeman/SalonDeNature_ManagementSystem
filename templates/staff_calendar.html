@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Calendar{% endblock %}
+
+{% block content %}
+
+<section class="admin-services-section staff-calendar-section">
+
+    <div class="admin-page-header">
+        <p class="eyebrow">STAFF CALENDAR</p>
+        <h1>My Reservations</h1>
+        <p>{{ session.staff_name }}님, review your assigned reservations by date.</p>
+    </div>
+
+    <div class="calendar-toolbar admin-form-card">
+        <form method="GET" action="/staff/calendar" class="calendar-date-form">
+            <label for="calendar-date">Date</label>
+            <div class="calendar-date-actions">
+                <input id="calendar-date" type="date" name="date" value="{{ target_date }}">
+                <button type="submit" class="booking-action-btn">Search</button>
+            </div>
+        </form>
+
+        <a href="/staff/dashboard" class="btn-primary">Today Dashboard</a>
+    </div>
+
+    {% set pending_count = bookings|selectattr("status", "equalto", "pending")|list|length %}
+    {% set confirmed_count = bookings|selectattr("status", "equalto", "confirmed")|list|length %}
+    {% set completed_count = bookings|selectattr("status", "equalto", "completed")|list|length %}
+    {% set no_show_count = bookings|selectattr("status", "equalto", "no_show")|list|length %}
+
+    <div class="admin-stat-grid staff-calendar-stat-grid">
+        <div class="admin-stat-card"><span>{{ bookings|length }}</span><p>Total</p></div>
+        <div class="admin-stat-card"><span>{{ confirmed_count }}</span><p>Confirmed</p></div>
+        <div class="admin-stat-card"><span>{{ completed_count }}</span><p>Completed</p></div>
+        <div class="admin-stat-card"><span>{{ pending_count }}</span><p>Pending</p></div>
+        <div class="admin-stat-card"><span>{{ no_show_count }}</span><p>No Show</p></div>
+    </div>
+
+    <div class="admin-section-header">
+        <h2>{{ target_date }} Reservations</h2>
+        <p>{{ bookings|length }} bookings</p>
+    </div>
+
+    {% if bookings %}
+        <div class="staff-calendar-list">
+            {% for booking in bookings %}
+                <article class="staff-calendar-card">
+                    <div class="booking-time-block">
+                        <span>{{ booking.start_time.strftime("%H:%M") }}</span>
+                        <small>~ {{ booking.end_time.strftime("%H:%M") }}</small>
+                    </div>
+
+                    <div class="staff-calendar-body">
+                        <div class="staff-calendar-main">
+                            <div>
+                                <h3>{{ booking.customer.name }}</h3>
+                                <p>{{ booking.service.name_ko }}</p>
+                            </div>
+
+                            {% if booking.status == "pending" %}
+                                <span class="status-badge status-pending">Pending</span>
+                            {% elif booking.status == "confirmed" %}
+                                <span class="status-badge status-confirmed">Confirmed</span>
+                            {% elif booking.status == "completed" %}
+                                <span class="status-badge status-completed">Completed</span>
+                            {% elif booking.status == "cancelled" %}
+                                <span class="status-badge status-cancelled">Cancelled</span>
+                            {% elif booking.status == "no_show" %}
+                                <span class="status-badge status-cancelled">No Show</span>
+                            {% else %}
+                                <span class="status-badge">{{ booking.status }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="staff-calendar-meta">
+                            <div><span>Customer</span><strong>{{ booking.customer.name }}</strong></div>
+                            <div><span>Service</span><strong>{{ booking.service.name_ko }}</strong></div>
+                            <div><span>Price</span><strong>₩{{ "{:,}".format(booking.service.price) }}</strong></div>
+                            <div><span>Deposit</span><strong>{{ booking.deposit_payment_status or "none" }}</strong></div>
+                        </div>
+
+                        <div class="staff-calendar-actions">
+                            {% if booking.status == "confirmed" %}
+                                <button type="button" class="btn-primary" onclick="openCompleteModal({{ booking.id }})">
+                                    Complete
+                                </button>
+                            {% else %}
+                                <span class="booking-locked-note">No action available</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="admin-form-card empty-staff-calendar-card">
+            <h2>No reservations</h2>
+            <p>There are no reservations assigned to you for this date.</p>
+        </div>
+    {% endif %}
+
+</section>
+
+<div id="completeModal" class="modal-backdrop">
+    <div class="modal-box">
+        <h3>Complete Booking</h3>
+        <p>Mark this reservation as completed?</p>
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">Back</button>
+            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">Complete</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.staff-calendar-section{max-width:1200px;}
+.calendar-toolbar{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:32px;}
+.calendar-date-form label{display:block;margin-bottom:8px;color:var(--forest);font-weight:700;}
+.calendar-date-actions{display:flex;gap:10px;}
+.calendar-date-actions input{min-width:220px;padding:13px 14px;border:1px solid #ddd;border-radius:12px;font-size:15px;}
+.staff-calendar-stat-grid{grid-template-columns:repeat(5,1fr);margin-bottom:44px;}
+.staff-calendar-stat-grid .admin-stat-card{padding:22px;}
+.staff-calendar-stat-grid .admin-stat-card p{margin:4px 0 0;color:#777;}
+.staff-calendar-list{display:flex;flex-direction:column;gap:18px;}
+.staff-calendar-card{display:grid;grid-template-columns:150px 1fr;gap:22px;background:white;border-radius:20px;padding:26px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.booking-time-block{padding:18px;border-radius:18px;background:#F9F7F2;color:var(--forest);align-self:start;text-align:center;}
+.booking-time-block span{display:block;font-size:30px;font-weight:800;}
+.booking-time-block small{display:block;margin-top:4px;color:var(--sage);font-weight:700;}
+.staff-calendar-main{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:18px;}
+.staff-calendar-main h3{margin:0;color:var(--forest);font-size:26px;}
+.staff-calendar-main p{margin:6px 0 0;color:#777;}
+.staff-calendar-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.staff-calendar-meta div{background:#F9F7F2;border-radius:14px;padding:14px;}
+.staff-calendar-meta span{display:block;margin-bottom:4px;color:var(--sage);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.staff-calendar-meta strong{display:block;color:var(--forest);font-size:15px;}
+.staff-calendar-actions{margin-top:20px;}
+.booking-locked-note{color:#777;font-weight:700;}
+.empty-staff-calendar-card{text-align:center;}
+.empty-staff-calendar-card h2{margin-top:0;color:var(--forest);}
+.modal-backdrop{display:none;position:fixed;z-index:1000;inset:0;background:rgba(0,0,0,.45);}
+.modal-box{background:white;width:min(480px,92vw);margin:12vh auto;padding:28px;border-radius:18px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal-box h3{margin-top:0;color:var(--forest);}
+.modal-actions{margin-top:22px;display:flex;gap:10px;justify-content:flex-end;}
+@media(max-width:900px){
+    .calendar-toolbar{display:block;}
+    .calendar-toolbar .btn-primary{margin-top:20px;width:100%;text-align:center;}
+    .calendar-date-actions{flex-direction:column;}
+    .calendar-date-actions input,.calendar-date-actions button{width:100%;}
+    .staff-calendar-stat-grid{grid-template-columns:repeat(2,1fr);}
+    .staff-calendar-card{grid-template-columns:1fr;}
+    .staff-calendar-meta{grid-template-columns:1fr;}
+    .staff-calendar-main{display:block;}
+    .staff-calendar-main .status-badge{margin-top:12px;}
+}
+</style>
+
+<script>
+let pendingCompleteBookingId = null;
+
+function openModal(id) {
+    document.getElementById(id).style.display = "block";
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = "none";
+}
+
+function openCompleteModal(id) {
+    pendingCompleteBookingId = id;
+    openModal("completeModal");
+}
+
+function confirmCompleteBooking() {
+    if (!pendingCompleteBookingId) return;
+
+    fetch(`/staff/booking/${pendingCompleteBookingId}/complete`, {
+        method:"POST"
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            location.reload();
+        } else {
+            alert("Failed to complete booking.");
+        }
+    });
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("completeModal");
+    if (event.target === modal) {
+        closeModal("completeModal");
+    }
+};
+</script>
+
+{% endblock %}

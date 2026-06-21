@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Schedule Management{% endblock %}
+
+{% block content %}
+
+<section class="admin-services-section staff-schedule-section">
+
+    <div class="admin-page-header">
+        <p class="eyebrow">STAFF SCHEDULE MANAGEMENT</p>
+        <h1>{{ staff.name }} Schedule</h1>
+        <p>Manage weekly working hours, days off, and break times.</p>
+    </div>
+
+    <form method="POST" action="/admin/staff/{{ staff.id }}/schedule/update" class="staff-schedule-form">
+
+        {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+        {% set days_ko = ["월", "화", "수", "목", "금", "토", "일"] %}
+
+        <div class="staff-schedule-grid">
+            {% for day in range(7) %}
+                {% set schedule = schedule_map.get(day) %}
+                {% set is_working = schedule and schedule.is_working %}
+
+                <div class="staff-schedule-card {% if not is_working %}off{% endif %}" data-schedule-card>
+                    <div class="staff-schedule-card-header">
+                        <div>
+                            <span class="schedule-day-ko">{{ days_ko[day] }}</span>
+                            <h3>{{ days[day] }}</h3>
+                        </div>
+
+                        <label class="schedule-toggle">
+                            <input
+                                type="checkbox"
+                                name="is_working_{{ day }}"
+                                data-working-toggle
+                                {% if is_working %}
+                                    checked
+                                {% endif %}
+                            >
+                            <span>Working</span>
+                        </label>
+                    </div>
+
+                    <div class="schedule-time-grid">
+                        <div>
+                            <label for="start_time_{{ day }}">Start</label>
+                            <input
+                                id="start_time_{{ day }}"
+                                type="time"
+                                name="start_time_{{ day }}"
+                                value="{% if schedule %}{{ schedule.start_time.strftime('%H:%M') }}{% else %}10:00{% endif %}"
+                                data-schedule-input
+                            >
+                        </div>
+
+                        <div>
+                            <label for="end_time_{{ day }}">End</label>
+                            <input
+                                id="end_time_{{ day }}"
+                                type="time"
+                                name="end_time_{{ day }}"
+                                value="{% if schedule %}{{ schedule.end_time.strftime('%H:%M') }}{% else %}19:00{% endif %}"
+                                data-schedule-input
+                            >
+                        </div>
+
+                        <div>
+                            <label for="break_start_time_{{ day }}">Break Start</label>
+                            <input
+                                id="break_start_time_{{ day }}"
+                                type="time"
+                                name="break_start_time_{{ day }}"
+                                value="{% if schedule and schedule.break_start_time %}{{ schedule.break_start_time.strftime('%H:%M') }}{% endif %}"
+                                data-schedule-input
+                            >
+                        </div>
+
+                        <div>
+                            <label for="break_end_time_{{ day }}">Break End</label>
+                            <input
+                                id="break_end_time_{{ day }}"
+                                type="time"
+                                name="break_end_time_{{ day }}"
+                                value="{% if schedule and schedule.break_end_time %}{{ schedule.break_end_time.strftime('%H:%M') }}{% endif %}"
+                                data-schedule-input
+                            >
+                        </div>
+                    </div>
+
+                    <p class="schedule-off-note">Day off</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="admin-form-actions staff-schedule-actions">
+            <a href="/admin/staff" class="booking-action-btn">Back to Staff</a>
+            <button type="submit" class="btn-primary">Save Schedule</button>
+        </div>
+
+    </form>
+
+</section>
+
+<style>
+.staff-schedule-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(310px, 1fr));
+    gap:24px;
+}
+
+.staff-schedule-card{
+    background:white;
+    border-radius:18px;
+    padding:26px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+    border:2px solid transparent;
+    transition:.2s;
+}
+
+.staff-schedule-card.off{
+    background:#f7f7f4;
+    opacity:.72;
+}
+
+.staff-schedule-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:22px;
+}
+
+.schedule-day-ko{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    background:#f4efe3;
+    color:#8a6400;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.staff-schedule-card h3{
+    margin:0;
+    color:var(--forest);
+    font-size:24px;
+}
+
+.schedule-toggle{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--forest);
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.schedule-toggle input{
+    width:18px;
+    height:18px;
+    accent-color:var(--forest);
+}
+
+.schedule-time-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+}
+
+.schedule-time-grid label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+    font-size:13px;
+}
+
+.schedule-time-grid input{
+    width:100%;
+    padding:13px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+    background:white;
+}
+
+.staff-schedule-card.off .schedule-time-grid{
+    display:none;
+}
+
+.schedule-off-note{
+    display:none;
+    margin:12px 0 0;
+    padding:14px;
+    border-radius:14px;
+    background:#eeeeea;
+    color:#777;
+    font-weight:700;
+    text-align:center;
+}
+
+.staff-schedule-card.off .schedule-off-note{
+    display:block;
+}
+
+.staff-schedule-actions{
+    margin-top:40px;
+}
+
+@media(max-width:768px){
+    .staff-schedule-grid{
+        grid-template-columns:1fr;
+    }
+
+    .schedule-time-grid{
+        grid-template-columns:1fr;
+    }
+
+    .staff-schedule-actions{
+        flex-direction:column;
+    }
+
+    .staff-schedule-actions a,
+    .staff-schedule-actions button{
+        width:100%;
+        text-align:center;
+    }
+}
+</style>
+
+<script>
+document.querySelectorAll("[data-schedule-card]").forEach(function(card) {
+    const toggle = card.querySelector("[data-working-toggle]");
+
+    function syncScheduleCard() {
+        if (toggle.checked) {
+            card.classList.remove("off");
+        } else {
+            card.classList.add("off");
+        }
+    }
+
+    toggle.addEventListener("change", syncScheduleCard);
+    syncScheduleCard();
+});
+</script>
+
+{% endblock %}

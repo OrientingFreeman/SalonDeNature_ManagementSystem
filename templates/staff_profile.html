@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ staff.name }} | Salon De Nature{% endblock %}
+
+{% block content %}
+
+<section class="profile-section">
+
+    <div class="profile-card-large">
+
+        <img
+            src="{{ staff.profile_image or '/static/images/staff-placeholder.jpg' }}"
+            class="profile-main-image"
+        >
+
+        <div class="profile-info">
+
+            <p class="eyebrow">Artist Profile</p>
+
+            <h1>{{ staff.name }}</h1>
+
+            <h3>{{ staff.position or "Nail Artist" }}</h3>
+
+            {% if staff.career_years %}
+            <p>{{ staff.career_years }} years of experience</p>
+            {% endif %}
+
+            {% if staff.specialties %}
+            <p>
+                <strong>Specialties</strong><br>
+                {{ staff.specialties }}
+            </p>
+            {% endif %}
+
+            {% if staff.introduction %}
+            <p>
+                {{ staff.introduction }}
+            </p>
+            {% endif %}
+
+            <a class="btn-primary"
+               href="/booking?staff_id={{ staff.id }}&lang={{ lang }}">
+                Book With {{ staff.name }}
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -3,25 +3,98 @@
 {% block title %}{{ text.login }}{% endblock %}
 
 {% block content %}
-<p>
-    <a href="/login?lang=ko">Korean</a> |
-    <a href="/login?lang=en">English</a>
-</p>
 
-<h1>{{ text.login }}</h1>
+<section class="auth-section customer-auth-section">
+    <div class="auth-card">
+        <div class="language-switcher auth-language">
+            <a href="/login?lang=ko">Korean</a>
+            <span>|</span>
+            <a href="/login?lang=en">English</a>
+        </div>
 
-<form method="POST" action="/login?lang={{ lang }}">
-    <p>{{ text.phone }}: <input type="text" name="phone" required></p>
-    <p>{{ text.password }}: <input type="password" name="password" required></p>
+        <p class="eyebrow">CUSTOMER ACCESS</p>
+        <h1>{{ text.login }}</h1>
 
-    <button type="submit">{{ text.login }}</button>
-</form>
+        <form method="POST" action="/login?lang={{ lang }}" class="auth-form">
+            <label for="phone">{{ text.phone }}</label>
+            <input id="phone" type="text" name="phone" required autocomplete="tel">
 
-<p>
-    {{ text.no_account }}
-    <a href="/signup?lang={{ lang }}">{{ text.signup }}</a>
-</p>
+            <label for="password">{{ text.password }}</label>
+            <input id="password" type="password" name="password" required autocomplete="current-password">
 
-<a href="{{ url_for('auth.kakao_login') }}">Continue with Kakao</a>
+            <button type="submit" class="btn-primary auth-submit">{{ text.login }}</button>
+        </form>
+
+        <a href="{{ url_for('auth.kakao_login') }}" class="kakao-login-btn">Continue with Kakao</a>
+
+        <p class="auth-link-text">
+            {{ text.no_account }}
+            <a href="/signup?lang={{ lang }}">{{ text.signup }}</a>
+        </p>
+    </div>
+</section>
+
+<style>
+.auth-section{
+    min-height:70vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:80px 24px;
+}
+.auth-card{
+    width:min(460px, 100%);
+    background:white;
+    border-radius:22px;
+    padding:44px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.auth-card h1{
+    margin:8px 0 24px;
+    color:var(--forest);
+    font-size:44px;
+}
+.auth-language{
+    margin:0 0 24px;
+    text-align:right;
+}
+.auth-form label{
+    display:block;
+    margin:18px 0 8px;
+    color:var(--forest);
+    font-weight:700;
+}
+.auth-form input{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+}
+.auth-submit{
+    width:100%;
+    margin-top:30px;
+}
+.kakao-login-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:14px;
+    padding:14px;
+    border-radius:12px;
+    background:#FEE500;
+    color:#191919;
+    font-weight:800;
+}
+.auth-link-text{
+    margin:24px 0 0;
+    text-align:center;
+    color:#777;
+}
+.auth-link-text a{
+    color:var(--forest);
+    font-weight:800;
+}
+</style>
 
 {% endblock %}

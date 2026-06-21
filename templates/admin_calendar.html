@@ -1,315 +1,971 @@
-{% extends "base.html" %} {% block title %}예약 캘린더{% endblock %} {% block
-content %}
-<style>
-.modal-backdrop {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.45);
-}
-.modal-box {
-  background: #fff;
-  width: min(560px, 92vw);
-  margin: 10vh auto;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-.modal-box-wide {
-  width: min(900px, 94vw);
-  margin: 4vh auto;
-}
-.modal-actions {
-  margin-top: 16px;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-.admin-booking-frame {
-  width: 100%;
-  height: 78vh;
-  border: 1px solid #ccc;
-}
-</style>
+{% extends "base.html" %}
 
-<h1>관리자 예약 캘린더</h1>
+{% block title %}Reservation Calendar{% endblock %}
 
-<p>
-  <button onclick="openAdminBookingModal()">관리자 예약 생성</button>
-</p>
+{% block content %}
 
-<form method="get" action="/admin/calendar">
-  <input type="date" name="date" value="{{ target_date }}" />
-  <button type="submit">조회</button>
-</form>
+<section class="admin-services-section admin-calendar-section">
 
-{% if bookings %}
-<table border="1" cellpadding="8">
-  <thead>
-    <tr>
-      <th>시간</th>
-      <th>고객</th>
-      <th>직원</th>
-      <th>시술</th>
-      <th>상태</th>
-      <th>예약금</th>
-      <th>관리</th>
-      <th>늦음 알림</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for booking in bookings %}
-    <tr>
-      <td>
-        {{ booking.start_time.strftime("%H:%M") }} ~ {{
-        booking.end_time.strftime("%H:%M") }}
-      </td>
-      <td>{{ booking.customer.name }}</td>
-      <td>{{ booking.staff.name }}</td>
-      <td>{{ booking.service.name_ko }}</td>
-      <td>{{ booking.status }}</td>
-      <td>
-        <select id="depositStatus{{ booking.id }}">
-          <option value="none" {% if booking.deposit_payment_status=="none" %}selected{% endif %}>없음</option>
-          <option value="required" {% if booking.deposit_payment_status=="required" %}selected{% endif %}>필요</option>
-          <option value="paid" {% if booking.deposit_payment_status=="paid" %}selected{% endif %}>결제완료</option>
-          <option value="refunded" {% if booking.deposit_payment_status=="refunded" %}selected{% endif %}>환불</option>
-          <option value="failed" {% if booking.deposit_payment_status=="failed" %}selected{% endif %}>실패</option>
-        </select>
+    <div class="admin-page-header">
+        <p class="eyebrow">RESERVATION CALENDAR</p>
+        <h1>Admin Calendar</h1>
+        <p>Manage daily reservations, booking status, deposit status, and no-show handling.</p>
+    </div>
 
-        <button onclick="updateDepositStatus({{ booking.id }})">저장</button>
+    <div class="calendar-toolbar admin-form-card">
+        <form method="get" action="/admin/calendar" class="calendar-date-form">
+            <label for="calendar-date">Date</label>
+            <div class="calendar-date-actions">
+                <input id="calendar-date" type="date" name="date" value="{{ target_date }}">
+                <button type="submit" class="booking-action-btn">Search</button>
+            </div>
+        </form>
 
-        <div>
-          <input
-            type="text"
-            id="paymentLink{{ booking.id }}"
-            placeholder="결제 링크"
-            value="{{ booking.deposit_payment_link or '' }}"
-          />
+        <button type="button" class="btn-primary" onclick="openAdminBookingModal()">
+            Create Booking
+        </button>
+    </div>
+
+    {% set pending_count = bookings|selectattr("status", "equalto", "pending")|list|length %}
+    {% set confirmed_count = bookings|selectattr("status", "equalto", "confirmed")|list|length %}
+    {% set completed_count = bookings|selectattr("status", "equalto", "completed")|list|length %}
+    {% set cancelled_count = bookings|selectattr("status", "equalto", "cancelled")|list|length %}
+    {% set no_show_count = bookings|selectattr("status", "equalto", "no_show")|list|length %}
+
+    <div class="admin-stat-grid calendar-stat-grid">
+        <div class="admin-stat-card">
+            <span>{{ bookings|length }}</span>
+            <p>Total</p>
         </div>
-
-        <div>
-          <input
-            type="text"
-            id="depositNote{{ booking.id }}"
-            placeholder="예약금 메모"
-            value="{{ booking.deposit_note or '' }}"
-          />
+        <div class="admin-stat-card">
+            <span>{{ pending_count }}</span>
+            <p>Pending</p>
         </div>
+        <div class="admin-stat-card">
+            <span>{{ confirmed_count }}</span>
+            <p>Confirmed</p>
+        </div>
+        <div class="admin-stat-card">
+            <span>{{ completed_count }}</span>
+            <p>Completed</p>
+        </div>
+        <div class="admin-stat-card">
+            <span>{{ no_show_count }}</span>
+            <p>No Show</p>
+        </div>
+    </div>
 
-        <button onclick="updateDepositRequest({{ booking.id }})">
-          결제요청 저장
-        </button>
-      </td>
+    <div class="admin-section-header">
+        <h2>{{ target_date }} Reservations</h2>
+        <p>{{ bookings|length }} bookings</p>
+    </div>
 
-      <td>
-        {% if booking.status == "pending" %}
-        <button onclick="openStatusModal({{ booking.id }}, 'confirmed', '예약을 확정 처리하시겠습니까?')">
-          확정
-        </button>
-        <button onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
-          취소
-        </button>
-        {% elif booking.status == "confirmed" %}
-        <button onclick="openStatusModal({{ booking.id }}, 'completed', '시술을 완료 처리하시겠습니까?')">
-          완료
-        </button>
-        <button onclick="openStatusModal({{ booking.id }}, 'no_show', '노쇼 처리하시겠습니까?')">
-          노쇼
-        </button>
-        <button onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
-          취소
-        </button>
-        {% elif booking.status == "no_show" %}
-        <button onclick="openRevertNoShowModal({{ booking.id }})">노쇼 취소</button>
-        {% else %} 완료된 시술: 변경 불가 {% endif %}
-      </td>
-      <td>
-        {% if booking.late_notice_minutes %} {{ booking.late_notice_minutes }}분
-        늦음 {% else %} - {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>해당 날짜에 예약이 없습니다.</p>
-{% endif %}
+    {% if bookings %}
+        <div class="admin-booking-card-list">
+            {% for booking in bookings %}
+                <article class="admin-booking-card">
+                    <div class="booking-time-block">
+                        <span>{{ booking.start_time.strftime("%H:%M") }}</span>
+                        <small>~ {{ booking.end_time.strftime("%H:%M") }}</small>
+                    </div>
+
+                    <div class="booking-detail-block">
+                        <div class="booking-card-topline">
+                            <div>
+                                <h3>{{ booking.customer.name }}</h3>
+                                <p>{{ booking.service.name_ko }} · {{ booking.staff.name }}</p>
+                            </div>
+
+                            {% if booking.status == "pending" %}
+                                <span class="status-badge status-pending">Pending</span>
+                            {% elif booking.status == "confirmed" %}
+                                <span class="status-badge status-confirmed">Confirmed</span>
+                            {% elif booking.status == "completed" %}
+                                <span class="status-badge status-completed">Completed</span>
+                            {% elif booking.status == "cancelled" %}
+                                <span class="status-badge status-cancelled">Cancelled</span>
+                            {% elif booking.status == "no_show" %}
+                                <span class="status-badge status-cancelled">No Show</span>
+                            {% else %}
+                                <span class="status-badge">{{ booking.status }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="booking-info-grid">
+                            <div>
+                                <span>Customer</span>
+                                <strong>{{ booking.customer.name }}</strong>
+                            </div>
+                            <div>
+                                <span>Staff</span>
+                                <strong>{{ booking.staff.name }}</strong>
+                            </div>
+                            <div>
+                                <span>Service</span>
+                                <strong>{{ booking.service.name_ko }}</strong>
+                            </div>
+                            <div>
+                                <span>Price</span>
+                                <strong>₩{{ "{:,}".format(booking.service.price) }}</strong>
+                            </div>
+                            <div>
+                                <span>Late Notice</span>
+                                {% if booking.late_notice_minutes %}
+                                    <strong>{{ booking.late_notice_minutes }} min late</strong>
+                                {% else %}
+                                    <strong>-</strong>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span>Deposit</span>
+                                <strong>{{ booking.deposit_payment_status or "none" }}</strong>
+                            </div>
+                        </div>
+
+                        <details class="booking-deposit-details">
+                            <summary>Deposit Management</summary>
+
+                            <div class="deposit-control-grid">
+                                <div>
+                                    <label for="depositStatus{{ booking.id }}">Deposit Status</label>
+                                    <select id="depositStatus{{ booking.id }}">
+                                        <option value="none" {% if booking.deposit_payment_status=="none" %}selected{% endif %}>None</option>
+                                        <option value="required" {% if booking.deposit_payment_status=="required" %}selected{% endif %}>Required</option>
+                                        <option value="paid" {% if booking.deposit_payment_status=="paid" %}selected{% endif %}>Paid</option>
+                                        <option value="refunded" {% if booking.deposit_payment_status=="refunded" %}selected{% endif %}>Refunded</option>
+                                        <option value="failed" {% if booking.deposit_payment_status=="failed" %}selected{% endif %}>Failed</option>
+                                    </select>
+                                    <button type="button" class="booking-action-btn" onclick="updateDepositStatus({{ booking.id }})">
+                                        Save Status
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label for="paymentLink{{ booking.id }}">Payment Link</label>
+                                    <input
+                                        type="text"
+                                        id="paymentLink{{ booking.id }}"
+                                        placeholder="Payment link"
+                                        value="{{ booking.deposit_payment_link or '' }}"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label for="depositNote{{ booking.id }}">Deposit Note</label>
+                                    <input
+                                        type="text"
+                                        id="depositNote{{ booking.id }}"
+                                        placeholder="Deposit note"
+                                        value="{{ booking.deposit_note or '' }}"
+                                    >
+                                </div>
+
+                                <div class="deposit-request-save">
+                                    <button type="button" class="booking-action-btn" onclick="updateDepositRequest({{ booking.id }})">
+                                        Save Request
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="booking-status-actions">
+                            {% if booking.status == "pending" %}
+                                <button type="button" class="booking-action-btn" onclick="openStatusModal({{ booking.id }}, 'confirmed', '예약을 확정 처리하시겠습니까?')">
+                                    Confirm
+                                </button>
+                                <button type="button" class="booking-action-btn" onclick="openAdminRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
+                                    Reschedule
+                                </button>
+                                <button type="button" class="booking-action-btn" onclick="openAdminAssignmentModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
+                                    Edit Assignment
+                                </button>
+                                <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
+                                    Cancel
+                                </button>
+                            {% elif booking.status == "confirmed" %}
+                                <button type="button" class="booking-action-btn" onclick="openStatusModal({{ booking.id }}, 'completed', '시술을 완료 처리하시겠습니까?')">
+                                    Complete
+                                </button>
+                                <button type="button" class="booking-action-btn" onclick="openAdminRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
+                                    Reschedule
+                                </button>
+                                <button type="button" class="booking-action-btn" onclick="openAdminAssignmentModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
+                                    Edit Assignment
+                                </button>
+                                <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'no_show', '노쇼 처리하시겠습니까?')">
+                                    No Show
+                                </button>
+                                <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
+                                    Cancel
+                                </button>
+                            {% elif booking.status == "no_show" %}
+                                <button type="button" class="booking-action-btn" onclick="openRevertNoShowModal({{ booking.id }})">
+                                    Revert No Show
+                                </button>
+                            {% else %}
+                                <span class="booking-locked-note">Status change unavailable</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="admin-form-card empty-calendar-card">
+            <h2>No bookings</h2>
+            <p>There are no reservations for this date.</p>
+            <button type="button" class="btn-primary" onclick="openAdminBookingModal()">Create Booking</button>
+        </div>
+    {% endif %}
+
+</section>
 
 <div id="statusModal" class="modal-backdrop">
-  <div class="modal-box">
-    <h3>예약 상태 변경</h3>
-    <p id="statusModalMessage"></p>
-    <div class="modal-actions">
-      <button onclick="closeModal('statusModal')">돌아가기</button>
-      <button onclick="confirmStatusChange()">처리하기</button>
+    <div class="modal-box">
+        <h3>예약 상태 변경</h3>
+        <p id="statusModalMessage"></p>
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('statusModal')">돌아가기</button>
+            <button type="button" class="btn-primary" onclick="confirmStatusChange()">처리하기</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <div id="revertNoShowModal" class="modal-backdrop">
-  <div class="modal-box">
-    <h3>노쇼 취소</h3>
-    <p>노쇼 처리를 취소하시겠습니까?</p>
-    <div class="modal-actions">
-      <button onclick="closeModal('revertNoShowModal')">돌아가기</button>
-      <button onclick="confirmRevertNoShow()">취소하기</button>
+    <div class="modal-box">
+        <h3>노쇼 취소</h3>
+        <p>노쇼 처리를 취소하시겠습니까?</p>
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('revertNoShowModal')">돌아가기</button>
+            <button type="button" class="btn-primary" onclick="confirmRevertNoShow()">취소하기</button>
+        </div>
     </div>
-  </div>
+</div>
+
+
+<div id="adminRescheduleModal" class="modal-backdrop">
+    <div class="modal-box">
+        <h3>Reschedule Booking</h3>
+        <p>Select a new date and available time for this booking.</p>
+
+        <div class="modal-form-group">
+            <label for="adminRescheduleDate">New Date</label>
+            <input
+                type="date"
+                id="adminRescheduleDate"
+                onchange="loadAdminRescheduleSlots()"
+            >
+        </div>
+
+        <div class="modal-form-group">
+            <label for="adminRescheduleSlot">Available Time</label>
+            <select id="adminRescheduleSlot">
+                <option value="">Select a date first</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('adminRescheduleModal')">
+                Back
+            </button>
+            <button type="button" class="btn-primary" onclick="confirmAdminRescheduleBooking()">
+                Reschedule
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<div id="adminAssignmentModal" class="modal-backdrop">
+    <div class="modal-box">
+        <h3>Edit Assignment</h3>
+        <p>Change staff, service, date, and time for this booking.</p>
+
+        <div class="modal-form-group">
+            <label for="assignmentStaffSelect">Staff</label>
+            <select id="assignmentStaffSelect" onchange="loadAdminAssignmentSlots()">
+                {% for staff in staff_list %}
+                    <option value="{{ staff.id }}">{{ staff.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-form-group">
+            <label for="assignmentServiceSelect">Service</label>
+            <select id="assignmentServiceSelect" onchange="loadAdminAssignmentSlots()">
+                {% for service in services %}
+                    <option value="{{ service.id }}">
+                        [{{ service.category }}] {{ service.name_ko }} / {{ service.duration_minutes }} min
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-form-group">
+            <label for="assignmentDate">New Date</label>
+            <input
+                type="date"
+                id="assignmentDate"
+                onchange="loadAdminAssignmentSlots()"
+            >
+        </div>
+
+        <div class="modal-form-group">
+            <label for="assignmentSlot">Available Time</label>
+            <select id="assignmentSlot">
+                <option value="">Select staff, service, and date</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('adminAssignmentModal')">
+                Back
+            </button>
+            <button type="button" class="btn-primary" onclick="confirmAdminAssignmentUpdate()">
+                Save Changes
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="adminBookingModal" class="modal-backdrop">
-  <div class="modal-box modal-box-wide">
-    <h3>관리자 예약 생성</h3>
-    <iframe class="admin-booking-frame" src="/admin/bookings/create"></iframe>
-    <div class="modal-actions">
-      <button onclick="closeModal('adminBookingModal')">닫기</button>
+    <div class="modal-box modal-box-wide">
+        <h3>관리자 예약 생성</h3>
+        <iframe class="admin-booking-frame" src="/admin/bookings/create"></iframe>
+        <div class="modal-actions">
+            <button type="button" class="booking-action-btn" onclick="closeModal('adminBookingModal')">닫기</button>
+        </div>
     </div>
-  </div>
 </div>
 
+<style>
+.admin-calendar-section{
+    max-width:1200px;
+}
+
+.calendar-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:32px;
+}
+
+.calendar-date-form label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+}
+
+.calendar-date-actions{
+    display:flex;
+    gap:10px;
+}
+
+.calendar-date-actions input{
+    min-width:220px;
+    padding:13px 14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+}
+
+.calendar-stat-grid{
+    grid-template-columns:repeat(5, 1fr);
+    margin-bottom:44px;
+}
+
+.calendar-stat-grid .admin-stat-card{
+    padding:22px;
+}
+
+.calendar-stat-grid .admin-stat-card p{
+    margin:4px 0 0;
+    color:#777;
+}
+
+.admin-booking-card-list{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.admin-booking-card{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:22px;
+    background:white;
+    border-radius:20px;
+    padding:26px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+
+.booking-time-block{
+    padding:18px;
+    border-radius:18px;
+    background:#F9F7F2;
+    color:var(--forest);
+    align-self:start;
+    text-align:center;
+}
+
+.booking-time-block span{
+    display:block;
+    font-size:30px;
+    font-weight:800;
+}
+
+.booking-time-block small{
+    display:block;
+    margin-top:4px;
+    color:var(--sage);
+    font-weight:700;
+}
+
+.booking-card-topline{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+    margin-bottom:20px;
+}
+
+.booking-card-topline h3{
+    margin:0;
+    color:var(--forest);
+    font-size:26px;
+}
+
+.booking-card-topline p{
+    margin:6px 0 0;
+    color:#777;
+}
+
+.booking-info-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.booking-info-grid div{
+    background:#F9F7F2;
+    border-radius:14px;
+    padding:14px;
+}
+
+.booking-info-grid span{
+    display:block;
+    margin-bottom:4px;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.booking-info-grid strong{
+    display:block;
+    color:var(--forest);
+    font-size:15px;
+}
+
+.booking-deposit-details{
+    border:1px solid #eee;
+    border-radius:16px;
+    padding:14px 16px;
+    margin:18px 0;
+}
+
+.booking-deposit-details summary{
+    cursor:pointer;
+    color:var(--forest);
+    font-weight:800;
+}
+
+.deposit-control-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:16px;
+}
+
+.deposit-control-grid label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+    font-size:13px;
+}
+
+.deposit-control-grid input,
+.deposit-control-grid select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:14px;
+    margin-bottom:10px;
+}
+
+.deposit-request-save{
+    display:flex;
+    align-items:flex-end;
+}
+
+.booking-status-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
+
+.booking-locked-note{
+    color:#777;
+    font-weight:700;
+}
+
+.empty-calendar-card{
+    text-align:center;
+}
+
+.empty-calendar-card h2{
+    margin-top:0;
+    color:var(--forest);
+}
+
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    z-index:1000;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.45);
+}
+
+.modal-box{
+    background:white;
+    width:min(560px, 92vw);
+    margin:10vh auto;
+    padding:28px;
+    border-radius:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.2);
+}
+
+.modal-box h3{
+    margin-top:0;
+    color:var(--forest);
+}
+
+.modal-box-wide{
+    width:min(900px, 94vw);
+    margin:4vh auto;
+}
+
+.modal-actions{
+    margin-top:22px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
+
+.admin-booking-frame{
+    width:100%;
+    height:78vh;
+    border:1px solid #ddd;
+    border-radius:14px;
+}
+
+
+.modal-form-group{
+    margin-bottom:18px;
+}
+
+.modal-form-group label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+}
+
+.modal-form-group input,
+.modal-form-group select{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+    background:white;
+}
+
+@media(max-width:900px){
+    .calendar-toolbar{
+        display:block;
+    }
+
+    .calendar-toolbar .btn-primary{
+        margin-top:20px;
+        width:100%;
+        text-align:center;
+    }
+
+    .calendar-date-actions{
+        flex-direction:column;
+    }
+
+    .calendar-date-actions input,
+    .calendar-date-actions button{
+        width:100%;
+    }
+
+    .calendar-stat-grid{
+        grid-template-columns:repeat(2, 1fr);
+    }
+
+    .admin-booking-card{
+        grid-template-columns:1fr;
+    }
+
+    .booking-info-grid,
+    .deposit-control-grid{
+        grid-template-columns:1fr;
+    }
+
+    .booking-card-topline{
+        display:block;
+    }
+
+    .booking-card-topline .status-badge{
+        margin-top:12px;
+    }
+}
+</style>
+
 <script>
-  let pendingStatusBookingId = null;
-  let pendingStatus = null;
-  let pendingRevertNoShowBookingId = null;
+let pendingStatusBookingId = null;
+let pendingStatus = null;
+let pendingRevertNoShowBookingId = null;
 
-  function openModal(id) {
+let pendingAdminRescheduleBookingId = null;
+let pendingAdminRescheduleStaffId = null;
+let pendingAdminRescheduleServiceId = null;
+
+let pendingAdminAssignmentBookingId = null;
+
+function openModal(id) {
     document.getElementById(id).style.display = "block";
-  }
+}
 
-  function closeModal(id) {
+function closeModal(id) {
     document.getElementById(id).style.display = "none";
-  }
+}
 
-  function openAdminBookingModal() {
+function openAdminBookingModal() {
     openModal("adminBookingModal");
-  }
+}
 
-  function openStatusModal(bookingId, status, message) {
+function openStatusModal(bookingId, status, message) {
     pendingStatusBookingId = bookingId;
     pendingStatus = status;
     document.getElementById("statusModalMessage").textContent = message;
     openModal("statusModal");
-  }
+}
 
-  function confirmStatusChange() {
+function confirmStatusChange() {
     if (!pendingStatusBookingId || !pendingStatus) return;
     updateStatus(pendingStatusBookingId, pendingStatus);
-  }
+}
 
-  function openRevertNoShowModal(bookingId) {
+function openRevertNoShowModal(bookingId) {
     pendingRevertNoShowBookingId = bookingId;
     openModal("revertNoShowModal");
-  }
+}
 
-  function confirmRevertNoShow() {
+function confirmRevertNoShow() {
     if (!pendingRevertNoShowBookingId) return;
     revertNoShow(pendingRevertNoShowBookingId);
-  }
+}
 
-  function updateStatus(bookingId, status) {
+
+function openAdminRescheduleModal(bookingId, staffId, serviceId) {
+    pendingAdminRescheduleBookingId = bookingId;
+    pendingAdminRescheduleStaffId = staffId;
+    pendingAdminRescheduleServiceId = serviceId;
+
+    document.getElementById("adminRescheduleDate").value = "";
+    document.getElementById("adminRescheduleSlot").innerHTML =
+        '<option value="">Select a date first</option>';
+
+    openModal("adminRescheduleModal");
+}
+
+async function loadAdminRescheduleSlots() {
+    const date = document.getElementById("adminRescheduleDate").value;
+    const slotSelect = document.getElementById("adminRescheduleSlot");
+
+    if (!date) {
+        slotSelect.innerHTML = '<option value="">Select a date first</option>';
+        return;
+    }
+
+    slotSelect.innerHTML = '<option value="">Loading...</option>';
+
+    const url =
+        `/api/bookings/available-slots?staff_id=${pendingAdminRescheduleStaffId}&service_id=${pendingAdminRescheduleServiceId}&date=${date}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        slotSelect.innerHTML = "";
+
+        if (!data.ok) {
+            slotSelect.innerHTML =
+                `<option value="">${data.message || "Failed to load slots"}</option>`;
+            return;
+        }
+
+        if (!data.available_slots || data.available_slots.length === 0) {
+            slotSelect.innerHTML = '<option value="">No available times</option>';
+            return;
+        }
+
+        data.available_slots.forEach(function(slot) {
+            const option = document.createElement("option");
+            option.value = `${date}T${slot}`;
+            option.textContent = slot;
+            slotSelect.appendChild(option);
+        });
+    } catch (error) {
+        slotSelect.innerHTML = '<option value="">Failed to load slots</option>';
+    }
+}
+
+function confirmAdminRescheduleBooking() {
+    const slotSelect = document.getElementById("adminRescheduleSlot");
+    const newStartTime = slotSelect.value;
+
+    if (!pendingAdminRescheduleBookingId || !newStartTime) {
+        alert("Please select a new date and time.");
+        return;
+    }
+
+    if (!confirm("Reschedule this booking?")) {
+        return;
+    }
+
+    fetch(`/admin/bookings/${pendingAdminRescheduleBookingId}/reschedule`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            new_start_time: newStartTime,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (data.ok) {
+            alert("Booking has been rescheduled.");
+            window.location.reload();
+        } else {
+            alert(data.message || "Failed to reschedule booking.");
+        }
+    });
+}
+
+
+function openAdminAssignmentModal(bookingId, staffId, serviceId) {
+    pendingAdminAssignmentBookingId = bookingId;
+
+    document.getElementById("assignmentStaffSelect").value = staffId;
+    document.getElementById("assignmentServiceSelect").value = serviceId;
+    document.getElementById("assignmentDate").value = "";
+    document.getElementById("assignmentSlot").innerHTML =
+        '<option value="">Select staff, service, and date</option>';
+
+    openModal("adminAssignmentModal");
+}
+
+async function loadAdminAssignmentSlots() {
+    const staffId = document.getElementById("assignmentStaffSelect").value;
+    const serviceId = document.getElementById("assignmentServiceSelect").value;
+    const date = document.getElementById("assignmentDate").value;
+    const slotSelect = document.getElementById("assignmentSlot");
+
+    if (!staffId || !serviceId || !date) {
+        slotSelect.innerHTML =
+            '<option value="">Select staff, service, and date</option>';
+        return;
+    }
+
+    slotSelect.innerHTML = '<option value="">Loading...</option>';
+
+    const url =
+        `/api/bookings/available-slots?staff_id=${staffId}&service_id=${serviceId}&date=${date}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        slotSelect.innerHTML = "";
+
+        if (!data.ok) {
+            slotSelect.innerHTML =
+                `<option value="">${data.message || "Failed to load slots"}</option>`;
+            return;
+        }
+
+        if (!data.available_slots || data.available_slots.length === 0) {
+            slotSelect.innerHTML = '<option value="">No available times</option>';
+            return;
+        }
+
+        data.available_slots.forEach(function(slot) {
+            const option = document.createElement("option");
+            option.value = `${date}T${slot}`;
+            option.textContent = slot;
+            slotSelect.appendChild(option);
+        });
+    } catch (error) {
+        slotSelect.innerHTML = '<option value="">Failed to load slots</option>';
+    }
+}
+
+function confirmAdminAssignmentUpdate() {
+    const staffId = document.getElementById("assignmentStaffSelect").value;
+    const serviceId = document.getElementById("assignmentServiceSelect").value;
+    const newStartTime = document.getElementById("assignmentSlot").value;
+
+    if (!pendingAdminAssignmentBookingId || !staffId || !serviceId || !newStartTime) {
+        alert("Please select staff, service, date, and time.");
+        return;
+    }
+
+    if (!confirm("Save assignment changes?")) {
+        return;
+    }
+
+    fetch(`/admin/bookings/${pendingAdminAssignmentBookingId}/assignment`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            staff_id: staffId,
+            service_id: serviceId,
+            new_start_time: newStartTime,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (data.ok) {
+            alert("Booking assignment has been updated.");
+            window.location.reload();
+        } else {
+            alert(data.message || "Failed to update booking assignment.");
+        }
+    });
+}
+
+function updateStatus(bookingId, status) {
     fetch(`/api/bookings/${bookingId}/status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status: status,
-      }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            status: status,
+        }),
     })
-      .then((response) => response.json())
-      .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
         if (data.ok) {
-          alert("상태가 변경되었습니다.");
-          window.location.reload();
+            alert("상태가 변경되었습니다.");
+            window.location.reload();
         } else {
-          alert(data.message || "상태 변경 실패");
+            alert(data.message || "상태 변경 실패");
         }
-      });
-  }
+    });
+}
 
-  function revertNoShow(bookingId) {
+function revertNoShow(bookingId) {
     fetch(`/api/bookings/${bookingId}/revert-no-show`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
     })
-      .then((response) => response.json())
-      .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
         if (data.ok) {
-          alert("노쇼 처리가 취소되었습니다.");
-          window.location.reload();
+            alert("노쇼 처리가 취소되었습니다.");
+            window.location.reload();
         } else {
-          alert(data.message || "노쇼 취소 실패");
+            alert(data.message || "노쇼 취소 실패");
         }
-      });
-  }
+    });
+}
 
-  function updateDepositStatus(bookingId) {
+function updateDepositStatus(bookingId) {
     const select = document.getElementById(`depositStatus${bookingId}`);
     const depositStatus = select.value;
 
     fetch(`/api/bookings/${bookingId}/deposit-status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        deposit_status: depositStatus,
-      }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            deposit_status: depositStatus,
+        }),
     })
-      .then((response) => response.json())
-      .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
         if (data.ok) {
-          alert("예약금 상태가 변경되었습니다.");
-          window.location.reload();
+            alert("예약금 상태가 변경되었습니다.");
+            window.location.reload();
         } else {
-          alert(data.message || "예약금 상태 변경 실패");
+            alert(data.message || "예약금 상태 변경 실패");
         }
-      });
-  }
+    });
+}
 
-  function updateDepositRequest(bookingId) {
-    const paymentLink = document.getElementById(
-      `paymentLink${bookingId}`,
-    ).value;
-    const depositNote = document.getElementById(
-      `depositNote${bookingId}`,
-    ).value;
+function updateDepositRequest(bookingId) {
+    const paymentLink = document.getElementById(`paymentLink${bookingId}`).value;
+    const depositNote = document.getElementById(`depositNote${bookingId}`).value;
 
     fetch(`/api/bookings/${bookingId}/deposit-request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        payment_link: paymentLink,
-        deposit_note: depositNote,
-      }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            payment_link: paymentLink,
+            deposit_note: depositNote,
+        }),
     })
-      .then((response) => response.json())
-      .then((data) => {
+    .then((response) => response.json())
+    .then((data) => {
         if (data.ok) {
-          alert("예약금 결제 요청 정보가 저장되었습니다.");
-          window.location.reload();
+            alert("예약금 결제 요청 정보가 저장되었습니다.");
+            window.location.reload();
         } else {
-          alert(data.message || "저장 실패");
+            alert(data.message || "저장 실패");
         }
-      });
-  }
-
-  window.onclick = function(event) {
-    ["statusModal", "revertNoShowModal", "adminBookingModal"].forEach(function(id) {
-      const modal = document.getElementById(id);
-      if (event.target === modal) {
-        closeModal(id);
-      }
     });
-  };
+}
+
+window.onclick = function(event) {
+    ["statusModal", "revertNoShowModal", "adminRescheduleModal", "adminAssignmentModal", "adminBookingModal"].forEach(function(id) {
+        const modal = document.getElementById(id);
+        if (event.target === modal) {
+            closeModal(id);
+        }
+    });
+};
 </script>
+
 {% endblock %}

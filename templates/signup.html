@@ -25,6 +25,24 @@
             <label for="password">{{ text.password }}</label>
             <input id="password" type="password" name="password" required autocomplete="new-password">
 
+            <div class="policy-agree">
+                <label class="policy-agree-label" for="agree_policy">
+                    <input
+                        id="agree_policy"
+                        class="policy-checkbox"
+                        type="checkbox"
+                        name="agree_policy"
+                        required
+                    >
+                    <span>
+                        I agree to the
+                        <a href="/privacy" target="_blank">Privacy Policy</a>
+                        and
+                        <a href="/terms" target="_blank">Terms of Service</a>.
+                    </span>
+                </label>
+            </div>
+
             <button type="submit" class="btn-primary auth-submit">{{ text.signup }}</button>
         </form>
 
@@ -85,6 +103,43 @@
     color:var(--forest);
     font-weight:800;
 }
+
+.auth-form .policy-agree {
+    margin: 22px 0 8px;
+}
+
+.auth-form .policy-agree-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    color: var(--forest);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+.auth-form .policy-agree-label .policy-checkbox {
+    width: auto;
+    min-width: 16px;
+    height: 16px;
+    margin: 4px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.auth-form .policy-agree-label span {
+    display: inline;
+}
+
+.auth-form .policy-agree-label a {
+    color: var(--forest);
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 </style>
 
 {% endblock %}

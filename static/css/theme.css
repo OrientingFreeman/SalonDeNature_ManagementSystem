@@ -1197,3 +1197,44 @@ a {
     line-height: 1.8;
     color: #333;
 }
+
+.policy-agree {
+    margin: 22px 0 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.policy-agree-label,
+.policy-agree label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+.policy-agree input[type="checkbox"],
+.auth-form .policy-agree input[type="checkbox"] {
+    width: auto !important;
+    min-width: 16px;
+    height: 16px;
+    margin: 4px 0 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+}
+
+.policy-agree span {
+    display: inline;
+}
+
+.policy-agree a {
+    color: #1f4f46;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.policy-agree a:hover {
+    opacity: 0.85;
+}

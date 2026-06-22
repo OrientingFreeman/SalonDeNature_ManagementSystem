@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Salon De Nature{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    
     <link rel="stylesheet"
       href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +28,7 @@
     <meta name="twitter:title" content="Salon De Nature">
     <meta name="twitter:description" content="Premium nail care inspired by nature, elegance, and relaxation.">
     <meta name="twitter:image" content="https://salondenature.shop/static/images/og-image.jpg">
+
 
 </head>
 <body>

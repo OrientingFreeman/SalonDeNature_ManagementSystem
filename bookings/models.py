@@ -78,3 +78,34 @@ class BookingEvent(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     booking = db.relationship("Booking", backref="events")
+
+
+class Payment(db.Model):
+    __tablename__ = "payments"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    booking_id = db.Column(
+        db.Integer,
+        db.ForeignKey("booking.id"),
+        nullable=False
+    )
+
+    order_id = db.Column(db.String(100), unique=True, nullable=False)
+    payment_key = db.Column(db.String(255), unique=True, nullable=True)
+
+    amount = db.Column(db.Integer, nullable=False)
+
+    status = db.Column(db.String(50), default="pending")
+    # pending / paid / failed / cancelled / refunded
+
+    method = db.Column(db.String(50), nullable=True)
+    failed_reason = db.Column(db.Text, nullable=True)
+
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    paid_at = db.Column(db.DateTime, nullable=True)
+
+    booking = db.relationship(
+        "Booking",
+        backref=db.backref("payments", lazy=True)
+    )

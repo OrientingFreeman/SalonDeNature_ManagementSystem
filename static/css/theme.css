@@ -1238,3 +1238,45 @@ a {
 .policy-agree a:hover {
     opacity: 0.85;
 }
+
+.social-login-section{
+    margin-top:14px;
+}
+
+.kakao-login-btn,
+.google-login-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    font-weight:700;
+    text-decoration:none;
+    transition:.2s;
+}
+
+.kakao-login-btn{
+    background:#FEE500;
+    color:#191919;
+    margin-bottom:12px;
+}
+
+.kakao-login-btn:hover{
+    filter:brightness(0.97);
+}
+
+.google-login-btn{
+    background:#fff;
+    color:#444;
+    border:1px solid #ddd;
+}
+
+.google-login-btn:hover{
+    background:#f8f8f8;
+}
+
+.social-icon{
+    font-size:18px;
+}

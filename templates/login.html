@@ -25,8 +25,24 @@
             <button type="submit" class="btn-primary auth-submit">{{ text.login }}</button>
         </form>
 
-        <a href="{{ url_for('auth.kakao_login') }}" class="kakao-login-btn">Continue with Kakao</a>
-        <a href="/google/login" class="google-login-btn">Continue with Google</a>
+        <div class="social-login-section">
+
+        <a href="{{ url_for('auth.kakao_login') }}" class="kakao-login-btn">
+            <span class="social-icon">💬</span>
+            <span>Continue with Kakao</span>
+        </a>
+
+        <a href="/google/login" class="google-login-btn">
+            <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.72 1.22 9.22 3.62l6.87-6.87C35.9 2.3 30.37 0 24 0 14.64 0 6.56 5.38 2.61 13.22l8 6.21C12.47 13.58 17.76 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.5 24.55c0-1.64-.15-3.21-.41-4.73H24v9h12.66c-.55 2.96-2.22 5.47-4.74 7.16l7.27 5.64C43.45 37.65 46.5 31.71 46.5 24.55z"/>
+                <path fill="#FBBC05" d="M10.61 28.57A14.5 14.5 0 0 1 9.84 24c0-1.59.28-3.13.77-4.57l-8-6.21A24.01 24.01 0 0 0 0 24c0 3.87.93 7.52 2.61 10.78l8-6.21z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.91-2.14 15.88-5.82l-7.27-5.64c-2.02 1.35-4.61 2.14-8.61 2.14-6.24 0-11.53-4.08-13.39-9.93l-8 6.21C6.56 42.62 14.64 48 24 48z"/>
+            </svg>
+            <span>Continue with Google</span>
+        </a>
+
+        </div>
 
         <p class="auth-link-text">
             {{ text.no_account }}

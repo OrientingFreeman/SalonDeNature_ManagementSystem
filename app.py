@@ -9,6 +9,10 @@ from bookings.customer_routes import customer_booking_bp
 from auth.routes import auth_bp, oauth
 from staff.routes import staff_bp
 
+import base64
+import requests
+import uuid
+from datetime import datetime
 
 
 def create_app():

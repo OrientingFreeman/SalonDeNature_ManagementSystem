@@ -1103,3 +1103,69 @@ a {
     color: #123c32;
     font-weight: 600;
 }
+
+.contact-section {
+    padding: 80px 24px;
+    background: #F9F7F2;
+}
+
+.contact-card {
+    max-width: 1180px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 24px;
+    padding: 52px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.06);
+}
+
+.contact-lead {
+    color: #8BA69B;
+    margin-bottom: 36px;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.3fr;
+    gap: 42px;
+    align-items: start;
+}
+
+.contact-info h2 {
+    color: var(--forest);
+    margin-bottom: 28px;
+}
+
+.contact-item {
+    margin-bottom: 24px;
+}
+
+.contact-item span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--forest);
+    font-weight: 700;
+}
+
+.contact-item p,
+.contact-item a {
+    color: #333;
+    line-height: 1.7;
+    text-decoration: none;
+}
+
+.map-box {
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid #eee;
+    background: #f8f6f0;
+}
+
+@media(max-width: 900px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-card {
+        padding: 34px 24px;
+    }
+}

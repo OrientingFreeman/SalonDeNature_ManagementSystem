@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Deposit Payment{% endblock %}
+
+{% block content %}
+<section style="max-width:640px; margin:80px auto; padding:36px; background:white; border-radius:24px; box-shadow:0 4px 24px rgba(0,0,0,.08);">
+    <p style="color:var(--gold); letter-spacing:2px; font-size:12px; font-weight:700; text-transform:uppercase;">
+        Reservation Deposit
+    </p>
+
+    <h1 style="color:var(--forest);">Complete Your Deposit</h1>
+
+    <p style="color:#666;">
+        Your reservation will be confirmed after deposit payment.
+    </p>
+
+    <p style="font-size:22px; margin-top:28px;">
+        Amount:
+        <strong>₩{{ "{:,}".format(payment.amount) }}</strong>
+    </p>
+
+    <button id="payment-button" class="btn-primary" style="width:100%; margin-top:24px;">
+        Pay Deposit
+    </button>
+</section>
+
+<script src="https://js.tosspayments.com/v1/payment"></script>
+
+<script>
+const tossPayments = TossPayments("{{ toss_client_key }}");
+
+document.getElementById("payment-button").addEventListener("click", function () {
+    tossPayments.requestPayment("카드", {
+        amount: {{ payment.amount }},
+        orderId: "{{ payment.order_id }}",
+        orderName: "Salon de Nature Reservation Deposit",
+        customerName: "{{ booking.customer.name }}",
+        successUrl: "{{ success_url }}",
+        failUrl: "{{ fail_url }}"
+    });
+});
+</script>
+{% endblock %}

@@ -1,6 +1,7 @@
+import uuid
 from datetime import datetime, date, time, timedelta
 
-from bookings.models import Booking, BookingEvent, Service, StaffService
+from bookings.models import Booking, BookingEvent, Service, StaffService, Payment
 from staff.models import StaffSchedule, Staff, StaffTimeOff
 from customers.models import Customer
 from extensions import db
@@ -429,19 +430,30 @@ def create_booking(customer_id, staff_id, service_id, start_time):
         else "none"
     )
 
+    requires_deposit = deposit_enabled and service.deposit_required and service.deposit_amount > 0
+
     booking = Booking(
         customer_id=customer_id,
         staff_id=staff_id,
         service_id=service_id,
         start_time=start_time,
         end_time=end_time,
-        status="confirmed",
+        status="pending" if requires_deposit else "confirmed",
         deposit_paid=False,
-        deposit_payment_status=deposit_payment_status
+        deposit_payment_status="required" if requires_deposit else "none"
     )
-
     db.session.add(booking)
-    db.session.commit()
+    db.session.flush()
+
+    payment = None 
+    if requires_deposit:
+        payment = Payment(
+            booking_id=booking.id,
+            order_id=f"booking-{booking.id}-{uuid.uuid4().hex[:12]}",
+            amount=service.deposit_amount,
+            status="pending"
+        )
+        db.session.add(payment)
 
     event = BookingEvent(
         booking_id=booking.id,
@@ -462,7 +474,8 @@ def create_booking(customer_id, staff_id, service_id, start_time):
             "start_time": booking.start_time.isoformat(),
             "end_time": booking.end_time.isoformat(),
             "status": booking.status,
-            "deposit_payment_status": booking.deposit_payment_status
+            "deposit_payment_status": booking.deposit_payment_status,
+            "payment_id": payment.id if payment else None
         }
     }
 

@@ -20,3 +20,5 @@ class Config:
         "GOOGLE_REDIRECT_URI",
         "https://salondenature.shop/login/google/callback"
     )
+    TOSS_CLIENT_KEY = os.getenv("TOSS_CLIENT_KEY")
+    TOSS_SECRET_KEY = os.getenv("TOSS_SECRET_KEY")

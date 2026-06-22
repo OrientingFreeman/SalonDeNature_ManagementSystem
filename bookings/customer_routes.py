@@ -126,6 +126,16 @@ def customer_booking_submit():
         return result.get("message", "예약 생성 실패"), 400
 
     booking_id = result["booking"]["id"]
+    payment_id = result["booking"].get("payment_id")
+
+    if payment_id:
+        return redirect(
+            url_for(
+                "payments.checkout",
+                payment_id=payment_id,
+                lang=lang
+            )
+        )
 
     return redirect(
         url_for(

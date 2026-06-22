@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Failed{% endblock %}
+
+{% block content %}
+<section style="max-width:640px; margin:80px auto; padding:36px; background:white; border-radius:24px; box-shadow:0 4px 24px rgba(0,0,0,.08); text-align:center;">
+    <p style="color:var(--gold); letter-spacing:2px; font-size:12px; font-weight:700; text-transform:uppercase;">
+        Payment Failed
+    </p>
+
+    <h1 style="color:var(--forest);">Payment was not completed</h1>
+
+    <p style="color:#666; margin-top:16px;">
+        Your reservation deposit payment was cancelled or failed.
+        Please try again.
+    </p>
+
+    <a href="{{ url_for('customer_booking.my_bookings', lang=lang) }}" class="btn-primary" style="display:inline-block; margin-top:28px;">
+        Go to My Bookings
+    </a>
+</section>
+{% endblock %}

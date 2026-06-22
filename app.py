@@ -8,6 +8,7 @@ from bookings.routes import booking_bp
 from bookings.customer_routes import customer_booking_bp
 from auth.routes import auth_bp, oauth
 from staff.routes import staff_bp
+from payments.routes import payment_bp
 
 import base64
 import requests
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(customer_booking_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(staff_bp)
+    app.register_blueprint(payment_bp)
 
     return app
 

@@ -6,7 +6,7 @@ import models
 from dashboard.routes import dashboard_bp
 from bookings.routes import booking_bp
 from bookings.customer_routes import customer_booking_bp
-from auth.routes import auth_bp
+from auth.routes import auth_bp, oauth
 from staff.routes import staff_bp
 
 
@@ -17,6 +17,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    oauth.init_app(app)
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(booking_bp)

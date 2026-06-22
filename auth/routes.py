@@ -9,6 +9,8 @@ from customers.models import Customer
 from translations import get_text, normalize_lang
 
 import requests
+import os
+from authlib.integrations.flask_client import OAuth
 
 def get_lang():
     lang = normalize_lang(request.args.get("lang", session.get("lang", "en")))
@@ -17,6 +19,18 @@ def get_lang():
 
 auth_bp = Blueprint("auth", __name__)
 
+oauth = OAuth()
+
+google = oauth.register(
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url=
+        "https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile"
+    }
+)
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -189,6 +203,63 @@ def kakao_callback():
     session["lang"] = session.get("lang", "en")
 
     return redirect(url_for("customer_booking.customer_home", lang=session["lang"]))
+
+@auth_bp.route("/google/login")
+def google_login():
+
+    redirect_uri = current_app.config["GOOGLE_REDIRECT_URI"]
+
+    return google.authorize_redirect(
+        redirect_uri
+    )
+
+@auth_bp.route("/login/google/callback")
+def google_callback():
+
+    token = google.authorize_access_token()
+
+    user_info = token.get("userinfo")
+
+    google_id = user_info["sub"]
+    email = user_info.get("email")
+    name = user_info.get("name", "Google User")
+
+    customer = Customer.query.filter_by(
+        login_provider="google",
+        provider_user_id=google_id
+    ).first()
+
+    if not customer:
+
+        customer = Customer(
+            name=name,
+            phone=f"google_{google_id}",
+            email=email,
+            social_provider="google",
+            social_id=google_id,
+            login_provider="google",
+            provider_user_id=google_id,
+            last_login_at=datetime.utcnow(),
+        )
+
+        db.session.add(customer)
+
+    else:
+
+        customer.name = name
+        customer.email = email
+        customer.last_login_at = datetime.utcnow()
+
+    db.session.commit()
+
+    session["customer_id"] = customer.id
+
+    return redirect(
+        url_for(
+            "customer_booking.customer_home",
+            lang=session.get("lang", "en")
+        )
+    )
 
 
 @auth_bp.route("/change-password", methods=["GET", "POST"])

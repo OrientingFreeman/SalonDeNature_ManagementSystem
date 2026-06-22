@@ -14,3 +14,9 @@ class Config:
     KAKAO_REST_API_KEY = os.environ.get("KAKAO_REST_API_KEY")
     KAKAO_REDIRECT_URI = os.environ.get("KAKAO_REDIRECT_URI")
     KAKAO_CLIENT_SECRET = os.environ.get("KAKAO_CLIENT_SECRET")
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    GOOGLE_REDIRECT_URI = os.getenv(
+        "GOOGLE_REDIRECT_URI",
+        "https://salondenature.shop/login/google/callback"
+    )

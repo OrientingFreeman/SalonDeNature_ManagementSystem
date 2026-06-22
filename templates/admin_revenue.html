@@ -64,18 +64,51 @@
 
     <div class="revenue-chart-grid">
         <section class="admin-form-card revenue-chart-card">
-            <h2>Daily Revenue</h2>
-            <canvas id="dailyRevenueChart"></canvas>
+            <div class="chart-card-header">
+                <div>
+                    <p class="chart-eyebrow">TREND</p>
+                    <h2>Daily Revenue</h2>
+                </div>
+            </div>
+            <div class="chart-canvas-wrap">
+                {% if chart_values and chart_values|sum > 0 %}
+                    <canvas id="dailyRevenueChart"></canvas>
+                {% else %}
+                    <div class="chart-empty">No completed bookings in this period.</div>
+                {% endif %}
+            </div>
         </section>
 
         <section class="admin-form-card revenue-chart-card">
-            <h2>Staff Revenue</h2>
-            <canvas id="staffRevenueChart"></canvas>
+            <div class="chart-card-header">
+                <div>
+                    <p class="chart-eyebrow">STAFF</p>
+                    <h2>Staff Revenue</h2>
+                </div>
+            </div>
+            <div class="chart-canvas-wrap">
+                {% if staff_chart_values and staff_chart_values|sum > 0 %}
+                    <canvas id="staffRevenueChart"></canvas>
+                {% else %}
+                    <div class="chart-empty">No staff revenue data in this period.</div>
+                {% endif %}
+            </div>
         </section>
 
         <section class="admin-form-card revenue-chart-card">
-            <h2>Category Revenue</h2>
-            <canvas id="categoryRevenueChart"></canvas>
+            <div class="chart-card-header">
+                <div>
+                    <p class="chart-eyebrow">CATEGORY</p>
+                    <h2>Category Revenue</h2>
+                </div>
+            </div>
+            <div class="chart-canvas-wrap chart-canvas-wrap-doughnut">
+                {% if category_chart_values and category_chart_values|sum > 0 %}
+                    <canvas id="categoryRevenueChart"></canvas>
+                {% else %}
+                    <div class="chart-empty">No category revenue data in this period.</div>
+                {% endif %}
+            </div>
         </section>
     </div>
 
@@ -97,6 +130,10 @@
                             <td>{{ staff_name }}</td>
                             <td>{{ staff_count.get(staff_name, 0) }}</td>
                             <td>₩{{ "{:,}".format(revenue) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="table-empty">No staff revenue data.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -121,6 +158,10 @@
                             <td>{{ category }}</td>
                             <td>{{ category_count.get(category, 0) }}</td>
                             <td>₩{{ "{:,}".format(revenue) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="table-empty">No category revenue data.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -147,6 +188,10 @@
                         <td>{{ data.count }}</td>
                         <td>₩{{ "{:,}".format(data.revenue) }}</td>
                     </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="table-empty">No daily revenue data.</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -158,6 +203,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+.admin-revenue-section{
+    max-width:1180px;
+    margin:0 auto;
+}
 .revenue-filter-card{
     margin-bottom:32px;
 }
@@ -176,13 +225,17 @@
 .revenue-filter-form input{
     width:100%;
     padding:13px;
-    border:1px solid #ddd;
+    border:1px solid #DED9CF;
     border-radius:12px;
     font-size:15px;
+    background:#FFFDF8;
 }
 .revenue-stat-grid{
     grid-template-columns:repeat(3, 1fr);
     margin-bottom:32px;
+}
+.revenue-stat-grid .admin-stat-card{
+    border:1px solid rgba(18, 60, 50, 0.08);
 }
 .revenue-stat-grid .admin-stat-card span{
     font-size:26px;
@@ -193,14 +246,53 @@
     gap:24px;
     margin-bottom:24px;
 }
+.revenue-chart-card,
+.revenue-table-card{
+    border:1px solid rgba(18, 60, 50, 0.08);
+    box-shadow:0 18px 45px rgba(18, 60, 50, 0.06);
+}
+.chart-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:18px;
+}
+.chart-eyebrow{
+    margin:0 0 6px;
+    font-size:11px;
+    letter-spacing:0.18em;
+    font-weight:800;
+    color:#C49A4A;
+}
 .revenue-chart-card h2,
 .revenue-table-card h2{
-    margin-top:0;
+    margin:0;
     color:var(--forest);
+    font-size:24px;
 }
-.revenue-chart-card canvas{
+.chart-canvas-wrap{
+    position:relative;
+    height:320px;
+    width:100%;
+    padding:8px 4px 0;
+}
+.chart-canvas-wrap-doughnut{
+    height:360px;
+}
+.chart-canvas-wrap canvas{
     width:100% !important;
-    max-height:320px;
+    height:100% !important;
+}
+.chart-empty{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px dashed #D8D0C4;
+    border-radius:18px;
+    background:#FBF8F1;
+    color:#8FA89F;
+    font-weight:700;
 }
 .revenue-table-grid{
     display:grid;
@@ -218,12 +310,21 @@
 .admin-data-table th,
 .admin-data-table td{
     padding:14px;
-    border-bottom:1px solid #eee;
+    border-bottom:1px solid #ECE7DF;
     text-align:left;
 }
 .admin-data-table th{
     color:var(--forest);
     background:#F9F7F2;
+    font-weight:800;
+}
+.admin-data-table td{
+    color:#2E3C38;
+}
+.table-empty{
+    text-align:center;
+    color:#8FA89F;
+    font-weight:700;
 }
 @media(max-width:900px){
     .revenue-filter-form,
@@ -235,59 +336,166 @@
 </style>
 
 <script>
+const salonChartColors = [
+    "#123C32",
+    "#C49A4A",
+    "#8FA89F",
+    "#E5D3A1",
+    "#6E8F85",
+    "#D8A48F",
+    "#2E5B4F",
+    "#B7C8BE"
+];
+
+const moneyFormatter = new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: "KRW",
+    maximumFractionDigits: 0
+});
+
+const commonChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                color: "#123C32",
+                boxWidth: 14,
+                boxHeight: 14,
+                font: {
+                    size: 12,
+                    weight: "700"
+                }
+            }
+        },
+        tooltip: {
+            callbacks: {
+                label: function(context) {
+                    const label = context.dataset.label || context.label || "";
+                    const value = context.parsed.y ?? context.parsed ?? 0;
+                    return `${label}: ${moneyFormatter.format(value)}`;
+                }
+            }
+        }
+    },
+    scales: {
+        x: {
+            ticks: { color: "#536B62" },
+            grid: { display: false }
+        },
+        y: {
+            beginAtZero: true,
+            ticks: {
+                color: "#536B62",
+                callback: function(value) {
+                    return moneyFormatter.format(value);
+                }
+            },
+            grid: {
+                color: "rgba(18, 60, 50, 0.08)"
+            }
+        }
+    }
+};
+
 const chartLabels = {{ chart_labels | tojson }};
 const chartValues = {{ chart_values | tojson }};
 
-new Chart(document.getElementById("dailyRevenueChart"), {
-    type: "line",
-    data: {
-        labels: chartLabels,
-        datasets: [{
-            label: "Daily Revenue",
-            data: chartValues,
-            tension: 0.25
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-    }
-});
+const dailyCanvas = document.getElementById("dailyRevenueChart");
+if (dailyCanvas) {
+    new Chart(dailyCanvas, {
+        type: "line",
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: "Daily Revenue",
+                data: chartValues,
+                borderColor: "#123C32",
+                backgroundColor: "rgba(18, 60, 50, 0.10)",
+                pointBackgroundColor: "#C49A4A",
+                pointBorderColor: "#123C32",
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.32
+            }]
+        },
+        options: commonChartOptions
+    });
+}
 
 const staffChartLabels = {{ staff_chart_labels | tojson }};
 const staffChartValues = {{ staff_chart_values | tojson }};
 
-new Chart(document.getElementById("staffRevenueChart"), {
-    type: "bar",
-    data: {
-        labels: staffChartLabels,
-        datasets: [{
-            label: "Staff Revenue",
-            data: staffChartValues
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-    }
-});
+const staffCanvas = document.getElementById("staffRevenueChart");
+if (staffCanvas) {
+    new Chart(staffCanvas, {
+        type: "bar",
+        data: {
+            labels: staffChartLabels,
+            datasets: [{
+                label: "Staff Revenue",
+                data: staffChartValues,
+                backgroundColor: "#8FA89F",
+                borderColor: "#123C32",
+                borderWidth: 1,
+                borderRadius: 12,
+                maxBarThickness: 64
+            }]
+        },
+        options: commonChartOptions
+    });
+}
 
 const categoryChartLabels = {{ category_chart_labels | tojson }};
 const categoryChartValues = {{ category_chart_values | tojson }};
 
-new Chart(document.getElementById("categoryRevenueChart"), {
-    type: "pie",
-    data: {
-        labels: categoryChartLabels,
-        datasets: [{
-            label: "Category Revenue",
-            data: categoryChartValues
-        }]
-    },
-    options: {
-        responsive: true
-    }
-});
+const categoryCanvas = document.getElementById("categoryRevenueChart");
+if (categoryCanvas) {
+    new Chart(categoryCanvas, {
+        type: "doughnut",
+        data: {
+            labels: categoryChartLabels,
+            datasets: [{
+                label: "Category Revenue",
+                data: categoryChartValues,
+                backgroundColor: salonChartColors,
+                borderColor: "#FFFFFF",
+                borderWidth: 3,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "62%",
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        color: "#123C32",
+                        boxWidth: 14,
+                        boxHeight: 14,
+                        padding: 18,
+                        font: {
+                            size: 12,
+                            weight: "700"
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed || 0;
+                            return `${context.label}: ${moneyFormatter.format(value)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 </script>
 
 {% endblock %}

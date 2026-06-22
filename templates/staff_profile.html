@@ -38,11 +38,15 @@
             </p>
             {% endif %}
 
-            <a class="btn-primary"
-               href="/booking?staff_id={{ staff.id }}&lang={{ lang }}">
+            {% if session.get("admin_logged_in") or session.get("staff_logged_in") %}
+                <button class="btn-primary" disabled>Booking Disabled</button>
+            {% else %}
+            <a href="/booking/create?staff_id={{ staff.id }}&lang={{ lang }}" class="btn-primary">
                 Book With {{ staff.name }}
             </a>
+            {% endif %}
 
+            
         </div>
 
     </div>

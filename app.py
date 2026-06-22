@@ -10,10 +10,6 @@ from auth.routes import auth_bp, oauth
 from staff.routes import staff_bp
 from payments.routes import payment_bp
 
-import base64
-import requests
-import uuid
-from datetime import datetime
 
 
 def create_app():

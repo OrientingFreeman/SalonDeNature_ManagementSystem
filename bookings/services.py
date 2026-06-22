@@ -424,12 +424,14 @@ def create_booking(customer_id, staff_id, service_id, start_time):
     settings = ShopSettings.query.first()
     deposit_enabled = settings.deposit_enabled if settings else False
 
+    '''
     deposit_payment_status = (
         "required"
         if deposit_enabled and service.deposit_required
         else "none"
     )
-
+    '''
+    
     requires_deposit = deposit_enabled and service.deposit_required and service.deposit_amount > 0
 
     booking = Booking(

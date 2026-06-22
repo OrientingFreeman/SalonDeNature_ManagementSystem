@@ -219,4 +219,14 @@
 }
 </style>
 
+<script>
+document.querySelectorAll(".staff-service-card").forEach(card => {
+    const checkbox = card.querySelector("input[type='checkbox']");
+
+    checkbox.addEventListener("change", () => {
+        card.classList.toggle("selected", checkbox.checked);
+    });
+});
+</script>
+
 {% endblock %}

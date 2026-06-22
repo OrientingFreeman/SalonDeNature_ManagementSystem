@@ -1280,3 +1280,9 @@ a {
 .social-icon{
     font-size:18px;
 }
+
+.staff-service-card.selected .staff-service-card-body{
+    border-color:var(--forest);
+    background:#eef7f1;
+    box-shadow:0 8px 30px rgba(0,0,0,.14);
+}

@@ -144,7 +144,7 @@ def kakao_callback():
 
     token_json = token_response.json()
     access_token = token_json.get("access_token")
-
+    '''
     if not access_token:
         flash("Kakao login failed. Please try again.")
         return redirect(url_for("auth.login", lang=session.get("lang", "en")))
@@ -157,7 +157,7 @@ def kakao_callback():
             "sent_redirect_uri": current_app.config["KAKAO_REDIRECT_URI"],
             "received_code_prefix": code[:20],
         }, 400
-    '''
+    
 
     user_response = requests.get(
         "https://kapi.kakao.com/v2/user/me",

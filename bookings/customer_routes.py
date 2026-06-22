@@ -197,3 +197,12 @@ def contact_page():
     return render_template("contact.html")
 
 
+@customer_booking_bp.route("/privacy")
+def privacy_page():
+    return render_template("privacy.html")
+
+
+@customer_booking_bp.route("/terms")
+def terms_page():
+    return render_template("terms.html")
+

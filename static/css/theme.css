@@ -1169,3 +1169,31 @@ a {
         padding: 34px 24px;
     }
 }
+
+.policy-section {
+    padding: 80px 24px;
+    background: #F9F7F2;
+}
+
+.policy-card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.06);
+}
+
+.policy-card h1,
+.policy-card h2 {
+    color: var(--forest);
+}
+
+.policy-card h2 {
+    margin-top: 32px;
+}
+
+.policy-card p {
+    line-height: 1.8;
+    color: #333;
+}

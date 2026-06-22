@@ -87,7 +87,7 @@ class Payment(db.Model):
 
     booking_id = db.Column(
         db.Integer,
-        db.ForeignKey("booking.id"),
+        db.ForeignKey("bookings.id"),
         nullable=False
     )
 
@@ -97,8 +97,6 @@ class Payment(db.Model):
     amount = db.Column(db.Integer, nullable=False)
 
     status = db.Column(db.String(50), default="pending")
-    # pending / paid / failed / cancelled / refunded
-
     method = db.Column(db.String(50), nullable=True)
     failed_reason = db.Column(db.Text, nullable=True)
 

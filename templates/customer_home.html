@@ -102,4 +102,177 @@
 
 </section>
 
+
+<section class="why-us-section">
+
+    <div class="section-header">
+        <p class="eyebrow">WHY CHOOSE US</p>
+        <h2>Why Salon De Nature?</h2>
+        <p>
+            Thoughtful nail care designed for beauty, comfort, and a refined salon experience.
+        </p>
+    </div>
+
+    <div class="why-grid">
+
+        <div class="why-card">
+            <h3>Premium Products</h3>
+            <p>
+                Carefully selected materials and professional products
+                for healthy, elegant, and long-lasting nails.
+            </p>
+        </div>
+
+        <div class="why-card">
+            <h3>Personalized Design</h3>
+            <p>
+                Every design is tailored to your personal style,
+                occasion, and preferred mood.
+            </p>
+        </div>
+
+        <div class="why-card">
+            <h3>Relaxing Experience</h3>
+            <p>
+                A calm and comfortable space where beauty,
+                detail, and relaxation come together.
+            </p>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="salon-philosophy-section">
+
+    <div class="philosophy-card">
+        <p class="eyebrow">OUR PHILOSOPHY</p>
+
+        <h2>Beauty Inspired by Nature</h2>
+
+        <p>
+            At Salon De Nature, we believe beauty should feel effortless,
+            elegant, and natural. Every service is designed not only to
+            enhance your nails, but also to offer a quiet moment of comfort
+            and self-care.
+        </p>
+    </div>
+
+</section>
+
+<section class="home-contact-cta">
+
+    <div class="home-contact-card">
+        <p class="eyebrow">VISIT US</p>
+        <h2>Visit Salon De Nature</h2>
+        <p>
+            Experience premium nail care in a calm and elegant atmosphere.
+            Check our location, business hours, and contact information.
+        </p>
+
+        <a href="/contact?lang={{ lang }}" class="btn-primary">
+            Location & Contact
+        </a>
+    </div>
+
+</section>
+
+
+<style>
+.why-us-section,
+.salon-philosophy-section,
+.home-contact-cta {
+    padding: 72px 24px;
+    background: #F9F7F2;
+}
+
+.why-us-section .section-header {
+    max-width: 760px;
+    margin: 0 auto 34px;
+    text-align: center;
+}
+
+.why-us-section .section-header h2,
+.philosophy-card h2,
+.home-contact-card h2 {
+    color: var(--forest);
+    margin-bottom: 14px;
+}
+
+.why-us-section .section-header p,
+.why-card p,
+.philosophy-card p,
+.home-contact-card p {
+    color: #66756F;
+    line-height: 1.75;
+}
+
+.why-grid {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.why-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 34px 28px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.055);
+}
+
+.why-card h3 {
+    color: var(--forest);
+    margin-bottom: 14px;
+}
+
+.salon-philosophy-section {
+    padding-top: 32px;
+}
+
+.philosophy-card,
+.home-contact-card {
+    max-width: 980px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 28px;
+    padding: 54px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+.philosophy-card p,
+.home-contact-card p {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.home-contact-cta {
+    padding-top: 32px;
+}
+
+.home-contact-card .btn-primary {
+    display: inline-flex;
+    margin-top: 28px;
+}
+
+@media(max-width: 900px) {
+    .why-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .why-us-section,
+    .salon-philosophy-section,
+    .home-contact-cta {
+        padding: 48px 20px;
+    }
+
+    .philosophy-card,
+    .home-contact-card {
+        padding: 36px 24px;
+    }
+}
+</style>
+
 {% endblock %}

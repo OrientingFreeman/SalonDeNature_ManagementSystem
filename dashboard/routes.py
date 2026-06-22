@@ -172,6 +172,10 @@ def admin_settings():
 def update_settings():
     settings = ShopSettings.query.first()
 
+    if not settings:
+        settings = ShopSettings()
+        db.session.add(settings)
+
     settings.no_show_limit_count = int(
         request.form["no_show_limit_count"]
     )

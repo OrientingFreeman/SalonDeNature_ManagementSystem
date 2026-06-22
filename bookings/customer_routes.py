@@ -192,7 +192,7 @@ def staff_profile(staff_id):
         text=get_text(lang)
     )
 
-@customer_bp.route("/contact")
+@customer_booking_bp.route("/contact")
 def contact_page():
     return render_template("contact.html")
 

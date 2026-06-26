@@ -32,3 +32,4 @@ class Customer(db.Model):
     total_revenue = db.Column(db.Integer, default=0)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    booking_info_consent_at = db.Column(db.DateTime, nullable=True)

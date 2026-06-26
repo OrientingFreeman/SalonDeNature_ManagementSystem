@@ -240,6 +240,54 @@
     display:none;
 }
 
+.booking-profile-box{
+    margin-bottom:34px;
+    padding:26px;
+    border:1px solid #e8e1d4;
+    border-radius:18px;
+    background:#fbfaf7;
+}
+
+.booking-profile-box h2{
+    margin:0 0 8px;
+    color:var(--forest);
+    font-size:24px;
+}
+
+.booking-profile-box p{
+    margin:0 0 20px;
+    color:#666;
+    line-height:1.6;
+}
+
+.booking-profile-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.booking-profile-field label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--forest);
+    font-weight:700;
+    font-size:14px;
+}
+
+.booking-consent-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin-top:18px;
+    color:#555;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.booking-consent-row input{
+    margin-top:4px;
+}
+
 @media(max-width:768px){
     .booking-card-premium{
         padding:26px;
@@ -247,6 +295,10 @@
 
     .booking-hero-panel h1{
         font-size:40px;
+    }
+
+    .booking-profile-grid{
+        grid-template-columns:1fr;
     }
 }
 </style>
@@ -274,7 +326,56 @@
     <div class="booking-card-premium">
         <form method="POST" action="/booking?lang={{ lang }}">
 
-            
+            {% set current_phone = current_customer.phone or "" %}
+            {% set needs_profile_completion =
+                current_customer.login_provider in ["kakao", "google"]
+                and (
+                    not current_customer.name
+                    or current_phone.startswith("kakao_")
+                    or current_phone.startswith("google_")
+                )
+            %}
+
+            {% if needs_profile_completion %}
+            <div class="booking-profile-box">
+                <h2>Contact Information Required</h2>
+                <p>
+                    Please enter your name and phone number for reservation management.
+                    This information will be saved to your account, so you will not need to enter it again next time.
+                </p>
+
+                <div class="booking-profile-grid">
+                    <div class="booking-profile-field">
+                        <label for="bookingCustomerName">Name</label>
+                        <input
+                            type="text"
+                            id="bookingCustomerName"
+                            name="name"
+                            class="booking-input"
+                            value="{{ current_customer.name if current_customer.name and current_customer.name not in ['Kakao User', 'Google User'] else '' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="booking-profile-field">
+                        <label for="bookingCustomerPhone">Phone Number</label>
+                        <input
+                            type="tel"
+                            id="bookingCustomerPhone"
+                            name="phone"
+                            class="booking-input"
+                            placeholder="01012345678"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <label class="booking-consent-row">
+                    <input type="checkbox" name="booking_info_consent" required>
+                    <span>I agree to provide my name and phone number for reservation management.</span>
+                </label>
+            </div>
+            {% endif %}
 
             <div class="booking-section-title">
                 <span>Step 1</span>

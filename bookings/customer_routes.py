@@ -96,7 +96,28 @@ def customer_booking_submit():
         if not customer:
             session.pop("customer_id", None)
             return redirect(url_for("auth.login"))
+    
 
+    needs_profile_completion = (
+        customer.login_provider in ["kakao", "google"]
+        and (
+            not customer.name
+            or customer.phone.startswith("kakao_")
+            or customer.phone.startswith("google_")
+        )
+    )
+
+    if needs_profile_completion:
+        name = request.form.get("name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        consent = request.form.get("booking_info_consent")
+
+        if not name or not phone or consent != "on":
+            return "Name, phone number, and consent are required for booking.", 400
+
+        customer.name = name
+        customer.phone = phone
+        customer.booking_info_consent_at = datetime.utcnow()
 
     
     db.session.add(customer)

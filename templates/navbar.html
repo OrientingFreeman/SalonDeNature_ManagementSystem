@@ -1,3 +1,4 @@
+{% if request.args.get("embed") != "1" %}
 <nav class="navbar">
 
     <div class="nav-left">
@@ -82,3 +83,4 @@
     </div>
 
 </nav>
+{% endif %}

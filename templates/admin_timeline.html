@@ -1,0 +1,1462 @@
+{% extends "base.html" %}
+{% block title %}Admin Timeline{% endblock %}
+
+{% block content %}
+
+<section class="admin-timeline-section">
+    <div class="admin-page-header">
+        <p class="eyebrow">RESERVATION BOARD</p>
+        <h1>Timeline Dashboard</h1>
+        <p>Daily reservation timeline by staff.</p>
+    </div>
+
+    <div class="timeline-toolbar">
+    <a class="booking-action-btn" href="/admin/timeline?date={{ prev_date }}">← Previous</a>
+
+    <form method="get" action="/admin/timeline" class="timeline-date-form">
+        <input type="date" name="date" value="{{ target_date }}">
+        <button type="submit" class="booking-action-btn">Search</button>
+    </form>
+
+    <a class="booking-action-btn" href="/admin/timeline?date={{ today }}">Today</a>
+    <a class="booking-action-btn" href="/admin/timeline?date={{ next_date }}">Next →</a>
+    </div>
+
+    <div class="timeline-board">
+        <div class="timeline-header">
+            <div class="timeline-time-header">Time</div>
+
+            {% for staff in staffs %}
+                <div class="timeline-staff-header">{{ staff.name }}</div>
+            {% endfor %}
+
+        </div>
+
+        <div class="timeline-body">
+            <div class="timeline-time-column">
+                {% for slot in time_slots %}
+                    <div class="timeline-time-slot">{{ slot }}</div>
+                {% endfor %}
+            </div>
+
+            {% for staff in staffs %}
+                <div
+                    class="timeline-staff-column"
+                    data-staff-id="{{ staff.id }}"
+                    data-date="{{ target_date }}"
+                    data-timeline-start="{{ timeline_start.strftime('%H:%M') }}"
+                    data-total-minutes="{{ total_minutes }}"
+>
+                    {% for slot in time_slots %}
+                        <div class="timeline-grid-line"></div>
+                    {% endfor %}
+
+                    {% for schedule in staff_schedules %}
+                        {% if schedule.staff_id == staff.id and schedule.break_start_time and schedule.break_end_time %}
+                            {% set break_start = target_date|string + " " + schedule.break_start_time|string %}
+                            {% set break_end = target_date|string + " " + schedule.break_end_time|string %}
+
+                            {% set break_start_minutes =
+                                ((schedule.break_start_time.hour * 60 + schedule.break_start_time.minute)
+                                - (timeline_start.hour * 60 + timeline_start.minute))
+                            %}
+
+                            {% set break_end_minutes =
+                                ((schedule.break_end_time.hour * 60 + schedule.break_end_time.minute)
+                                - (timeline_start.hour * 60 + timeline_start.minute))
+                            %}
+                            {% set top_px = break_start_minutes * 2 %}
+                            {% set height_px = (break_end_minutes - break_start_minutes) * 2 %}
+
+                            <div
+                                class="timeline-unavailable-block"
+                                style="top: {{ top_px }}px; height: {{ height_px }}px;"
+                            >
+                                <strong>Break</strong>
+                                <small>{{ schedule.break_start_time.strftime("%H:%M") }}~{{ schedule.break_end_time.strftime("%H:%M") }}</small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for time_off in staff_time_offs %}
+                        {% if time_off.staff_id == staff.id %}
+                            {% set start_minutes = ((time_off.start_time - timeline_start).total_seconds() / 60)|int %}
+                            {% set duration_minutes = ((time_off.end_time - time_off.start_time).total_seconds() / 60)|int %}
+                            {% set top_px = start_minutes * 2 %}
+                            {% set height_px = duration_minutes * 2 %}
+
+                            <div
+                                class="timeline-unavailable-block time-off"
+                                style="top: {{ top_px }}px; height: {{ height_px }}px;"
+                            >
+                                <strong>Time Off</strong>
+                                <small>{{ time_off.start_time.strftime("%H:%M") }}~{{ time_off.end_time.strftime("%H:%M") }}</small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+
+
+                    {% for booking in bookings %}
+                        {% if booking.staff_id == staff.id %}
+                            {% set start_minutes = ((booking.start_time - timeline_start).total_seconds() / 60)|int %}
+                            {% set duration_minutes = ((booking.end_time - booking.start_time).total_seconds() / 60)|int %}
+                            {% set top_px = start_minutes * 2 %}
+                            {% set height_px = duration_minutes * 2 %}
+
+                            <div
+                                class="timeline-booking-block category-{{ booking.service.category }}"
+                                draggable="true"
+                                data-booking-id="{{ booking.id }}"
+                                data-duration-minutes="{{ duration_minutes }}"
+                                data-staff-id="{{ booking.staff_id }}"
+                                data-service-id="{{ booking.service_id }}"
+                                data-category="{{ booking.service.category }}"
+                                data-customer-name="{{ booking.customer.name|e }}"
+                                data-phone="{{ booking.customer.phone or '-'|e }}"
+                                data-service-name="{{ booking.service.name_ko|e }}"
+                                data-staff-name="{{ booking.staff.name|e }}"
+                                data-start-time="{{ booking.start_time.strftime('%H:%M') }}"
+                                data-end-time="{{ booking.end_time.strftime('%H:%M') }}"
+                                data-visits="{{ booking.customer.visit_count or 0 }}"
+                                data-no-show="{{ booking.customer.no_show_count or 0 }}"
+                                data-status="{{ booking.status or '-' }}"
+                                data-deposit="{{ booking.deposit_payment_status or 'none' }}"
+                                data-memo="{{ booking.memo or ''|e }}"
+                                style="top: {{ top_px }}px; height: {{ height_px }}px;"
+                                ondblclick="openBookingDetailModalFromBlock(this)"
+                            >
+                                <div class="booking-badges">
+                                    {% if booking.customer.visit_count == 0 %}<span class="booking-badge badge-new">NEW</span>{% endif %}
+                                    {% if booking.customer.no_show_count and booking.customer.no_show_count > 0 %}<span class="booking-badge badge-warning">NO-SHOW</span>{% endif %}
+                                    {% if booking.deposit_payment_status == "paid" %}<span class="booking-badge badge-paid">PAID</span>{% elif booking.deposit_payment_status == "required" %}<span class="booking-badge badge-pending">PENDING</span>{% endif %}
+                                </div>
+                                <strong>{{ booking.customer.name }}</strong>
+                                <span>{{ booking.service.name_ko }}</span>
+                                <small>{{ booking.start_time.strftime("%H:%M") }}~{{ booking.end_time.strftime("%H:%M") }}</small>
+                                <div class="booking-tooltip">
+                                    <strong>{{ booking.customer.name }}</strong>
+                                    <p>{{ booking.customer.phone or "-" }}</p>
+                                    <p>{{ booking.service.name_ko }} · {{ booking.staff.name }}</p>
+                                    <p>{{ booking.start_time.strftime("%H:%M") }} ~ {{ booking.end_time.strftime("%H:%M") }}</p>
+                                    <p>Visits: {{ booking.customer.visit_count or 0 }}</p>
+                                    <p>No-show: {{ booking.customer.no_show_count or 0 }}</p>
+                                    <p>Deposit: {{ booking.deposit_payment_status or "none" }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            {% if target_date == today %}
+               {% set now_minutes = ((now - timeline_start).total_seconds() / 60)|int %}
+                {% if now_minutes >= 0 and now_minutes <= total_minutes %}
+                    <div class="now-line" style="top: {{ now_minutes * 2 }}px;">
+                        <span>Now</span>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+        </div>
+    </div>
+</section>
+
+<div id="timelineNotice" class="timeline-notice" aria-live="polite"></div>
+
+<div id="bookingDetailModal" class="modal-backdrop">
+    <div class="modal-box timeline-detail-modal">
+        <div class="modal-topline">
+            <div>
+                <p class="eyebrow">BOOKING DETAIL</p>
+                <h3 id="modalCustomerName"></h3>
+                <p id="modalServiceName"></p>
+            </div>
+            <span id="modalStatusBadge" class="status-badge"></span>
+        </div>
+
+        <div class="booking-info-grid modal-booking-info-grid">
+            <div><span>Phone</span><strong id="modalPhone"></strong></div>
+            <div><span>Staff</span><strong id="modalStaff"></strong></div>
+            <div><span>Time</span><strong id="modalTime"></strong></div>
+            <div><span>Visits</span><strong id="modalVisits"></strong></div>
+            <div><span>No-show</span><strong id="modalNoShow"></strong></div>
+            <div><span>Deposit</span><strong id="modalDeposit"></strong></div>
+        </div>
+
+        <div class="modal-memo-box">
+            <span>Memo</span>
+            <p id="modalMemo"></p>
+        </div>
+
+        <div class="timeline-status-actions">
+            <button type="button" class="booking-action-btn status-confirm" onclick="requestTimelineStatusChange('confirmed')">Confirm</button>
+            <button type="button" class="booking-action-btn status-complete" onclick="requestTimelineStatusChange('completed')">Complete</button>
+            <button type="button" class="booking-action-btn status-noshow" onclick="requestTimelineStatusChange('no_show')">No-show</button>
+        </div>
+
+        <div class="modal-actions timeline-modal-actions">
+            <button type="button" class="booking-action-btn" onclick="goToCalendarForBooking()">Open Calendar</button>
+            <button type="button" class="booking-action-btn" onclick="requestTimelineReschedule()">Reschedule</button>
+            <button type="button" class="booking-action-btn" onclick="requestTimelineAssignment()">Edit Assignment</button>
+            <button type="button" class="booking-action-btn danger" onclick="requestTimelineCancel()">Cancel</button>
+            <button type="button" class="booking-action-btn" onclick="closeBookingDetailModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="timelineRescheduleModal" class="modal-backdrop">
+    <div class="modal-box timeline-reschedule-modal">
+        <div class="modal-topline">
+            <div>
+                <p class="eyebrow">RESCHEDULE</p>
+                <h3>Change booking time</h3>
+                <p id="rescheduleBookingSummary"></p>
+            </div>
+        </div>
+
+        <div class="timeline-form-row">
+            <label for="timelineRescheduleInput">New date and time</label>
+            <input id="timelineRescheduleInput" type="datetime-local" step="900">
+            <small>Bookings can be rescheduled in 15-minute increments.</small>
+        </div>
+
+        <div class="modal-actions timeline-modal-actions">
+            <button type="button" class="booking-action-btn" onclick="submitTimelineReschedule()">Save</button>
+            <button type="button" class="booking-action-btn" onclick="closeTimelineRescheduleModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="timelineAssignmentModal" class="modal-backdrop">
+    <div class="modal-box timeline-assignment-modal">
+        <div class="modal-topline">
+            <div>
+                <p class="eyebrow">EDIT ASSIGNMENT</p>
+                <h3>Change staff, service, and time</h3>
+                <p id="assignmentBookingSummary"></p>
+            </div>
+        </div>
+
+        <div class="timeline-form-grid">
+            <div class="timeline-form-row">
+                <label for="timelineAssignmentStaff">Staff</label>
+                <select id="timelineAssignmentStaff">
+                    <option value="">Select staff</option>
+                    {% for staff in staffs %}
+                        <option value="{{ staff.id }}">{{ staff.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="timeline-form-row">
+                <label for="timelineAssignmentService">Service</label>
+                <select id="timelineAssignmentService">
+                    {% for service in services %}
+                        <option value="{{ service.id }}">{{ service.name_ko }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="timeline-form-row full-width">
+                <label for="timelineAssignmentInput">Date and time</label>
+                <input id="timelineAssignmentInput" type="datetime-local" step="900">
+                <small>Assignment changes are saved in 15-minute increments.</small>
+            </div>
+        </div>
+
+        <div class="modal-actions timeline-modal-actions">
+            <button type="button" class="booking-action-btn" onclick="submitTimelineAssignment()">Save</button>
+            <button type="button" class="booking-action-btn" onclick="closeTimelineAssignmentModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-timeline-section{
+    max-width:1400px;
+    margin:0 auto;
+}
+
+.timeline-date-form{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin:0;
+}
+
+.timeline-toolbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+}
+
+.timeline-toolbar .booking-action-btn,
+.timeline-date-form input{
+    height:42px;
+    display:inline-flex;
+    align-items:center;
+}
+
+.timeline-date-form input{
+    padding:12px 14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+}
+
+.timeline-board{
+    background:white;
+    border-radius:22px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+    overflow:auto;
+}
+
+.timeline-header{
+    display:grid;
+    grid-template-columns:90px repeat({{ staffs|length }}, minmax(180px, 1fr));
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:#fff;
+    border-bottom:1px solid #eee;
+}
+
+.timeline-time-header,
+.timeline-staff-header{
+    padding:16px;
+    font-weight:800;
+    color:var(--forest);
+    border-right:1px solid #eee;
+    text-align:center;
+}
+
+
+
+.timeline-body{
+    position:relative;
+    display:grid;
+    grid-template-columns:90px repeat({{ staffs|length }}, minmax(180px, 1fr));
+    min-width:900px;
+}
+
+.timeline-time-column{
+    border-right:1px solid #eee;
+}
+
+.timeline-time-slot{
+    height:60px;
+    padding:8px;
+    border-bottom:1px solid #eee;
+    font-size:13px;
+    color:#777;
+}
+
+.timeline-staff-column{
+    position:relative;
+    border-right:1px solid #eee;
+    min-height:{{ total_minutes * 2 }}px;
+}
+
+.timeline-grid-line{
+    height:60px;
+    border-bottom:1px solid #f0f0f0;
+}
+
+.timeline-booking-block{
+    position:absolute;
+    left:8px;
+    right:8px;
+    border-radius:12px;
+    padding:10px;
+    overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,.12);
+    cursor:pointer;
+    font-size:13px;
+}
+
+.timeline-booking-block strong{
+    display:block;
+    color:#17352f;
+    font-size:14px;
+}
+
+.timeline-booking-block span{
+    display:block;
+    margin-top:3px;
+}
+
+.timeline-booking-block small{
+    display:block;
+    margin-top:4px;
+    color:#555;
+}
+
+.category-nail{
+    background:#CFE8FF;
+    border-left:5px solid #5BA8E8;
+}
+
+.category-waxing{
+    background:#FFDCE8;
+    border-left:5px solid #E88AAA;
+}
+
+.category-etc{
+    background:#DFF7E3;
+    border-left:5px solid #80C88A;
+}
+
+
+
+
+
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    z-index:1000;
+    inset:0;
+    background:rgba(0,0,0,.45);
+}
+
+.modal-box{
+    background:white;
+    width:min(520px, 92vw);
+    margin:12vh auto;
+    padding:28px;
+    border-radius:18px;
+    box-shadow:0 8px 32px rgba(0,0,0,.2);
+}
+
+.modal-box h3{
+    margin-top:0;
+    color:var(--forest);
+}
+
+.modal-actions{
+    margin-top:22px;
+    display:flex;
+    justify-content:flex-end;
+}
+
+
+@media(max-width:900px){
+    .timeline-board{
+        overflow-x:auto;
+    }
+}
+
+
+
+.now-line{
+    position:absolute;
+    left:90px;
+    right:0;
+    height:2px;
+    background:#e74c3c;
+    z-index:20;
+    pointer-events:none;
+}
+
+.now-line span{
+    position:absolute;
+    left:8px;
+    top:-18px;
+    background:#e74c3c;
+    color:white;
+    font-size:11px;
+    font-weight:800;
+    padding:2px 6px;
+    border-radius:999px;
+}
+
+.timeline-unavailable-block{
+    position:absolute;
+    left:8px;
+    right:8px;
+    border-radius:12px;
+    padding:9px 10px;
+    overflow:hidden;
+    background:#e7e7e7;
+    border-left:5px solid #9a9a9a;
+    color:#555;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.04);
+    font-size:12px;
+    z-index:3;
+}
+
+.timeline-unavailable-block strong{
+    display:block;
+    font-size:13px;
+    color:#555;
+}
+
+.timeline-unavailable-block small{
+    display:block;
+    margin-top:3px;
+    color:#666;
+}
+
+.timeline-booking-block{
+    z-index:5;
+}
+
+
+
+.booking-badges{position:absolute;top:6px;right:6px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+.booking-badge{font-size:9px;font-weight:900;padding:2px 5px;border-radius:999px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.badge-new{color:#1f6feb}.badge-warning{color:#d93025}.badge-paid{color:#137333}.badge-pending{color:#b06000}
+.booking-tooltip{display:none;position:absolute;left:12px;top:calc(100% + 8px);width:230px;z-index:100;background:#fff;border:1px solid #e6e1d7;border-radius:14px;padding:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);color:#333}
+.booking-tooltip strong{color:var(--forest);font-size:14px}
+.booking-tooltip p{margin:5px 0;font-size:12px;color:#555}
+.timeline-booking-block:hover{overflow:visible;z-index:50}
+.timeline-booking-block:hover .booking-tooltip{display:block}
+
+
+.timeline-detail-modal{
+    width:min(720px, 94vw);
+}
+
+.modal-topline{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+    margin-bottom:18px;
+}
+
+.modal-topline .eyebrow{
+    color:var(--gold);
+    letter-spacing:1.6px;
+    font-size:11px;
+    font-weight:800;
+    margin:0 0 6px;
+}
+
+.modal-topline h3{
+    margin:0;
+    color:var(--forest);
+    font-size:28px;
+}
+
+.modal-topline p{
+    margin:6px 0 0;
+    color:#666;
+}
+
+.modal-booking-info-grid{
+    margin-top:16px;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px 18px;
+}
+
+.modal-booking-info-grid > div{
+    display:grid;
+    grid-template-columns:86px minmax(0, 1fr);
+    align-items:center;
+    column-gap:14px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:#FBFAF7;
+}
+
+.modal-booking-info-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+    white-space:nowrap;
+}
+
+.modal-booking-info-grid strong{
+    display:block;
+    color:#17352f;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.35;
+    word-break:break-word;
+}
+
+@media(max-width:640px){
+    .modal-booking-info-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+.modal-memo-box{
+    margin-top:18px;
+    padding:16px;
+    border-radius:14px;
+    background:#F9F7F2;
+}
+
+.modal-memo-box span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    margin-bottom:6px;
+}
+
+.modal-memo-box p{
+    margin:0;
+    color:#555;
+    min-height:22px;
+}
+
+.timeline-modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;          /* 버튼 간격 */
+    margin-top:24px;
+}
+
+.timeline-modal-actions .booking-action-btn{
+    min-width:130px;
+}
+
+.timeline-modal-actions .danger{
+    border-color:#d93025;
+    color:#d93025;
+}
+
+.timeline-status-actions{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+    padding-top:18px;
+    border-top:1px solid #eee9df;
+}
+
+.timeline-status-actions .booking-action-btn{
+    min-width:116px;
+}
+
+.timeline-status-actions .status-confirm{
+    border-color:#137333;
+    color:#137333;
+}
+
+.timeline-status-actions .status-complete{
+    border-color:#1f6feb;
+    color:#1f6feb;
+}
+
+.timeline-status-actions .status-noshow{
+    border-color:#d93025;
+    color:#d93025;
+}
+
+.timeline-booking-block.removing{
+    opacity:0;
+    transform:scale(.98);
+    transition:opacity .18s ease, transform .18s ease;
+}
+
+.status-badge.modal-status-pending{background:#fff4d8;color:#9a6b00;}
+.status-badge.modal-status-confirmed{background:#e4f4ea;color:#137333;}
+.status-badge.modal-status-completed{background:#e8f0fe;color:#1f6feb;}
+.status-badge.modal-status-cancelled{background:#fde8e8;color:#d93025;}
+.status-badge.modal-status-no_show{background:#fde8e8;color:#d93025;}
+
+.timeline-staff-column.drag-over{
+    background:#f0f7f4;
+    outline:2px dashed var(--forest);
+    outline-offset:-6px;
+}
+
+.timeline-booking-block.dragging{
+    opacity:.55;
+}
+
+.timeline-drop-preview{
+    position:absolute;
+    left:8px;
+    right:8px;
+    border-radius:12px;
+    background:rgba(23,53,47,.10);
+    border:2px dashed var(--forest);
+    pointer-events:none;
+    z-index:4;
+    box-sizing:border-box;
+}
+
+.timeline-drop-preview-label{
+    position:absolute;
+    top:6px;
+    left:8px;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:var(--forest);
+    color:white;
+    font-size:12px;
+    font-weight:900;
+    box-shadow:0 2px 8px rgba(0,0,0,.16);
+}
+
+.timeline-notice{
+    display:none;
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    max-width:min(420px, calc(100vw - 48px));
+    padding:14px 16px;
+    border-radius:14px;
+    background:#17352f;
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.45;
+    box-shadow:0 10px 30px rgba(0,0,0,.22);
+    z-index:2000;
+}
+
+.timeline-notice.error{
+    background:#d93025;
+}
+
+.timeline-notice.success{
+    background:#137333;
+}
+
+
+.timeline-form-row{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:18px;
+}
+
+.timeline-form-row label{
+    color:var(--forest);
+    font-size:13px;
+    font-weight:900;
+}
+
+.timeline-form-row input{
+    height:44px;
+    padding:10px 12px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:14px;
+}
+
+.timeline-form-row small{
+    color:#777;
+    font-size:12px;
+}
+
+.timeline-reschedule-modal{
+    width:min(520px, 92vw);
+}
+
+.timeline-booking-block.removing{
+    opacity:.25;
+    transform:scale(.98);
+    transition:opacity .18s ease, transform .18s ease;
+}
+
+
+.timeline-form-row select,
+.timeline-form-row input{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:14px;
+    box-sizing:border-box;
+}
+
+.timeline-form-row label{
+    display:block;
+    margin-bottom:7px;
+    color:var(--forest);
+    font-weight:800;
+    font-size:13px;
+}
+
+.timeline-form-row small{
+    display:block;
+    margin-top:7px;
+    color:#777;
+    font-size:12px;
+}
+
+.timeline-form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+
+.timeline-form-grid .full-width{
+    grid-column:1 / -1;
+}
+
+.timeline-booking-block.removing{
+    opacity:0;
+    transform:scale(.96);
+    transition:opacity .18s ease, transform .18s ease;
+}
+
+@media(max-width:700px){
+    .timeline-form-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+</style>
+
+<script>
+let selectedTimelineBookingId = null;
+
+function openBookingDetailModalFromBlock(block) {
+    openBookingDetailModal(
+        block.dataset.bookingId,
+        block.dataset.customerName || "-",
+        block.dataset.phone || "-",
+        block.dataset.serviceName || "-",
+        block.dataset.staffName || "-",
+        block.dataset.startTime || "-",
+        block.dataset.endTime || "-",
+        block.dataset.visits || "0",
+        block.dataset.noShow || "0",
+        block.dataset.status || "-",
+        block.dataset.deposit || "none",
+        block.dataset.memo || "-"
+    );
+}
+
+function openBookingDetailModal(bookingId, customerName, phone, serviceName, staffName, startTime, endTime, visits, noShow, status, deposit, memo) {
+    if (isTimelineDragging || Date.now() - lastTimelineDragEndAt < 250) {
+        return;
+    }
+
+    selectedTimelineBookingId = bookingId;
+
+    document.getElementById("modalCustomerName").textContent = customerName;
+    document.getElementById("modalServiceName").textContent = serviceName;
+    document.getElementById("modalPhone").textContent = phone || "-";
+    document.getElementById("modalStaff").textContent = staffName;
+    document.getElementById("modalTime").textContent = `${startTime} ~ ${endTime}`;
+    document.getElementById("modalVisits").textContent = visits || "0";
+    document.getElementById("modalNoShow").textContent = noShow || "0";
+    document.getElementById("modalDeposit").textContent = deposit || "none";
+    document.getElementById("modalMemo").textContent = memo || "-";
+
+    const statusBadge = document.getElementById("modalStatusBadge");
+    statusBadge.textContent = status || "-";
+    statusBadge.className = `status-badge modal-status-${status || "pending"}`;
+
+    document.getElementById("bookingDetailModal").style.display = "block";
+}
+
+function closeBookingDetailModal() {
+    document.getElementById("bookingDetailModal").style.display = "none";
+    selectedTimelineBookingId = null;
+}
+
+function setTimelineModalStatus(status) {
+    const statusBadge = document.getElementById("modalStatusBadge");
+    if (!statusBadge) return;
+
+    statusBadge.textContent = status || "-";
+    statusBadge.className = `status-badge modal-status-${status || "pending"}`;
+}
+
+function updateTimelineBlockStatus(bookingId, status) {
+    const block = document.querySelector(`.timeline-booking-block[data-booking-id="${bookingId}"]`);
+    if (!block) return;
+
+    block.dataset.status = status;
+}
+
+function isTerminalTimelineStatus(status) {
+    return ["completed", "cancelled", "no_show"].includes(status);
+}
+
+function goToCalendarForBooking() {
+    window.location.href = `/admin/calendar?date={{ target_date }}`;
+}
+
+function requestTimelineReschedule() {
+    if (!selectedTimelineBookingId) return;
+
+    const block = getSelectedTimelineBookingBlock();
+    if (!block) {
+        showTimelineNotice("Could not find the selected booking block.", "error");
+        return;
+    }
+
+    const dateText = "{{ target_date }}";
+    const startTime = block.dataset.startTime || "09:00";
+    const input = document.getElementById("timelineRescheduleInput");
+    const summary = document.getElementById("rescheduleBookingSummary");
+
+    input.value = `${dateText}T${startTime}`;
+    summary.textContent = `${block.dataset.customerName || "-"} · ${block.dataset.serviceName || "-"} · ${block.dataset.staffName || "-"}`;
+
+    document.getElementById("timelineRescheduleModal").style.display = "block";
+}
+
+function closeTimelineRescheduleModal() {
+    document.getElementById("timelineRescheduleModal").style.display = "none";
+}
+
+function submitTimelineReschedule() {
+    if (!selectedTimelineBookingId) return;
+
+    const input = document.getElementById("timelineRescheduleInput");
+    const newStartTime = input.value;
+
+    if (!newStartTime) {
+        showTimelineNotice("Please select a new date and time.", "error");
+        return;
+    }
+
+    fetch(`/admin/bookings/${selectedTimelineBookingId}/reschedule`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            new_start_time: `${newStartTime}:00`,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (!data.ok) {
+            showTimelineNotice(data.message || "Failed to reschedule booking.", "error");
+            return;
+        }
+
+        applyTimelineBookingUpdate(data);
+        closeTimelineRescheduleModal();
+        closeBookingDetailModal();
+        showTimelineNotice("Booking rescheduled successfully.", "success");
+    })
+    .catch(() => {
+        showTimelineNotice("Failed to reschedule booking. Please check your connection and try again.", "error");
+    });
+}
+
+function requestTimelineAssignment() {
+    if (!selectedTimelineBookingId) return;
+
+    const block = document.querySelector(`.timeline-booking-block[data-booking-id="${selectedTimelineBookingId}"]`);
+    if (!block) {
+        showTimelineNotice("Booking block not found. Please refresh and try again.", "error");
+        return;
+    }
+
+    const dateText = "{{ target_date }}";
+    const startTime = block.dataset.startTime || "09:00";
+
+    document.getElementById("timelineAssignmentStaff").value = block.dataset.staffId || "";
+    document.getElementById("timelineAssignmentService").value = block.dataset.serviceId || "";
+    document.getElementById("timelineAssignmentInput").value = `${dateText}T${startTime}`;
+    document.getElementById("assignmentBookingSummary").textContent = `${block.dataset.customerName || "-"} · ${block.dataset.serviceName || "-"} · ${block.dataset.staffName || "-"}`;
+
+    document.getElementById("timelineAssignmentModal").style.display = "block";
+}
+
+function closeTimelineAssignmentModal() {
+    document.getElementById("timelineAssignmentModal").style.display = "none";
+}
+
+function submitTimelineAssignment() {
+    if (!selectedTimelineBookingId) return;
+
+    const staffId = document.getElementById("timelineAssignmentStaff").value;
+    const serviceId = document.getElementById("timelineAssignmentService").value;
+    const newStartTime = document.getElementById("timelineAssignmentInput").value;
+
+    if (!staffId || !serviceId || !newStartTime) {
+        showTimelineNotice("Please select staff, service, and date/time.", "error");
+        return;
+    }
+
+    fetch(`/admin/bookings/${selectedTimelineBookingId}/assignment`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            staff_id: staffId,
+            service_id: serviceId,
+            new_start_time: `${newStartTime}:00`,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (!data.ok) {
+            showTimelineNotice(data.message || "Failed to update assignment.", "error");
+            return;
+        }
+
+        applyTimelineBookingUpdate(data);
+        closeTimelineAssignmentModal();
+        closeBookingDetailModal();
+        showTimelineNotice("Booking assignment updated successfully.", "success");
+    })
+    .catch(() => {
+        showTimelineNotice("Failed to update assignment. Please check your connection and try again.", "error");
+    });
+}
+
+function getTimelineStatusLabel(status) {
+    const labels = {
+        pending: "pending",
+        confirmed: "confirmed",
+        completed: "completed",
+        cancelled: "cancelled",
+        no_show: "no-show",
+    };
+
+    return labels[status] || status;
+}
+
+function requestTimelineStatusChange(newStatus) {
+    if (!selectedTimelineBookingId) return;
+
+    const label = getTimelineStatusLabel(newStatus);
+    const terminal = isTerminalTimelineStatus(newStatus);
+    const confirmMessage = terminal
+        ? `Change this booking to ${label} and remove it from the timeline?`
+        : `Change this booking to ${label}?`;
+
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    const bookingId = selectedTimelineBookingId;
+
+    fetch(`/admin/timeline/bookings/${bookingId}/status`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            status: newStatus,
+        }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (!data.ok) {
+            showTimelineNotice(data.message || "Failed to update booking status.", "error");
+            return;
+        }
+
+        if (isTerminalTimelineStatus(newStatus)) {
+            removeTimelineBookingBlock(bookingId);
+            closeBookingDetailModal();
+        } else {
+            updateTimelineBlockStatus(bookingId, newStatus);
+            setTimelineModalStatus(newStatus);
+        }
+
+        showTimelineNotice(`Booking status changed to ${label}.`, "success");
+    })
+    .catch(() => {
+        showTimelineNotice("Failed to update booking status. Please check your connection and try again.", "error");
+    });
+}
+
+function requestTimelineCancel() {
+    requestTimelineStatusChange("cancelled");
+}
+
+window.addEventListener("click", function(event) {
+    const detailModal = document.getElementById("bookingDetailModal");
+    const rescheduleModal = document.getElementById("timelineRescheduleModal");
+    const assignmentModal = document.getElementById("timelineAssignmentModal");
+
+    if (event.target === detailModal) {
+        closeBookingDetailModal();
+    }
+
+    if (event.target === rescheduleModal) {
+        closeTimelineRescheduleModal();
+    }
+
+    if (event.target === assignmentModal) {
+        closeTimelineAssignmentModal();
+    }
+});
+
+
+let draggingBookingId = null;
+let draggingDurationMinutes = null;
+let isTimelineDragging = false;
+let lastTimelineDragEndAt = 0;
+let timelineNoticeTimer = null;
+
+const PIXELS_PER_MINUTE = 2;
+const DROP_STEP_MINUTES = 15;
+
+function pad2(value) {
+    return String(value).padStart(2, "0");
+}
+
+function showTimelineNotice(message, type = "error") {
+    const notice = document.getElementById("timelineNotice");
+    if (!notice) {
+        alert(message);
+        return;
+    }
+
+    notice.textContent = message;
+    notice.className = `timeline-notice ${type}`;
+    notice.style.display = "block";
+
+    if (timelineNoticeTimer) {
+        clearTimeout(timelineNoticeTimer);
+    }
+
+    timelineNoticeTimer = setTimeout(function() {
+        notice.style.display = "none";
+    }, 3200);
+}
+
+function formatLocalDateTime(date) {
+    return (
+        date.getFullYear() + "-" +
+        pad2(date.getMonth() + 1) + "-" +
+        pad2(date.getDate()) + "T" +
+        pad2(date.getHours()) + ":" +
+        pad2(date.getMinutes()) + ":00"
+    );
+}
+
+function roundToQuarterHour(minutes) {
+    return Math.round(minutes / DROP_STEP_MINUTES) * DROP_STEP_MINUTES;
+}
+
+function getDropMinutesFromColumn(event, column) {
+    const rect = column.getBoundingClientRect();
+    const rawTop = event.clientY - rect.top;
+    const rawMinutes = rawTop / PIXELS_PER_MINUTE;
+    const snappedMinutes = roundToQuarterHour(rawMinutes);
+
+    const duration = Number(draggingDurationMinutes || 0);
+    const totalMinutes = Number(column.dataset.totalMinutes || 0);
+    const maxStartMinutes = Math.max(0, totalMinutes - duration);
+
+    return Math.min(Math.max(snappedMinutes, 0), maxStartMinutes);
+}
+
+function getStaffNameFromColumn(column) {
+    if (column && column.classList.contains("unassigned-column")) {
+        return "Unassigned";
+    }
+
+    const columns = Array.from(document.querySelectorAll(".timeline-staff-column[data-staff-id]"));
+    const index = columns.indexOf(column);
+    const headers = Array.from(document.querySelectorAll(".timeline-staff-header:not(.unassigned)"));
+    return headers[index] ? headers[index].textContent.trim() : "selected staff";
+}
+
+function buildTimelineDateTime(column, minutesFromTimelineStart) {
+    const dateText = column.dataset.date;
+    const startText = column.dataset.timelineStart || "09:00";
+    const [startHour, startMinute] = startText.split(":").map(Number);
+
+    const result = new Date(`${dateText}T00:00:00`);
+    result.setHours(startHour);
+    result.setMinutes(startMinute + minutesFromTimelineStart);
+    result.setSeconds(0);
+    result.setMilliseconds(0);
+
+    return result;
+}
+
+function removeDropPreviews() {
+    document.querySelectorAll(".timeline-drop-preview").forEach(function(preview) {
+        preview.remove();
+    });
+}
+
+function formatDisplayTimeFromDate(date) {
+    return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+
+function getSelectedTimelineBookingBlock() {
+    if (!selectedTimelineBookingId) return null;
+    return document.querySelector(`.timeline-booking-block[data-booking-id="${selectedTimelineBookingId}"]`);
+}
+
+function getTimelineDateText() {
+    return "{{ target_date }}";
+}
+
+function getColumnForStaffId(staffId) {
+    if (staffId === null || staffId === undefined || staffId === "" || staffId === "null") {
+        return document.querySelector(".unassigned-column");
+    }
+
+    return document.querySelector(`.timeline-staff-column[data-staff-id="${staffId}"]`);
+}
+
+function getMinutesFromDateTimeForColumn(isoText, column) {
+    if (!isoText || !column) return 0;
+
+    const date = new Date(isoText);
+    if (Number.isNaN(date.getTime())) {
+        return 0;
+    }
+
+    const startText = column.dataset.timelineStart || "09:00";
+    const [startHour, startMinute] = startText.split(":").map(Number);
+    const timelineStartMinutes = startHour * 60 + startMinute;
+    const bookingMinutes = date.getHours() * 60 + date.getMinutes();
+
+    return bookingMinutes - timelineStartMinutes;
+}
+
+function isSameTimelineDate(isoText) {
+    if (!isoText) return true;
+    return isoText.slice(0, 10) === getTimelineDateText();
+}
+
+function applyTimelineBookingUpdate(data) {
+    if (!data || !data.booking_id) {
+        window.location.reload();
+        return;
+    }
+
+    if (!isSameTimelineDate(data.new_start_time)) {
+        removeTimelineBookingBlock(data.booking_id);
+        return;
+    }
+
+    const targetColumn = getColumnForStaffId(data.new_staff_id);
+    const minutesFromTimelineStart = getMinutesFromDateTimeForColumn(
+        data.new_start_time,
+        targetColumn
+    );
+
+    updateBookingBlockAfterMove(data, targetColumn, minutesFromTimelineStart);
+}
+
+function removeTimelineBookingBlock(bookingId) {
+    const block = document.querySelector(`.timeline-booking-block[data-booking-id="${bookingId}"]`);
+    if (!block) return;
+
+    block.classList.add("removing");
+    setTimeout(function() {
+        block.remove();
+    }, 180);
+}
+
+function updateBookingBlockAfterMove(data, targetColumn, minutesFromTimelineStart) {
+    const block = document.querySelector(`.timeline-booking-block[data-booking-id="${data.booking_id}"]`);
+
+    if (!block || !targetColumn) {
+        window.location.reload();
+        return;
+    }
+
+    const startText = data.new_start_display || formatIsoTime(data.new_start_time);
+    const endText = data.new_end_display || formatIsoTime(data.new_end_time);
+    const staffName = data.staff_name || getStaffNameFromColumn(targetColumn);
+    const serviceName = data.service_name || block.dataset.serviceName || "-";
+    const serviceId = data.service_id || block.dataset.serviceId || "";
+    const category = data.category || block.dataset.category || "etc";
+    const durationMinutes = Number(data.duration_minutes || block.dataset.durationMinutes || 30);
+
+    block.style.top = `${minutesFromTimelineStart * PIXELS_PER_MINUTE}px`;
+    block.style.height = `${durationMinutes * PIXELS_PER_MINUTE}px`;
+    block.dataset.staffId = data.new_staff_id ? String(data.new_staff_id) : "";
+    block.dataset.staffName = staffName || "Unassigned";
+    block.dataset.serviceId = String(serviceId);
+    block.dataset.serviceName = serviceName;
+    block.dataset.category = category;
+    block.dataset.durationMinutes = String(durationMinutes);
+    block.dataset.startTime = startText;
+    block.dataset.endTime = endText;
+    if (data.status) {
+        block.dataset.status = data.status;
+    }
+
+    block.classList.forEach(function(className) {
+        if (className.startsWith("category-")) {
+            block.classList.remove(className);
+        }
+    });
+    block.classList.add(`category-${category}`);
+
+    const serviceLabel = block.querySelector(":scope > span");
+    if (serviceLabel) {
+        serviceLabel.textContent = serviceName;
+    }
+
+    const small = block.querySelector("small");
+    if (small) {
+        small.textContent = `${startText}~${endText}`;
+    }
+
+    const tooltip = block.querySelector(".booking-tooltip");
+    if (tooltip) {
+        const tooltipRows = tooltip.querySelectorAll("p");
+        if (tooltipRows[1]) {
+            tooltipRows[1].textContent = `${serviceName} · ${staffName}`;
+        }
+        if (tooltipRows[2]) {
+            tooltipRows[2].textContent = `${startText} ~ ${endText}`;
+        }
+    }
+
+    targetColumn.appendChild(block);
+}
+
+function formatIsoTime(isoText) {
+    if (!isoText) return "-";
+    const date = new Date(isoText);
+    if (Number.isNaN(date.getTime())) {
+        const parts = isoText.split("T");
+        return parts.length > 1 ? parts[1].slice(0, 5) : isoText.slice(11, 16);
+    }
+    return formatDisplayTimeFromDate(date);
+}
+
+function showDropPreview(column, minutesFromTimelineStart) {
+    removeDropPreviews();
+
+    const duration = Number(draggingDurationMinutes || 30);
+    const previewStartDate = buildTimelineDateTime(column, minutesFromTimelineStart);
+    const previewEndDate = buildTimelineDateTime(column, minutesFromTimelineStart + duration);
+    const previewStartText = formatDisplayTimeFromDate(previewStartDate);
+    const previewEndText = formatDisplayTimeFromDate(previewEndDate);
+
+    const preview = document.createElement("div");
+    preview.className = "timeline-drop-preview";
+    preview.style.top = `${minutesFromTimelineStart * PIXELS_PER_MINUTE}px`;
+    preview.style.height = `${duration * PIXELS_PER_MINUTE}px`;
+
+    const label = document.createElement("div");
+    label.className = "timeline-drop-preview-label";
+    label.textContent = `${previewStartText} ~ ${previewEndText}`;
+
+    preview.appendChild(label);
+    column.appendChild(preview);
+}
+
+document.querySelectorAll(".timeline-booking-block").forEach(function(block) {
+    block.addEventListener("dragstart", function(event) {
+        isTimelineDragging = true;
+        draggingBookingId = block.dataset.bookingId;
+        draggingDurationMinutes = Number(block.dataset.durationMinutes || 30);
+
+        block.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", draggingBookingId);
+    });
+
+    block.addEventListener("dragend", function() {
+        block.classList.remove("dragging");
+        isTimelineDragging = false;
+        lastTimelineDragEndAt = Date.now();
+        draggingBookingId = null;
+        draggingDurationMinutes = null;
+
+        removeDropPreviews();
+
+        document.querySelectorAll(".timeline-staff-column").forEach(function(column) {
+            column.classList.remove("drag-over");
+        });
+    });
+});
+
+document.querySelectorAll(".timeline-staff-column[data-staff-id]").forEach(function(column) {
+    column.addEventListener("dragover", function(event) {
+        event.preventDefault();
+        column.classList.add("drag-over");
+
+        if (!draggingBookingId) {
+            return;
+        }
+
+        const minutesFromTimelineStart = getDropMinutesFromColumn(event, column);
+        showDropPreview(column, minutesFromTimelineStart);
+    });
+
+    column.addEventListener("dragleave", function(event) {
+        if (!column.contains(event.relatedTarget)) {
+            column.classList.remove("drag-over");
+            removeDropPreviews();
+        }
+    });
+
+    column.addEventListener("drop", function(event) {
+        event.preventDefault();
+        column.classList.remove("drag-over");
+        removeDropPreviews();
+
+        const bookingId =
+            draggingBookingId || event.dataTransfer.getData("text/plain");
+
+        const staffId = column.dataset.staffId;
+
+        if (!bookingId || !staffId) {
+            return;
+        }
+
+        const minutesFromTimelineStart = getDropMinutesFromColumn(event, column);
+        const newStartDate = buildTimelineDateTime(column, minutesFromTimelineStart);
+        const newStartTime = formatLocalDateTime(newStartDate);
+        const newEndDate = buildTimelineDateTime(
+            column,
+            minutesFromTimelineStart + Number(draggingDurationMinutes || 30)
+        );
+        const displayStartTime = formatDisplayTimeFromDate(newStartDate);
+        const displayEndTime = formatDisplayTimeFromDate(newEndDate);
+
+        const staffName = getStaffNameFromColumn(column);
+
+        if (!confirm(`Move this booking to ${staffName}, ${displayStartTime} ~ ${displayEndTime}?`)) {
+            return;
+        }
+
+        fetch("/admin/timeline/move", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                booking_id: bookingId,
+                staff_id: staffId,
+                new_start_time: newStartTime,
+            }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.ok) {
+                updateBookingBlockAfterMove(data, column, minutesFromTimelineStart);
+                showTimelineNotice("Booking moved successfully.", "success");
+            } else {
+                showTimelineNotice(data.message || "Failed to move booking.", "error");
+            }
+        })
+        .catch(() => {
+            showTimelineNotice("Failed to move booking. Please check your connection and try again.", "error");
+        });
+    });
+});
+
+</script>
+
+{% endblock %}

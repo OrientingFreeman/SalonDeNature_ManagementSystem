@@ -20,7 +20,7 @@ from io import BytesIO
 
 from dashboard.models import ShopSettings, AdminUser
 from extensions import db
-from bookings.models import Booking, Service, StaffService
+from bookings.models import Booking, Service, StaffService, BookingEvent
 from bookings.services import (
     create_booking,
     find_available_staff_for_service,
@@ -83,12 +83,7 @@ def dashboard_home():
         for booking in completed_today
     )
 
-    return render_template(
-        "admin_home.html",
-        today_booking_count=today_booking_count,
-        pending_count=pending_count,
-        today_revenue=today_revenue
-    )
+    return redirect(url_for("dashboard.admin_timeline"))
 
 
 @dashboard_bp.route("/admin/login", methods=["GET", "POST"])
@@ -1143,13 +1138,31 @@ def admin_reschedule_booking(booking_id):
             "message": "Invalid date/time format."
         }), 400
 
+    if not _is_quarter_hour(new_start_time):
+        return jsonify({
+            "ok": False,
+            "message": "Bookings can only be rescheduled in 15-minute increments."
+        }), 400
+
     result = reschedule_booking(
         booking_id=booking_id,
         new_start_time=new_start_time
     )
 
-    status_code = 200 if result.get("ok") else 400
-    return jsonify(result), status_code
+    if not result.get("ok"):
+        return jsonify(result), 400
+
+    booking = Booking.query.get(booking_id)
+
+    if not booking:
+        return jsonify({
+            "ok": False,
+            "message": "Booking not found after reschedule."
+        }), 404
+
+    payload = _timeline_booking_payload(booking)
+    payload["message"] = result.get("message", "Booking rescheduled successfully.")
+    return jsonify(payload), 200
 
 
 @dashboard_bp.route("/admin/bookings/<int:booking_id>/assignment", methods=["POST"])
@@ -1171,10 +1184,16 @@ def admin_update_booking_assignment_route(booking_id):
         staff_id = int(staff_id_raw)
         service_id = int(service_id_raw)
         new_start_time = datetime.fromisoformat(new_start_time_str)
-    except ValueError:
+    except (TypeError, ValueError):
         return jsonify({
             "ok": False,
             "message": "Invalid request data."
+        }), 400
+
+    if not _is_quarter_hour(new_start_time):
+        return jsonify({
+            "ok": False,
+            "message": "Bookings can only be assigned in 15-minute increments."
         }), 400
 
     result = admin_update_booking_assignment(
@@ -1184,8 +1203,20 @@ def admin_update_booking_assignment_route(booking_id):
         new_start_time=new_start_time
     )
 
-    status_code = 200 if result.get("ok") else 400
-    return jsonify(result), status_code
+    if not result.get("ok"):
+        return jsonify(result), 400
+
+    booking = Booking.query.get(booking_id)
+
+    if not booking:
+        return jsonify({
+            "ok": False,
+            "message": "Booking not found after assignment update."
+        }), 404
+
+    payload = _timeline_booking_payload(booking)
+    payload["message"] = result.get("message", "Booking assignment updated successfully.")
+    return jsonify(payload), 200
 
 
 @dashboard_bp.route("/admin/change-password", methods=["GET", "POST"])
@@ -1271,3 +1302,315 @@ def reset_customer_password(customer_id):
 
     flash("Customer password has been reset.")
     return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
+
+
+
+@dashboard_bp.route("/admin/timeline")
+@admin_required
+def admin_timeline():
+
+    target_date_str = request.args.get("date")
+    if target_date_str:
+        target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
+    else:
+        target_date = date.today()
+
+    day_start = datetime.combine(target_date, time(0, 0))
+    day_end = day_start + timedelta(days=1)
+
+    settings = ShopSettings.query.first()
+    open_hour = 9
+    close_hour = 21
+
+    staffs = Staff.query.filter_by(is_active=True).order_by(Staff.display_order.asc()).all()
+    services = Service.query.filter_by(is_active=True).order_by(Service.name_ko.asc()).all()
+
+    bookings = (
+        Booking.query
+        .filter(
+            Booking.start_time >= day_start,
+            Booking.start_time < day_end,
+            Booking.status.in_(["pending", "confirmed"])
+        )
+        .order_by(Booking.start_time.asc())
+        .all()
+    )
+
+    timeline_start = datetime.combine(target_date, time(open_hour, 0))
+    timeline_end = datetime.combine(target_date, time(close_hour, 0))
+    total_minutes = int((timeline_end - timeline_start).total_seconds() / 60)
+
+    time_slots = []
+    current = timeline_start
+    while current <= timeline_end:
+        time_slots.append(current.strftime("%H:%M"))
+        current += timedelta(minutes=30)
+
+    weekday = target_date.weekday()
+
+    staff_schedules = StaffSchedule.query.filter_by(
+        day_of_week=weekday,
+        is_working=True
+    ).all()
+
+    staff_time_offs = StaffTimeOff.query.filter(
+        StaffTimeOff.start_time < day_end,
+        StaffTimeOff.end_time > day_start
+    ).all()
+
+    return render_template(
+        "admin_timeline.html",
+        target_date=target_date,
+        staffs=staffs,
+        bookings=bookings,
+        time_slots=time_slots,
+        timeline_start=timeline_start,
+        total_minutes=total_minutes,
+        today=date.today(),
+        prev_date=target_date - timedelta(days=1),
+        next_date=target_date + timedelta(days=1),
+        now=datetime.now(),
+        staff_schedules=staff_schedules,
+        staff_time_offs=staff_time_offs,
+        services=services,
+    )
+
+
+
+
+def _is_quarter_hour(dt):
+    return (
+        dt.minute % 15 == 0
+        and dt.second == 0
+        and dt.microsecond == 0
+    )
+
+
+def _has_time_overlap(start_a, end_a, start_b, end_b):
+    return start_a < end_b and end_a > start_b
+
+
+def _validate_staff_booking_window(staff_id, service_id, start_time, end_time):
+    staff = Staff.query.get(staff_id)
+
+    if not staff or not staff.is_active:
+        return "Selected staff member is not available."
+
+    linked_service = StaffService.query.filter_by(
+        staff_id=staff_id,
+        service_id=service_id
+    ).first()
+
+    if not linked_service:
+        return "Selected staff member cannot perform this service."
+
+    weekday = start_time.weekday()
+
+    schedule = StaffSchedule.query.filter_by(
+        staff_id=staff_id,
+        day_of_week=weekday,
+        is_working=True
+    ).first()
+
+    if not schedule:
+        return "Selected staff member is not working on this day."
+
+    work_start = datetime.combine(start_time.date(), schedule.start_time)
+    work_end = datetime.combine(start_time.date(), schedule.end_time)
+
+    if start_time < work_start or end_time > work_end:
+        return "Booking time is outside selected staff working hours."
+
+    if schedule.break_start_time and schedule.break_end_time:
+        break_start = datetime.combine(start_time.date(), schedule.break_start_time)
+        break_end = datetime.combine(start_time.date(), schedule.break_end_time)
+
+        if _has_time_overlap(start_time, end_time, break_start, break_end):
+            return "Booking overlaps with selected staff break time."
+
+    time_off = StaffTimeOff.query.filter(
+        StaffTimeOff.staff_id == staff_id,
+        StaffTimeOff.start_time < end_time,
+        StaffTimeOff.end_time > start_time
+    ).first()
+
+    if time_off:
+        return "Booking overlaps with selected staff time off."
+
+    return None
+
+
+def _timeline_booking_payload(booking):
+    staff = Staff.query.get(booking.staff_id)
+    service = Service.query.get(booking.service_id)
+    duration_minutes = int(
+        (booking.end_time - booking.start_time).total_seconds() / 60
+    )
+
+    return {
+        "ok": True,
+        "booking_id": booking.id,
+        "new_staff_id": booking.staff_id,
+        "staff_id": booking.staff_id,
+        "staff_name": staff.name if staff else "Unassigned",
+        "service_id": booking.service_id,
+        "service_name": service.name_ko if service else "",
+        "category": service.category if service else "etc",
+        "duration_minutes": duration_minutes,
+        "new_start_time": booking.start_time.isoformat(),
+        "new_end_time": booking.end_time.isoformat(),
+        "new_start_display": booking.start_time.strftime("%H:%M"),
+        "new_end_display": booking.end_time.strftime("%H:%M"),
+        "status": booking.status or "",
+    }
+
+
+
+@dashboard_bp.route("/admin/timeline/move", methods=["POST"])
+@admin_required
+def admin_timeline_move():
+    data = request.get_json() or {}
+
+    booking_id = data.get("booking_id")
+    new_staff_id_raw = data.get("staff_id")
+    new_start_time_str = data.get("new_start_time")
+
+    if not booking_id or not new_staff_id_raw or not new_start_time_str:
+        return jsonify({
+            "ok": False,
+            "message": "booking_id, staff_id, and new_start_time are required."
+        }), 400
+
+    try:
+        new_staff_id = int(new_staff_id_raw)
+        new_start_time = datetime.fromisoformat(new_start_time_str)
+    except (TypeError, ValueError):
+        return jsonify({
+            "ok": False,
+            "message": "Invalid staff or date/time data."
+        }), 400
+
+    if not _is_quarter_hour(new_start_time):
+        return jsonify({
+            "ok": False,
+            "message": "Bookings can only be moved in 15-minute increments."
+        }), 400
+
+    booking = Booking.query.get(booking_id)
+
+    if not booking:
+        return jsonify({
+            "ok": False,
+            "message": "Booking not found."
+        }), 404
+
+    if booking.status not in ["pending", "confirmed"]:
+        return jsonify({
+            "ok": False,
+            "message": "Only pending or confirmed bookings can be moved."
+        }), 400
+
+    duration_minutes = int(
+        (booking.end_time - booking.start_time).total_seconds() / 60
+    )
+
+    if duration_minutes <= 0:
+        return jsonify({
+            "ok": False,
+            "message": "Invalid booking duration."
+        }), 400
+
+    new_end_time = new_start_time + timedelta(minutes=duration_minutes)
+
+    validation_message = _validate_staff_booking_window(
+        staff_id=new_staff_id,
+        service_id=booking.service_id,
+        start_time=new_start_time,
+        end_time=new_end_time
+    )
+
+    if validation_message:
+        return jsonify({
+            "ok": False,
+            "message": validation_message
+        }), 400
+
+    overlapped_booking = Booking.query.filter(
+        Booking.id != booking.id,
+        Booking.staff_id == new_staff_id,
+        Booking.status.in_(["pending", "confirmed"]),
+        Booking.start_time < new_end_time,
+        Booking.end_time > new_start_time
+    ).first()
+
+    if overlapped_booking:
+        return jsonify({
+            "ok": False,
+            "message": "This staff member already has a booking at this time."
+        }), 400
+
+    old_staff_id = booking.staff_id
+    old_start_time = booking.start_time
+    old_end_time = booking.end_time
+
+    booking.staff_id = new_staff_id
+    booking.start_time = new_start_time
+    booking.end_time = new_end_time
+
+    event = BookingEvent(
+        booking_id=booking.id,
+        event_type="timeline_drag_moved",
+        memo=(
+            f"staff {old_staff_id} -> {new_staff_id}, "
+            f"time {old_start_time.strftime('%Y-%m-%d %H:%M')}~{old_end_time.strftime('%H:%M')} "
+            f"-> {new_start_time.strftime('%Y-%m-%d %H:%M')}~{new_end_time.strftime('%H:%M')}"
+        )
+    )
+
+    db.session.add(event)
+    db.session.commit()
+
+    payload = _timeline_booking_payload(booking)
+    payload["old_staff_id"] = old_staff_id
+    payload["old_start_time"] = old_start_time.isoformat()
+
+    return jsonify(payload)
+
+
+@dashboard_bp.route("/admin/timeline/bookings/<int:booking_id>/status", methods=["POST"])
+@admin_required
+def admin_timeline_update_booking_status(booking_id):
+    data = request.get_json() or {}
+    new_status = data.get("status")
+
+    allowed_statuses = {"pending", "confirmed", "completed", "cancelled", "no_show"}
+
+    if new_status not in allowed_statuses:
+        return jsonify({
+            "ok": False,
+            "message": "Invalid booking status."
+        }), 400
+
+    booking = Booking.query.get(booking_id)
+
+    if not booking:
+        return jsonify({
+            "ok": False,
+            "message": "Booking not found."
+        }), 404
+
+    old_status = booking.status
+    booking.status = new_status
+
+    event = BookingEvent(
+        booking_id=booking.id,
+        event_type="timeline_status_changed",
+        memo=f"status {old_status} -> {new_status}"
+    )
+
+    db.session.add(event)
+    db.session.commit()
+
+    payload = _timeline_booking_payload(booking)
+    payload["old_status"] = old_status
+    return jsonify(payload), 200

@@ -43,6 +43,63 @@
             </label>
         </div>
 
+        <div class="settings-row settings-deposit-account-row">
+            <div>
+                <h2>Deposit Account</h2>
+                <p>Displayed to customers when a service requires a deposit.</p>
+            </div>
+            <div class="settings-field-stack">
+                <label>
+                    <span>Bank</span>
+                    <input
+                        type="text"
+                        name="deposit_bank_name"
+                        value="{{ settings.deposit_bank_name or '' }}"
+                        placeholder="e.g. Shinhan Bank"
+                    >
+                </label>
+
+                <label>
+                    <span>Account Number</span>
+                    <input
+                        type="text"
+                        name="deposit_account_number"
+                        value="{{ settings.deposit_account_number or '' }}"
+                        placeholder="e.g. 110-123-456789"
+                    >
+                </label>
+
+                <label>
+                    <span>Account Holder</span>
+                    <input
+                        type="text"
+                        name="deposit_account_holder"
+                        value="{{ settings.deposit_account_holder or '' }}"
+                        placeholder="e.g. Salon De Nature"
+                    >
+                </label>
+
+                <label>
+                    <span>Deposit Due Minutes</span>
+                    <input
+                        type="number"
+                        name="deposit_due_minutes"
+                        value="{{ settings.deposit_due_minutes or 30 }}"
+                        min="0"
+                    >
+                </label>
+
+                <label>
+                    <span>Deposit Notice</span>
+                    <textarea
+                        name="deposit_notice"
+                        rows="4"
+                        placeholder="Please transfer using the reservation name."
+                    >{{ settings.deposit_notice or '' }}</textarea>
+                </label>
+            </div>
+        </div>
+
         <div class="settings-row">
             <div>
                 <h2>Booking Approval</h2>
@@ -114,6 +171,40 @@
     height:18px;
     accent-color:var(--forest);
 }
+
+.settings-field-stack{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+.settings-field-stack label{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+.settings-field-stack span{
+    color:var(--forest);
+    font-size:13px;
+    font-weight:800;
+}
+.settings-field-stack input,
+.settings-field-stack textarea{
+    width:100%;
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:15px;
+    box-sizing:border-box;
+    font-family:inherit;
+}
+.settings-field-stack textarea{
+    resize:vertical;
+    min-height:96px;
+}
+.settings-deposit-account-row{
+    align-items:start;
+}
+
 @media(max-width:768px){
     .settings-row{
         grid-template-columns:1fr;

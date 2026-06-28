@@ -182,6 +182,20 @@ def update_settings():
         request.form["booking_approval_mode"]
     )
 
+    settings.deposit_bank_name = request.form.get("deposit_bank_name") or None
+    settings.deposit_account_number = request.form.get("deposit_account_number") or None
+    settings.deposit_account_holder = request.form.get("deposit_account_holder") or None
+    settings.deposit_notice = request.form.get("deposit_notice") or None
+
+    deposit_due_minutes_raw = request.form.get("deposit_due_minutes")
+    try:
+        settings.deposit_due_minutes = int(deposit_due_minutes_raw or 30)
+    except ValueError:
+        settings.deposit_due_minutes = 30
+
+    if settings.deposit_due_minutes < 0:
+        settings.deposit_due_minutes = 0
+
     if not deposit_enabled:
         services = Service.query.all()
 

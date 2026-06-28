@@ -10,6 +10,11 @@ class ShopSettings(db.Model):
     no_show_limit_count = db.Column(db.Integer, default=3)
     same_day_cancel_block_enabled = db.Column(db.Boolean, default=True)
     deposit_enabled = db.Column(db.Boolean, default=False)
+    deposit_bank_name = db.Column(db.String(100), nullable=True)
+    deposit_account_number = db.Column(db.String(100), nullable=True)
+    deposit_account_holder = db.Column(db.String(100), nullable=True)
+    deposit_notice = db.Column(db.Text, nullable=True)
+    deposit_due_minutes = db.Column(db.Integer, default=30)
 
     booking_approval_mode = db.Column(db.String(30), default="auto")
     # auto / manual

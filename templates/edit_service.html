@@ -1,6 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Service{% endblock %}
+{% block title %}Edit Service
+<script>
+    const depositCheckbox = document.getElementById("deposit_required");
+    const depositAmountInput = document.getElementById("deposit_amount");
+
+    function syncDepositAmountInput() {
+        if (!depositCheckbox || !depositAmountInput) {
+            return;
+        }
+
+        depositAmountInput.disabled = !depositCheckbox.checked;
+        depositAmountInput.required = depositCheckbox.checked;
+
+        if (!depositCheckbox.checked) {
+            depositAmountInput.value = 0;
+        }
+    }
+
+    if (depositCheckbox && depositAmountInput) {
+        depositCheckbox.addEventListener("change", syncDepositAmountInput);
+        syncDepositAmountInput();
+    }
+</script>
+
+{% endblock %}
 
 {% block content %}
 
@@ -57,12 +81,14 @@
                 <div>
                     <label for="deposit_amount">Deposit Amount</label>
                     <input
-    type="number"
-    name="deposit_amount"
-    id="deposit_amount"
-    value="{{ service.deposit_amount }}"
-    {% if not service.deposit_required %}disabled{% endif %}
->
+                        type="number"
+                        name="deposit_amount"
+                        id="deposit_amount"
+                        value="{{ service.deposit_amount or 0 }}"
+                        min="0"
+                        {% if service.deposit_required %}required{% endif %}
+                        {% if not service.deposit_required %}disabled{% endif %}
+                    >
                 </div>
             {% endif %}
             </div>
@@ -98,5 +124,29 @@
     </div>
 
 </section>
+
+
+<script>
+    const depositCheckbox = document.getElementById("deposit_required");
+    const depositAmountInput = document.getElementById("deposit_amount");
+
+    function syncDepositAmountInput() {
+        if (!depositCheckbox || !depositAmountInput) {
+            return;
+        }
+
+        depositAmountInput.disabled = !depositCheckbox.checked;
+        depositAmountInput.required = depositCheckbox.checked;
+
+        if (!depositCheckbox.checked) {
+            depositAmountInput.value = 0;
+        }
+    }
+
+    if (depositCheckbox && depositAmountInput) {
+        depositCheckbox.addEventListener("change", syncDepositAmountInput);
+        syncDepositAmountInput();
+    }
+</script>
 
 {% endblock %}

@@ -107,6 +107,107 @@
         width:100%;
     }
 }
+
+.my-booking-deposit-card{
+    margin-top:22px;
+    padding:20px;
+    border-radius:18px;
+    background:#F9F7F2;
+    border:1px solid #eee4d4;
+}
+.deposit-card-header{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.deposit-card-header strong{
+    color:var(--forest);
+    font-size:20px;
+}
+.deposit-status-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+.deposit-status-pill.required{
+    background:#fff4d8;
+    color:#9a6b00;
+}
+.deposit-status-pill.paid{
+    background:#e4f4ea;
+    color:#137333;
+}
+.deposit-status-pill.failed{
+    background:#fde8e8;
+    color:#d93025;
+}
+.deposit-status-pill.muted{
+    background:#eee;
+    color:#666;
+}
+.deposit-card-message{
+    margin:12px 0 16px;
+    color:#8a5d00;
+    font-weight:800;
+    line-height:1.5;
+}
+.deposit-card-message.success{
+    color:#137333;
+}
+.deposit-card-message.danger{
+    color:#d93025;
+}
+.deposit-account-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+}
+.deposit-account-grid div{
+    padding:12px;
+    border-radius:13px;
+    background:white;
+}
+.deposit-account-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+.deposit-account-grid strong{
+    display:block;
+    margin-top:4px;
+    color:var(--forest);
+    font-size:14px;
+    word-break:break-word;
+}
+.deposit-transfer-note{
+    margin:14px 0 0;
+    padding:11px 13px;
+    border-radius:12px;
+    background:#fff4d8;
+    color:#8a5d00;
+    font-weight:900;
+    line-height:1.5;
+}
+.deposit-custom-notice{
+    margin:10px 0 0;
+    color:#666;
+    line-height:1.55;
+}
+@media(max-width:640px){
+    .deposit-account-grid{
+        grid-template-columns:1fr;
+    }
+}
+
 </style>
 
 
@@ -173,6 +274,78 @@
 
                 
 
+
+
+                {% if booking.deposit_payment_status and booking.deposit_payment_status != "none" %}
+                <div class="my-booking-deposit-card">
+                    {% if booking.deposit_payment_status == "required" %}
+                        <div class="deposit-card-header">
+                            <span class="deposit-status-pill required">Deposit Required</span>
+                            <strong>₩{{ "{:,}".format(booking.service.deposit_amount or 0) }}</strong>
+                        </div>
+
+                        <p class="deposit-card-message">
+                            Your reservation will be confirmed after the deposit has been verified by the salon.
+                        </p>
+
+                        <div class="deposit-account-grid">
+                            {% if settings and settings.deposit_due_minutes %}
+                            <div>
+                                <span>Transfer Within</span>
+                                <strong>{{ settings.deposit_due_minutes }} minutes</strong>
+                            </div>
+                            {% endif %}
+
+                            {% if settings and settings.deposit_bank_name %}
+                            <div>
+                                <span>Bank</span>
+                                <strong>{{ settings.deposit_bank_name }}</strong>
+                            </div>
+                            {% endif %}
+
+                            {% if settings and settings.deposit_account_number %}
+                            <div>
+                                <span>Account</span>
+                                <strong>{{ settings.deposit_account_number }}</strong>
+                            </div>
+                            {% endif %}
+
+                            {% if settings and settings.deposit_account_holder %}
+                            <div>
+                                <span>Account Holder</span>
+                                <strong>{{ settings.deposit_account_holder }}</strong>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <p class="deposit-transfer-note">
+                            Please transfer using the reservation name.
+                        </p>
+
+                        {% if settings and settings.deposit_notice %}
+                            <p class="deposit-custom-notice">{{ settings.deposit_notice }}</p>
+                        {% endif %}
+                    {% elif booking.deposit_payment_status == "paid" %}
+                        <div class="deposit-card-header">
+                            <span class="deposit-status-pill paid">Deposit Confirmed</span>
+                        </div>
+                        <p class="deposit-card-message success">
+                            Your deposit has been confirmed by the salon.
+                        </p>
+                    {% elif booking.deposit_payment_status == "refunded" %}
+                        <div class="deposit-card-header">
+                            <span class="deposit-status-pill muted">Deposit Refunded</span>
+                        </div>
+                    {% elif booking.deposit_payment_status == "failed" %}
+                        <div class="deposit-card-header">
+                            <span class="deposit-status-pill failed">Deposit Failed</span>
+                        </div>
+                        <p class="deposit-card-message danger">
+                            Please contact the salon to check your reservation.
+                        </p>
+                    {% endif %}
+                </div>
+                {% endif %}
 
                 <div class="booking-card-actions">
                     {% if booking.status in ["pending", "confirmed"] %}

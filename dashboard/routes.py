@@ -516,6 +516,10 @@ def create_service_admin():
     if deposit_enabled:
         deposit_required = request.form.get("deposit_required") == "on"
         deposit_amount = int(request.form.get("deposit_amount") or 0) if deposit_required else 0
+
+        if deposit_required and deposit_amount <= 0:
+            flash("Deposit amount must be greater than 0 when deposit is required.", "error")
+            return redirect(url_for("dashboard.admin_services"))
     else:
         deposit_required = False
         deposit_amount = 0
@@ -584,11 +588,15 @@ def update_service_admin(service_id):
     service.price = int(request.form["price"])
 
     if deposit_enabled:
-        service.deposit_required = request.form.get("deposit_required") == "on"
-        if service.deposit_required:
-            service.deposit_amount = int(request.form.get("deposit_amount") or 0)
-        else:
-            service.deposit_amount = 0
+        deposit_required = request.form.get("deposit_required") == "on"
+        deposit_amount = int(request.form.get("deposit_amount") or 0) if deposit_required else 0
+
+        if deposit_required and deposit_amount <= 0:
+            flash("Deposit amount must be greater than 0 when deposit is required.", "error")
+            return redirect(url_for("dashboard.edit_service_page", service_id=service.id))
+
+        service.deposit_required = deposit_required
+        service.deposit_amount = deposit_amount
     else:
         service.deposit_required = False
         service.deposit_amount = 0
@@ -1476,6 +1484,8 @@ def _timeline_booking_payload(booking):
         "new_start_display": booking.start_time.strftime("%H:%M"),
         "new_end_display": booking.end_time.strftime("%H:%M"),
         "status": booking.status or "",
+        "deposit_payment_status": booking.deposit_payment_status or "none",
+        "deposit_paid": bool(booking.deposit_paid),
     }
 
 
@@ -1589,6 +1599,66 @@ def admin_timeline_move():
     payload["old_start_time"] = old_start_time.isoformat()
 
     return jsonify(payload)
+
+
+
+@dashboard_bp.route("/admin/timeline/bookings/<int:booking_id>/deposit-paid", methods=["POST"])
+@admin_required
+def admin_timeline_mark_deposit_paid(booking_id):
+    booking = Booking.query.get(booking_id)
+
+    if not booking:
+        return jsonify({
+            "ok": False,
+            "message": "Booking not found."
+        }), 404
+
+    if booking.deposit_payment_status == "paid":
+        payload = _timeline_booking_payload(booking)
+        payload["message"] = "Deposit is already marked as paid."
+        return jsonify(payload), 200
+
+    old_deposit_status = booking.deposit_payment_status or "none"
+    old_status = booking.status
+
+    booking.deposit_payment_status = "paid"
+    booking.deposit_paid = True
+
+    settings = ShopSettings.query.first()
+    booking_approval_mode = settings.booking_approval_mode if settings else "auto"
+
+    status_auto_confirmed = False
+
+    if booking_approval_mode == "auto" and booking.status == "pending":
+        booking.status = "confirmed"
+        status_auto_confirmed = True
+
+    event = BookingEvent(
+        booking_id=booking.id,
+        event_type="deposit_marked_paid",
+        memo=(
+            f"deposit {old_deposit_status} -> paid"
+            + (
+                f", status {old_status} -> confirmed by auto approval"
+                if status_auto_confirmed else ""
+            )
+        )
+    )
+
+    db.session.add(event)
+    db.session.commit()
+
+    payload = _timeline_booking_payload(booking)
+    payload["old_deposit_payment_status"] = old_deposit_status
+    payload["old_status"] = old_status
+    payload["status_auto_confirmed"] = status_auto_confirmed
+    payload["message"] = (
+        "Deposit marked as paid and booking confirmed."
+        if status_auto_confirmed
+        else "Deposit marked as paid."
+    )
+
+    return jsonify(payload), 200
 
 
 @dashboard_bp.route("/admin/timeline/bookings/<int:booking_id>/status", methods=["POST"])

@@ -124,13 +124,22 @@
                                 data-deposit="{{ booking.deposit_payment_status or 'none' }}"
                                 data-memo="{{ booking.memo or ''|e }}"
                                 style="top: {{ top_px }}px; height: {{ height_px }}px;"
-                                ondblclick="openBookingDetailModalFromBlock(this)"
+                                onclick="if (!isTimelineDragging && Date.now() - lastTimelineDragEndAt > 300) openBookingDetailModalFromBlock(this)" ondblclick="openBookingDetailModalFromBlock(this)"
                             >
                                 <div class="booking-badges">
                                     {% if booking.customer.visit_count == 0 %}<span class="booking-badge badge-new">NEW</span>{% endif %}
                                     {% if booking.customer.no_show_count and booking.customer.no_show_count > 0 %}<span class="booking-badge badge-warning">NO-SHOW</span>{% endif %}
                                     {% if booking.deposit_payment_status == "paid" %}<span class="booking-badge badge-paid">PAID</span>{% elif booking.deposit_payment_status == "required" %}<span class="booking-badge badge-pending">PENDING</span>{% endif %}
                                 </div>
+                                <button
+                                    type="button"
+                                    class="booking-detail-open-btn"
+                                    draggable="false"
+                                    onmousedown="event.preventDefault(); event.stopPropagation();"
+                                    onclick="event.preventDefault(); event.stopPropagation(); openBookingDetailModalSafe(this);"
+                                >
+                                    Details
+                                </button>
                                 <strong>{{ booking.customer.name }}</strong>
                                 <span>{{ booking.service.name_ko }}</span>
                                 <small>{{ booking.start_time.strftime("%H:%M") }}~{{ booking.end_time.strftime("%H:%M") }}</small>
@@ -182,6 +191,23 @@
             <div><span>Visits</span><strong id="modalVisits"></strong></div>
             <div><span>No-show</span><strong id="modalNoShow"></strong></div>
             <div><span>Deposit</span><strong id="modalDeposit"></strong></div>
+        </div>
+
+
+        <div id="timelineDepositActions" class="timeline-deposit-actions">
+            <div>
+                <span>Deposit Status</span>
+                <strong id="modalDepositActionStatus">none</strong>
+                <p id="modalDepositActionNote"></p>
+            </div>
+            <button
+                type="button"
+                id="markDepositPaidButton"
+                class="booking-action-btn deposit-paid-btn"
+                onclick="requestTimelineDepositPaid()"
+            >
+                Mark as Paid
+            </button>
         </div>
 
         <div class="modal-memo-box">
@@ -504,6 +530,32 @@
 
 
 
+
+.booking-detail-open-btn{
+    position:absolute;
+    right:6px;
+    bottom:6px;
+    z-index:8;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 7px;
+    border:1px solid rgba(23,53,47,.25);
+    border-radius:999px;
+    background:rgba(255,255,255,.9);
+    color:var(--forest);
+    font-size:10px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.12);
+}
+.booking-detail-open-btn:hover{
+    background:white;
+}
+.timeline-booking-block:hover .booking-detail-open-btn{
+    display:inline-flex;
+}
+
 .booking-badges{position:absolute;top:6px;right:6px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
 .booking-badge{font-size:9px;font-weight:900;padding:2px 5px;border-radius:999px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);}
 .badge-new{color:#1f6feb}.badge-warning{color:#d93025}.badge-paid{color:#137333}.badge-pending{color:#b06000}
@@ -627,6 +679,68 @@
     border-color:#d93025;
     color:#d93025;
 }
+
+
+.timeline-deposit-actions{
+    display:none;
+    justify-content:space-between;
+    gap:16px;
+    align-items:center;
+    margin-top:18px;
+    padding:16px;
+    border-radius:14px;
+    background:#fff9ea;
+    border:1px solid #f1dfb8;
+}
+.timeline-deposit-actions span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+.timeline-deposit-actions strong{
+    display:block;
+    margin-top:4px;
+    color:#8a5d00;
+    font-size:16px;
+    font-weight:900;
+}
+.timeline-deposit-actions p{
+    margin:6px 0 0;
+    color:#8a5d00;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.45;
+}
+.timeline-deposit-actions .deposit-paid-btn{
+    border-color:#137333;
+    color:#137333;
+    min-width:130px;
+    flex-shrink:0;
+}
+.timeline-deposit-actions.deposit-paid{
+    background:#eef8f1;
+    border-color:#cfe9d8;
+}
+.timeline-deposit-actions.deposit-paid strong,
+.timeline-deposit-actions.deposit-paid p{
+    color:#137333;
+}
+.timeline-deposit-actions.deposit-none{
+    display:none !important;
+}
+@media(max-width:640px){
+    .timeline-deposit-actions{
+        align-items:stretch;
+        flex-direction:column;
+    }
+    .timeline-deposit-actions .deposit-paid-btn{
+        width:100%;
+    }
+}
+
 
 .timeline-status-actions{
     display:flex;
@@ -818,6 +932,30 @@
     }
 }
 
+
+.booking-detail-open-btn{
+    position:absolute;
+    right:6px;
+    bottom:6px;
+    z-index:80;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 7px;
+    border:1px solid rgba(23,53,47,.25);
+    border-radius:999px;
+    background:rgba(255,255,255,.95);
+    color:var(--forest);
+    font-size:10px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.12);
+    pointer-events:auto;
+}
+.booking-detail-open-btn:hover{
+    background:white;
+}
+
 </style>
 
 <script>
@@ -855,6 +993,7 @@ function openBookingDetailModal(bookingId, customerName, phone, serviceName, sta
     document.getElementById("modalVisits").textContent = visits || "0";
     document.getElementById("modalNoShow").textContent = noShow || "0";
     document.getElementById("modalDeposit").textContent = deposit || "none";
+    syncTimelineDepositActions(deposit || "none", status || "-");
     document.getElementById("modalMemo").textContent = memo || "-";
 
     const statusBadge = document.getElementById("modalStatusBadge");
@@ -863,6 +1002,75 @@ function openBookingDetailModal(bookingId, customerName, phone, serviceName, sta
 
     document.getElementById("bookingDetailModal").style.display = "block";
 }
+
+
+function openBookingDetailModalSafe(buttonOrBlock) {
+    const block = buttonOrBlock.classList && buttonOrBlock.classList.contains("timeline-booking-block")
+        ? buttonOrBlock
+        : buttonOrBlock.closest(".timeline-booking-block");
+
+    if (!block) {
+        return;
+    }
+
+    selectedTimelineBookingId = block.dataset.bookingId;
+
+    const setText = function(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = value || "-";
+        }
+    };
+
+    const customerName = block.dataset.customerName || "-";
+    const phone = block.dataset.phone || "-";
+    const serviceName = block.dataset.serviceName || "-";
+    const staffName = block.dataset.staffName || "-";
+    const startTime = block.dataset.startTime || "-";
+    const endTime = block.dataset.endTime || "-";
+    const visits = block.dataset.visits || "0";
+    const noShow = block.dataset.noShow || "0";
+    const status = block.dataset.status || "pending";
+    const deposit = block.dataset.deposit || "none";
+    const memo = block.dataset.memo || "-";
+
+    setText("modalCustomerName", customerName);
+    setText("modalServiceName", serviceName);
+    setText("modalPhone", phone);
+    setText("modalStaff", staffName);
+    setText("modalTime", `${startTime} ~ ${endTime}`);
+    setText("modalVisits", visits);
+    setText("modalNoShow", noShow);
+    setText("modalDeposit", deposit);
+    setText("modalMemo", memo);
+
+    const statusBadge = document.getElementById("modalStatusBadge");
+    if (statusBadge) {
+        statusBadge.textContent = status;
+        statusBadge.className = `status-badge modal-status-${status}`;
+    }
+
+    if (typeof syncTimelineDepositActions === "function") {
+        syncTimelineDepositActions(deposit, status);
+    }
+
+    const modal = document.getElementById("bookingDetailModal");
+    if (modal) {
+        modal.style.display = "block";
+    }
+}
+
+document.addEventListener("click", function(event) {
+    const detailButton = event.target.closest(".booking-detail-open-btn");
+    if (!detailButton) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openBookingDetailModalSafe(detailButton);
+}, true);
+
 
 function closeBookingDetailModal() {
     document.getElementById("bookingDetailModal").style.display = "none";
@@ -1029,6 +1237,118 @@ function getTimelineStatusLabel(status) {
     return labels[status] || status;
 }
 
+
+function syncTimelineDepositActions(depositStatus, bookingStatus) {
+    const actions = document.getElementById("timelineDepositActions");
+    const statusText = document.getElementById("modalDepositActionStatus");
+    const note = document.getElementById("modalDepositActionNote");
+    const button = document.getElementById("markDepositPaidButton");
+
+    if (!actions || !statusText || !note || !button) return;
+
+    actions.classList.remove("deposit-paid", "deposit-none");
+
+    const normalized = depositStatus || "none";
+    statusText.textContent = normalized;
+
+    if (normalized === "required") {
+        actions.style.display = "flex";
+        button.style.display = "inline-flex";
+        button.disabled = false;
+        note.textContent = "Confirm bank transfer and mark this booking as paid.";
+    } else if (normalized === "paid") {
+        actions.style.display = "flex";
+        actions.classList.add("deposit-paid");
+        button.style.display = "none";
+        note.textContent = "Deposit has been confirmed.";
+    } else {
+        actions.style.display = "none";
+        actions.classList.add("deposit-none");
+        button.style.display = "none";
+        note.textContent = "";
+    }
+}
+
+function updateTimelineBlockDeposit(bookingId, depositStatus) {
+    const block = document.querySelector(`.timeline-booking-block[data-booking-id="${bookingId}"]`);
+    if (!block) return;
+
+    block.dataset.deposit = depositStatus || "none";
+
+    const tooltipParagraphs = block.querySelectorAll(".booking-tooltip p");
+    tooltipParagraphs.forEach((p) => {
+        if (p.textContent.trim().startsWith("Deposit:")) {
+            p.textContent = `Deposit: ${depositStatus || "none"}`;
+        }
+    });
+
+    let badges = block.querySelector(".booking-badges");
+    if (!badges) {
+        badges = document.createElement("div");
+        badges.className = "booking-badges";
+        block.prepend(badges);
+    }
+
+    badges.querySelectorAll(".badge-paid, .badge-pending").forEach((badge) => {
+        if (badge.textContent.trim() === "PAID" || badge.textContent.trim() === "PENDING") {
+            badge.remove();
+        }
+    });
+
+    if (depositStatus === "paid") {
+        const paid = document.createElement("span");
+        paid.className = "booking-badge badge-paid";
+        paid.textContent = "PAID";
+        badges.appendChild(paid);
+    } else if (depositStatus === "required") {
+        const pending = document.createElement("span");
+        pending.className = "booking-badge badge-pending";
+        pending.textContent = "PENDING";
+        badges.appendChild(pending);
+    }
+}
+
+function requestTimelineDepositPaid() {
+    if (!selectedTimelineBookingId) return;
+
+    if (!confirm("Mark this booking deposit as paid?")) {
+        return;
+    }
+
+    const bookingId = selectedTimelineBookingId;
+
+    fetch(`/admin/timeline/bookings/${bookingId}/deposit-paid`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (!data.ok) {
+            showTimelineNotice(data.message || "Failed to update deposit status.", "error");
+            return;
+        }
+
+        const newDepositStatus = data.deposit_payment_status || "paid";
+        const newStatus = data.status || data.new_status || null;
+
+        updateTimelineBlockDeposit(bookingId, newDepositStatus);
+        document.getElementById("modalDeposit").textContent = newDepositStatus;
+        syncTimelineDepositActions(newDepositStatus, newStatus || "");
+
+        if (newStatus) {
+            updateTimelineBlockStatus(bookingId, newStatus);
+            setTimelineModalStatus(newStatus);
+        }
+
+        showTimelineNotice(data.message || "Deposit marked as paid.", "success");
+    })
+    .catch(() => {
+        showTimelineNotice("Failed to update deposit status. Please check your connection and try again.", "error");
+    });
+}
+
 function requestTimelineStatusChange(newStatus) {
     if (!selectedTimelineBookingId) return;
 
@@ -1103,6 +1423,36 @@ let draggingDurationMinutes = null;
 let isTimelineDragging = false;
 let lastTimelineDragEndAt = 0;
 let timelineNoticeTimer = null;
+
+let timelineClickOpenTimer = null;
+
+function scheduleTimelineBookingOpen(block) {
+    if (!block) return;
+
+    if (isTimelineDragging || Date.now() - lastTimelineDragEndAt < 300) {
+        return;
+    }
+
+    if (timelineClickOpenTimer) {
+        clearTimeout(timelineClickOpenTimer);
+    }
+
+    timelineClickOpenTimer = setTimeout(function() {
+        if (isTimelineDragging || Date.now() - lastTimelineDragEndAt < 300) {
+            return;
+        }
+
+        openBookingDetailModalFromBlock(block);
+    }, 160);
+}
+
+function cancelTimelineBookingOpen() {
+    if (timelineClickOpenTimer) {
+        clearTimeout(timelineClickOpenTimer);
+        timelineClickOpenTimer = null;
+    }
+}
+
 
 const PIXELS_PER_MINUTE = 2;
 const DROP_STEP_MINUTES = 15;
@@ -1356,7 +1706,20 @@ function showDropPreview(column, minutesFromTimelineStart) {
 }
 
 document.querySelectorAll(".timeline-booking-block").forEach(function(block) {
+    block.addEventListener("click", function(event) {
+        event.stopPropagation();
+        scheduleTimelineBookingOpen(block);
+    });
+
+    block.addEventListener("dblclick", function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        cancelTimelineBookingOpen();
+        openBookingDetailModalFromBlock(block);
+    });
+
     block.addEventListener("dragstart", function(event) {
+        cancelTimelineBookingOpen();
         isTimelineDragging = true;
         draggingBookingId = block.dataset.bookingId;
         draggingDurationMinutes = Number(block.dataset.durationMinutes || 30);

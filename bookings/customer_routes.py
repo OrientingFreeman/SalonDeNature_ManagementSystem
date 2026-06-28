@@ -6,6 +6,7 @@ from extensions import db
 from customers.models import Customer
 from staff.models import Staff
 from bookings.models import Service, Booking
+from dashboard.models import ShopSettings
 from bookings.services import (
     create_booking,
     find_available_staff_for_service
@@ -147,16 +148,6 @@ def customer_booking_submit():
         return result.get("message", "예약 생성 실패"), 400
 
     booking_id = result["booking"]["id"]
-    payment_id = result["booking"].get("payment_id")
-
-    if payment_id:
-        return redirect(
-            url_for(
-                "payments.checkout",
-                payment_id=payment_id,
-                lang=lang
-            )
-        )
 
     return redirect(
         url_for(
@@ -179,7 +170,8 @@ def customer_booking_success(booking_id):
         "customer_booking_success.html",
         booking=booking,
         lang=lang,
-        text=get_text(lang)
+        text=get_text(lang),
+        settings=ShopSettings.query.first()
     )
 
 @customer_booking_bp.route("/my-bookings")
@@ -206,7 +198,8 @@ def my_bookings():
         lang=lang,
         text=get_text(lang),
         today=date.today(),
-        now=datetime.now()
+        now=datetime.now(),
+        settings=ShopSettings.query.first()
     )
 
 

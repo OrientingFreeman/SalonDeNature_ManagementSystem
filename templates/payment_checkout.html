@@ -1,43 +1,156 @@
 {% extends "base.html" %}
 
-{% block title %}Deposit Payment{% endblock %}
+{% block title %}Deposit Information{% endblock %}
 
 {% block content %}
-<section style="max-width:640px; margin:80px auto; padding:36px; background:white; border-radius:24px; box-shadow:0 4px 24px rgba(0,0,0,.08);">
-    <p style="color:var(--gold); letter-spacing:2px; font-size:12px; font-weight:700; text-transform:uppercase;">
-        Reservation Deposit
-    </p>
+<section class="deposit-checkout-section">
+    <div class="deposit-checkout-card">
+        <p class="deposit-eyebrow">RESERVATION DEPOSIT</p>
 
-    <h1 style="color:var(--forest);">Complete Your Deposit</h1>
+        <h1>Bank Transfer Required</h1>
 
-    <p style="color:#666;">
-        Your reservation will be confirmed after deposit payment.
-    </p>
+        <p class="deposit-lead">
+            Your reservation will be confirmed after the deposit has been verified by the salon.
+        </p>
 
-    <p style="font-size:22px; margin-top:28px;">
-        Amount:
-        <strong>₩{{ "{:,}".format(payment.amount) }}</strong>
-    </p>
+        <div class="deposit-amount-box">
+            <span>Deposit Amount</span>
+            <strong>₩{{ "{:,}".format(payment.amount if payment is defined and payment else booking.service.deposit_amount or 0) }}</strong>
+        </div>
 
-    <button id="payment-button" class="btn-primary" style="width:100%; margin-top:24px;">
-        Pay Deposit
-    </button>
+        <div class="deposit-info-grid">
+            {% if settings is defined and settings and settings.deposit_due_minutes %}
+            <div>
+                <span>Please Transfer Within</span>
+                <strong>{{ settings.deposit_due_minutes }} minutes</strong>
+            </div>
+            {% endif %}
+
+            {% if settings is defined and settings and settings.deposit_bank_name %}
+            <div>
+                <span>Bank</span>
+                <strong>{{ settings.deposit_bank_name }}</strong>
+            </div>
+            {% endif %}
+
+            {% if settings is defined and settings and settings.deposit_account_number %}
+            <div>
+                <span>Account</span>
+                <strong>{{ settings.deposit_account_number }}</strong>
+            </div>
+            {% endif %}
+
+            {% if settings is defined and settings and settings.deposit_account_holder %}
+            <div>
+                <span>Account Holder</span>
+                <strong>{{ settings.deposit_account_holder }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <p class="deposit-important-note">
+            Please transfer using the reservation name.
+        </p>
+
+        {% if settings is defined and settings and settings.deposit_notice %}
+            <p class="deposit-notice">{{ settings.deposit_notice }}</p>
+        {% endif %}
+
+        <a class="btn-primary deposit-action" href="/my-bookings">
+            View My Bookings
+        </a>
+    </div>
 </section>
 
-<script src="https://js.tosspayments.com/v1/payment"></script>
-
-<script>
-const tossPayments = TossPayments("{{ toss_client_key }}");
-
-document.getElementById("payment-button").addEventListener("click", function () {
-    tossPayments.requestPayment("카드", {
-        amount: {{ payment.amount }},
-        orderId: "{{ payment.order_id }}",
-        orderName: "Salon de Nature Reservation Deposit",
-        customerName: "{{ booking.customer.name }}",
-        successUrl: "{{ success_url }}",
-        failUrl: "{{ fail_url }}"
-    });
-});
-</script>
+<style>
+.deposit-checkout-section{
+    max-width:680px;
+    margin:70px auto;
+    padding:0 18px;
+}
+.deposit-checkout-card{
+    padding:36px;
+    background:white;
+    border-radius:24px;
+    box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.deposit-eyebrow{
+    margin:0 0 8px;
+    color:var(--gold);
+    letter-spacing:2px;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+.deposit-checkout-card h1{
+    margin:0;
+    color:var(--forest);
+}
+.deposit-lead{
+    margin:12px 0 24px;
+    color:#666;
+    line-height:1.6;
+}
+.deposit-amount-box{
+    padding:20px;
+    border-radius:18px;
+    background:#F9F7F2;
+    margin-bottom:18px;
+}
+.deposit-amount-box span,
+.deposit-info-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+.deposit-amount-box strong{
+    display:block;
+    margin-top:6px;
+    color:var(--forest);
+    font-size:28px;
+}
+.deposit-info-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+}
+.deposit-info-grid div{
+    padding:15px;
+    border-radius:14px;
+    background:#F9F7F2;
+}
+.deposit-info-grid strong{
+    display:block;
+    margin-top:5px;
+    color:var(--forest);
+    font-size:15px;
+    word-break:break-word;
+}
+.deposit-important-note{
+    margin:18px 0 0;
+    padding:13px 15px;
+    border-radius:12px;
+    background:#fff4d8;
+    color:#8a5d00;
+    font-weight:900;
+}
+.deposit-notice{
+    margin:12px 0 0;
+    color:#666;
+    line-height:1.6;
+}
+.deposit-action{
+    width:100%;
+    margin-top:24px;
+    text-align:center;
+}
+@media(max-width:640px){
+    .deposit-info-grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
 {% endblock %}

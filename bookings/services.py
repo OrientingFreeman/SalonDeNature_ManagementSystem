@@ -1,7 +1,6 @@
-import uuid
 from datetime import datetime, date, time, timedelta
 
-from bookings.models import Booking, BookingEvent, Service, StaffService, Payment
+from bookings.models import Booking, BookingEvent, Service, StaffService
 from staff.models import StaffSchedule, Staff, StaffTimeOff
 from customers.models import Customer
 from extensions import db
@@ -434,28 +433,25 @@ def create_booking(customer_id, staff_id, service_id, start_time):
     
     requires_deposit = deposit_enabled and service.deposit_required and service.deposit_amount > 0
 
+    booking_approval_mode = settings.booking_approval_mode if settings else "auto"
+
+    if booking_approval_mode == "manual":
+        booking_status = "pending"
+    else:
+        booking_status = "pending" if requires_deposit else "confirmed"
+
     booking = Booking(
         customer_id=customer_id,
         staff_id=staff_id,
         service_id=service_id,
         start_time=start_time,
         end_time=end_time,
-        status="pending" if requires_deposit else "confirmed",
+        status=booking_status,
         deposit_paid=False,
         deposit_payment_status="required" if requires_deposit else "none"
     )
     db.session.add(booking)
     db.session.flush()
-
-    payment = None 
-    if requires_deposit:
-        payment = Payment(
-            booking_id=booking.id,
-            order_id=f"booking-{booking.id}-{uuid.uuid4().hex[:12]}",
-            amount=service.deposit_amount,
-            status="pending"
-        )
-        db.session.add(payment)
 
     event = BookingEvent(
         booking_id=booking.id,
@@ -476,8 +472,7 @@ def create_booking(customer_id, staff_id, service_id, start_time):
             "start_time": booking.start_time.isoformat(),
             "end_time": booking.end_time.isoformat(),
             "status": booking.status,
-            "deposit_payment_status": booking.deposit_payment_status,
-            "payment_id": payment.id if payment else None
+            "deposit_payment_status": booking.deposit_payment_status
         }
     }
 
@@ -764,13 +759,31 @@ def update_deposit_status(booking_id, deposit_status):
             "message": "예약을 찾을 수 없습니다."
         }
 
+    old_status = booking.status
+    old_deposit_status = booking.deposit_payment_status or "none"
+
     booking.deposit_payment_status = deposit_status
     booking.deposit_paid = deposit_status == "paid"
+
+    settings = ShopSettings.query.first()
+    booking_approval_mode = settings.booking_approval_mode if settings else "auto"
+
+    status_auto_confirmed = False
+
+    if deposit_status == "paid" and booking_approval_mode == "auto" and booking.status == "pending":
+        booking.status = "confirmed"
+        status_auto_confirmed = True
 
     event = BookingEvent(
         booking_id=booking.id,
         event_type="deposit_status_changed",
-        memo=f"예약금 상태 변경: {deposit_status}"
+        memo=(
+            f"예약금 상태 변경: {old_deposit_status} -> {deposit_status}"
+            + (
+                f", 예약 상태 자동 변경: {old_status} -> confirmed"
+                if status_auto_confirmed else ""
+            )
+        )
     )
 
     db.session.add(event)
@@ -780,7 +793,9 @@ def update_deposit_status(booking_id, deposit_status):
         "ok": True,
         "booking_id": booking.id,
         "deposit_payment_status": booking.deposit_payment_status,
-        "deposit_paid": booking.deposit_paid
+        "deposit_paid": booking.deposit_paid,
+        "status": booking.status,
+        "status_auto_confirmed": status_auto_confirmed
     }
 
 

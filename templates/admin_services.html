@@ -62,6 +62,7 @@
         type="number" 
         name="deposit_amount" 
         value="0"
+        min="0"
         id="deposit_amount"
         disabled>
                 </div>
@@ -172,15 +173,22 @@
     const depositAmountInput = document.getElementById("deposit_amount");
 
     function syncDepositAmountInput() {
+        if (!depositCheckbox || !depositAmountInput) {
+            return;
+        }
+
         depositAmountInput.disabled = !depositCheckbox.checked;
+        depositAmountInput.required = depositCheckbox.checked;
 
         if (!depositCheckbox.checked) {
             depositAmountInput.value = 0;
         }
     }
 
-    depositCheckbox.addEventListener("change", syncDepositAmountInput);
-    syncDepositAmountInput();
+    if (depositCheckbox && depositAmountInput) {
+        depositCheckbox.addEventListener("change", syncDepositAmountInput);
+        syncDepositAmountInput();
+    }
 </script>
 
 {% endblock %}

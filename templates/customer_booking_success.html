@@ -2,6 +2,85 @@
 
 {% block title %}
 Booking Confirmed
+
+<style>
+.deposit-guide-card{
+    margin-top:26px;
+    padding:24px;
+    border-radius:18px;
+    background:#F9F7F2;
+    border:1px solid #eee4d4;
+    text-align:left;
+}
+.deposit-eyebrow{
+    margin:0 0 8px;
+    color:var(--gold);
+    letter-spacing:1.8px;
+    font-size:11px;
+    font-weight:900;
+}
+.deposit-guide-card h2{
+    margin:0;
+    color:var(--forest);
+    font-size:24px;
+}
+.deposit-status{
+    margin:10px 0 18px;
+    font-weight:800;
+    line-height:1.5;
+}
+.deposit-status.pending{color:#9a6b00;}
+.deposit-status.success{color:#137333;}
+.deposit-status.danger{color:#d93025;}
+.deposit-status.muted{color:#666;}
+.deposit-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-top:16px;
+}
+.deposit-summary-grid div{
+    padding:14px;
+    border-radius:14px;
+    background:white;
+}
+.deposit-summary-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+.deposit-summary-grid strong{
+    display:block;
+    margin-top:5px;
+    color:var(--forest);
+    font-size:15px;
+    line-height:1.35;
+    word-break:break-word;
+}
+.deposit-important-note{
+    margin:18px 0 0;
+    padding:12px 14px;
+    border-radius:12px;
+    background:#fff4d8;
+    color:#8a5d00;
+    font-weight:900;
+    line-height:1.5;
+}
+.deposit-notice{
+    margin:12px 0 0;
+    color:#666;
+    line-height:1.6;
+}
+@media(max-width:640px){
+    .deposit-summary-grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+
 {% endblock %}
 
 {% block content %}
@@ -65,8 +144,75 @@ Booking Confirmed
 
         </div>
 
-        
-        
+
+
+        {% if booking.deposit_payment_status and booking.deposit_payment_status != "none" %}
+        <div class="deposit-guide-card">
+            <p class="deposit-eyebrow">RESERVATION DEPOSIT</p>
+
+            {% if booking.deposit_payment_status == "paid" %}
+                <h2>Deposit Confirmed</h2>
+                <p class="deposit-status success">Your deposit has been confirmed by the salon.</p>
+            {% elif booking.deposit_payment_status == "required" %}
+                <h2>Waiting for Deposit</h2>
+                <p class="deposit-status pending">
+                    Your reservation will be confirmed after the deposit has been verified by the salon.
+                </p>
+            {% elif booking.deposit_payment_status == "refunded" %}
+                <h2>Deposit Refunded</h2>
+                <p class="deposit-status muted">Your deposit has been refunded.</p>
+            {% elif booking.deposit_payment_status == "failed" %}
+                <h2>Deposit Failed</h2>
+                <p class="deposit-status danger">The deposit was not confirmed. Please contact the salon.</p>
+            {% endif %}
+
+            {% if booking.deposit_payment_status == "required" %}
+                <div class="deposit-summary-grid">
+                    <div>
+                        <span>Deposit Amount</span>
+                        <strong>₩{{ "{:,}".format(booking.service.deposit_amount or 0) }}</strong>
+                    </div>
+
+                    {% if settings is defined and settings and settings.deposit_due_minutes %}
+                    <div>
+                        <span>Please Transfer Within</span>
+                        <strong>{{ settings.deposit_due_minutes }} minutes</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if settings is defined and settings and settings.deposit_bank_name %}
+                    <div>
+                        <span>Bank</span>
+                        <strong>{{ settings.deposit_bank_name }}</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if settings is defined and settings and settings.deposit_account_number %}
+                    <div>
+                        <span>Account</span>
+                        <strong>{{ settings.deposit_account_number }}</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if settings is defined and settings and settings.deposit_account_holder %}
+                    <div>
+                        <span>Account Holder</span>
+                        <strong>{{ settings.deposit_account_holder }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="deposit-important-note">
+                    Please transfer using the reservation name.
+                </p>
+
+                {% if settings is defined and settings and settings.deposit_notice %}
+                    <p class="deposit-notice">{{ settings.deposit_notice }}</p>
+                {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="success-actions">
 
             <a class="btn-primary"
@@ -79,5 +225,84 @@ Booking Confirmed
     </div>
 
 </section>
+
+
+<style>
+.deposit-guide-card{
+    margin-top:26px;
+    padding:24px;
+    border-radius:18px;
+    background:#F9F7F2;
+    border:1px solid #eee4d4;
+    text-align:left;
+}
+.deposit-eyebrow{
+    margin:0 0 8px;
+    color:var(--gold);
+    letter-spacing:1.8px;
+    font-size:11px;
+    font-weight:900;
+}
+.deposit-guide-card h2{
+    margin:0;
+    color:var(--forest);
+    font-size:24px;
+}
+.deposit-status{
+    margin:10px 0 18px;
+    font-weight:800;
+    line-height:1.5;
+}
+.deposit-status.pending{color:#9a6b00;}
+.deposit-status.success{color:#137333;}
+.deposit-status.danger{color:#d93025;}
+.deposit-status.muted{color:#666;}
+.deposit-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-top:16px;
+}
+.deposit-summary-grid div{
+    padding:14px;
+    border-radius:14px;
+    background:white;
+}
+.deposit-summary-grid span{
+    display:block;
+    color:var(--sage);
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+.deposit-summary-grid strong{
+    display:block;
+    margin-top:5px;
+    color:var(--forest);
+    font-size:15px;
+    line-height:1.35;
+    word-break:break-word;
+}
+.deposit-important-note{
+    margin:18px 0 0;
+    padding:12px 14px;
+    border-radius:12px;
+    background:#fff4d8;
+    color:#8a5d00;
+    font-weight:900;
+    line-height:1.5;
+}
+.deposit-notice{
+    margin:12px 0 0;
+    color:#666;
+    line-height:1.6;
+}
+@media(max-width:640px){
+    .deposit-summary-grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
 
 {% endblock %}

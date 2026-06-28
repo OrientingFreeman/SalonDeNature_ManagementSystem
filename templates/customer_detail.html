@@ -99,6 +99,7 @@
                             <th>Staff</th>
                             <th>Status</th>
                             <th>Price</th>
+                            <th>Deposit</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -110,6 +111,17 @@
                                 <td>{{ booking.staff.name }}</td>
                                 <td>{{ booking.status }}</td>
                                 <td>₩{{ "{:,}".format(booking.service.price) }}</td>
+                                <td>
+                                    {% if booking.deposit_payment_status == 'paid' %}
+                                        <span class="deposit-table-badge deposit-paid">Paid</span>
+                                    {% elif booking.deposit_payment_status == 'required' %}
+                                        <span class="deposit-table-badge deposit-required">Required</span>
+                                    {% elif booking.deposit_payment_status %}
+                                        <span class="deposit-table-badge">{{ booking.deposit_payment_status }}</span>
+                                    {% else %}
+                                        <span class="deposit-table-badge deposit-none">None</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -227,6 +239,32 @@
 .empty-note{
     color:#777;
 }
+.deposit-table-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:74px;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#eee;
+    color:#555;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+.deposit-table-badge.deposit-paid{
+    background:#e4f4ea;
+    color:#137333;
+}
+.deposit-table-badge.deposit-required{
+    background:#fff4d8;
+    color:#9a6b00;
+}
+.deposit-table-badge.deposit-none{
+    background:#f1f1f1;
+    color:#777;
+}
+
 @media(max-width:900px){
     .customer-detail-layout{
         grid-template-columns:1fr;

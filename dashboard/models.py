@@ -38,3 +38,24 @@ class AdminUser(db.Model):
 
 
     
+
+
+class AdminNotification(db.Model):
+    __tablename__ = "admin_notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    notification_type = db.Column(db.String(50), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=True)
+
+    booking_id = db.Column(db.Integer, db.ForeignKey("bookings.id"), nullable=True, index=True)
+    target_url = db.Column(db.String(500), nullable=True)
+
+    is_read = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    read_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    booking = db.relationship("Booking", backref=db.backref("admin_notifications", lazy=True))
+

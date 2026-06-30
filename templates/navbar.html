@@ -31,6 +31,12 @@
                 <a href="/admin/services">Services</a>
                 <a href="/admin/staff">Staff</a>
                 <a href="/admin/revenue">Revenue</a>
+                <a href="/admin/notifications">
+                    Alerts
+                    {% if admin_unread_notification_count|default(0) > 0 %}
+                        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:#8b5e3c;color:white;font-size:11px;line-height:18px;">{{ admin_unread_notification_count }}</span>
+                    {% endif %}
+                </a>
                 <a href="/admin/settings">Settings</a>
                 <a href="/admin/users">AdminAccount</a>
                 <a href="/admin/change-password">My Account</a>

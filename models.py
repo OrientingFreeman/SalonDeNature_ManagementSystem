@@ -12,4 +12,4 @@ from bookings.models import (
     BookingEvent,
 )
 
-from dashboard.models import ShopSettings, AdminUser
+from dashboard.models import ShopSettings, AdminUser, AdminNotification

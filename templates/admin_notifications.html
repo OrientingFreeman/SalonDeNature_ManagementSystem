@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Alerts{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width: 980px; margin: 32px auto; padding: 0 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:20px;">
+        <div>
+            <h1 style="margin:0 0 8px;">Admin Alerts</h1>
+            <p style="margin:0; color:#666;">Recent booking, deposit, cancellation, and schedule-change notifications.</p>
+        </div>
+        <a href="/admin/timeline" class="btn-book" style="text-decoration:none;">Go to Timeline</a>
+    </div>
+
+    {% if notifications %}
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            {% for notification in notifications %}
+                <div style="border:1px solid #eadfd6; border-radius:14px; padding:16px 18px; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                        <div>
+                            <div style="font-size:13px; color:#9a7f6d; margin-bottom:6px;">{{ notification.notification_type }}</div>
+                            <h3 style="margin:0 0 8px; font-size:18px;">{{ notification.title }}</h3>
+                            {% if notification.message %}
+                                <p style="margin:0; color:#444; line-height:1.5;">{{ notification.message }}</p>
+                            {% endif %}
+                        </div>
+                        <div style="white-space:nowrap; color:#777; font-size:13px;">
+                            {{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:12px;">
+                        <div style="font-size:13px; color:#888;">
+                            {% if notification.booking_id %}
+                                Booking #{{ notification.booking_id }}
+                            {% endif %}
+                        </div>
+                        {% if notification.target_url %}
+                            <a href="{{ notification.target_url }}" style="text-decoration:none; font-weight:600;">Open related page →</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="border:1px solid #eadfd6; border-radius:14px; padding:28px; background:#fff; color:#666;">
+            No admin alerts yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

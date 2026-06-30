@@ -18,7 +18,12 @@ from functools import wraps
 from openpyxl import Workbook
 from io import BytesIO
 
-from dashboard.models import ShopSettings, AdminUser
+from dashboard.models import ShopSettings, AdminUser, AdminNotification
+from dashboard.notifications import (
+    notify_deposit_marked_paid,
+    notify_booking_status_changed,
+    notify_booking_rescheduled,
+)
 from extensions import db
 from bookings.models import Booking, Service, StaffService, BookingEvent
 from bookings.services import (
@@ -53,6 +58,42 @@ def allowed_image(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 dashboard_bp = Blueprint("dashboard", __name__)
+
+
+@dashboard_bp.app_context_processor
+def inject_admin_notification_count():
+    if not session.get("admin_logged_in"):
+        return {"admin_unread_notification_count": 0}
+
+    unread_count = AdminNotification.query.filter_by(is_read=False).count()
+    return {"admin_unread_notification_count": unread_count}
+
+
+@dashboard_bp.route("/admin/notifications")
+@admin_required
+def admin_notifications():
+    notifications = (
+        AdminNotification.query
+        .order_by(AdminNotification.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    unread_notifications = AdminNotification.query.filter_by(is_read=False).all()
+    now = datetime.utcnow()
+
+    for notification in unread_notifications:
+        notification.is_read = True
+        notification.read_at = now
+
+    if unread_notifications:
+        db.session.commit()
+
+    return render_template(
+        "admin_notifications.html",
+        notifications=notifications
+    )
+
 
 
 @dashboard_bp.route("/admin")
@@ -1592,6 +1633,7 @@ def admin_timeline_move():
     )
 
     db.session.add(event)
+    notify_booking_rescheduled(booking, old_start=old_start_time, old_end=old_end_time)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)
@@ -1646,6 +1688,7 @@ def admin_timeline_mark_deposit_paid(booking_id):
     )
 
     db.session.add(event)
+    notify_deposit_marked_paid(booking, status_auto_confirmed=status_auto_confirmed)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)

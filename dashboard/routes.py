@@ -47,13 +47,16 @@ from dashboard.notifications import (
     notify_deposit_paid,
     serialize_admin_notification,
 )
-from sms.models import SmsLog
+from sms.models import SmsLog, SmsTemplate
 from sms.service import (
     send_booking_cancelled_sms,
     send_booking_changed_sms,
     send_deposit_paid_sms,
     send_test_sms,
+    ensure_default_sms_templates,
 )
+from sms.default_templates import SMS_PLACEHOLDERS
+from sms.renderer import render_sample
 
 def admin_required(func):
     @wraps(func)
@@ -269,6 +272,82 @@ def admin_notifications_sms_test():
         flash(f"Test SMS failed: {result.get('reason')}", "error")
 
     return redirect(url_for("dashboard.admin_notifications_page"))
+
+
+
+
+@dashboard_bp.route("/admin/sms-templates")
+@admin_required
+def admin_sms_templates_page():
+    ensure_default_sms_templates()
+    templates = (
+        SmsTemplate.query
+        .order_by(SmsTemplate.sort_order.asc(), SmsTemplate.id.asc())
+        .all()
+    )
+
+    selected_key = request.args.get("template")
+    selected_template = None
+    if selected_key:
+        selected_template = SmsTemplate.query.filter_by(template_key=selected_key).first()
+    if not selected_template and templates:
+        selected_template = templates[0]
+
+    preview_text = render_sample(selected_template.content) if selected_template else ""
+
+    return render_template(
+        "admin_sms_templates.html",
+        templates=templates,
+        selected_template=selected_template,
+        preview_text=preview_text,
+        placeholders=SMS_PLACEHOLDERS,
+    )
+
+
+@dashboard_bp.route("/admin/sms-templates/<int:template_id>/update", methods=["POST"])
+@admin_required
+def admin_sms_template_update(template_id):
+    template = SmsTemplate.query.get_or_404(template_id)
+    name = request.form.get("name", "").strip()
+    content = request.form.get("content", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not name:
+        flash("Template name is required.", "error")
+        return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
+
+    if not content:
+        flash("Template content is required.", "error")
+        return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
+
+    template.name = name
+    template.content = content
+    template.description = description
+    template.is_enabled = request.form.get("is_enabled") == "on"
+    db.session.commit()
+
+    flash("SMS template updated.", "success")
+    return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
+
+
+@dashboard_bp.route("/admin/sms-templates/<int:template_id>/preview", methods=["POST"])
+@admin_required
+def admin_sms_template_preview(template_id):
+    template = SmsTemplate.query.get_or_404(template_id)
+    content = request.form.get("content", "")
+    return jsonify({
+        "ok": True,
+        "preview": render_sample(content),
+        "template_key": template.template_key,
+    })
+
+
+@dashboard_bp.route("/admin/sms-templates/reset-defaults", methods=["POST"])
+@admin_required
+def admin_sms_templates_seed_defaults():
+    created = ensure_default_sms_templates()
+    flash(f"Default template sync complete. Created: {created}", "success")
+    return redirect(url_for("dashboard.admin_sms_templates_page"))
 
 
 @dashboard_bp.route("/admin/notifications/<int:notification_id>/read", methods=["POST"])

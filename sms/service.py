@@ -5,9 +5,10 @@ import json
 from flask import current_app, has_app_context
 
 from extensions import db
-from sms.models import SmsLog
+from sms.default_templates import DEFAULT_SMS_TEMPLATES
+from sms.models import SmsLog, SmsTemplate
 from sms.provider import SolapiSmsProvider, SmsProviderError, normalize_phone
-from sms import templates
+from sms.renderer import build_booking_context, render_template_content
 
 
 class SmsEventType:
@@ -19,13 +20,35 @@ class SmsEventType:
     TEST = "test"
 
 
-TEMPLATE_BUILDERS = {
-    SmsEventType.BOOKING_CREATED: templates.booking_created_message,
-    SmsEventType.BOOKING_CHANGED: templates.booking_changed_message,
-    SmsEventType.BOOKING_CANCELLED: templates.booking_cancelled_message,
-    SmsEventType.DEPOSIT_REQUEST: templates.deposit_request_message,
-    SmsEventType.DEPOSIT_PAID: templates.deposit_paid_message,
-}
+def ensure_default_sms_templates():
+    """Create missing default templates without overwriting admin-edited content."""
+    created_count = 0
+    for item in DEFAULT_SMS_TEMPLATES:
+        existing = SmsTemplate.query.filter_by(template_key=item["template_key"]).first()
+        if existing:
+            continue
+        db.session.add(SmsTemplate(**item))
+        created_count += 1
+
+    if created_count:
+        db.session.commit()
+    return created_count
+
+
+def get_sms_template(template_key):
+    ensure_default_sms_templates()
+    return SmsTemplate.query.filter_by(template_key=template_key).first()
+
+
+def render_sms_template(template_key, booking):
+    template = get_sms_template(template_key)
+    if not template:
+        return None, "missing_template"
+    if not template.is_enabled:
+        return None, "template_disabled"
+
+    context = build_booking_context(booking)
+    return render_template_content(template.content, context), None
 
 
 def send_booking_sms(booking, event_type):
@@ -36,13 +59,12 @@ def send_booking_sms(booking, event_type):
     if not booking:
         return {"ok": False, "skipped": True, "reason": "missing_booking"}
 
-    builder = TEMPLATE_BUILDERS.get(event_type)
-    if not builder:
-        return {"ok": False, "skipped": True, "reason": "unsupported_event_type"}
+    message, error = render_sms_template(event_type, booking)
+    if error:
+        return {"ok": False, "skipped": True, "reason": error}
 
     customer = getattr(booking, "customer", None)
     recipient = getattr(customer, "phone", None)
-    message = builder(booking)
 
     return _send_and_log(
         recipient=recipient,
@@ -176,7 +198,6 @@ def _extract_message_id(response):
     if not isinstance(response, dict):
         return None
 
-    # SOLAPI response shape can differ by endpoint/version. Keep this defensive.
     candidates = [
         response.get("messageId"),
         response.get("message_id"),

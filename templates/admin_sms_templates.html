@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}SMS Templates{% endblock %}
+
+{% block content %}
+<section class="admin-notifications-page sms-template-page">
+    <div class="notification-center-hero">
+        <div>
+            <p class="notification-center-eyebrow">SMS CENTER</p>
+            <h1>SMS Templates</h1>
+            <p class="notification-center-subtitle">
+                Manage customer-facing SMS copy for booking and deposit events.
+            </p>
+        </div>
+
+        <div class="notification-center-actions">
+            <a class="notification-action-btn muted" href="{{ url_for('dashboard.admin_notifications_page') }}">
+                Back to Notifications
+            </a>
+            <form method="POST"
+                  action="{{ url_for('dashboard.admin_sms_templates_seed_defaults') }}"
+                  onsubmit="return confirm('Create any missing default templates? Existing templates will not be overwritten.');">
+                <button class="notification-action-btn primary" type="submit">
+                    Sync defaults
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="sms-template-layout">
+        <aside class="sms-template-list-card">
+            <h2>Templates</h2>
+            <div class="sms-template-list">
+                {% for item in templates %}
+                    <a class="sms-template-list-item {% if selected_template and item.id == selected_template.id %}is-active{% endif %}"
+                       href="{{ url_for('dashboard.admin_sms_templates_page', template=item.template_key) }}">
+                        <span>{{ item.name }}</span>
+                        <em>{{ item.template_key }}</em>
+                        <strong class="sms-template-enabled {{ 'is-on' if item.is_enabled else 'is-off' }}">
+                            {{ 'ON' if item.is_enabled else 'OFF' }}
+                        </strong>
+                    </a>
+                {% else %}
+                    <p class="notification-sms-empty">No SMS templates yet. Click Sync defaults.</p>
+                {% endfor %}
+            </div>
+        </aside>
+
+        {% if selected_template %}
+            <main class="sms-template-editor-card">
+                <form method="POST"
+                      action="{{ url_for('dashboard.admin_sms_template_update', template_id=selected_template.id) }}"
+                      data-sms-template-form
+                      data-preview-url="{{ url_for('dashboard.admin_sms_template_preview', template_id=selected_template.id) }}">
+                    <div class="sms-template-editor-header">
+                        <div>
+                            <h2>{{ selected_template.name }}</h2>
+                            <p>{{ selected_template.template_key }}</p>
+                        </div>
+                        <label class="sms-template-switch">
+                            <input type="checkbox" name="is_enabled" {% if selected_template.is_enabled %}checked{% endif %}>
+                            <span>Enable sending</span>
+                        </label>
+                    </div>
+
+                    <label class="sms-template-field">
+                        <span>Template name</span>
+                        <input type="text" name="name" value="{{ selected_template.name }}" required>
+                    </label>
+
+                    <label class="sms-template-field">
+                        <span>Description</span>
+                        <input type="text" name="description" value="{{ selected_template.description or '' }}">
+                    </label>
+
+                    <label class="sms-template-field">
+                        <span>Content</span>
+                        <textarea name="content" rows="12" required data-sms-template-content>{{ selected_template.content }}</textarea>
+                    </label>
+
+                    <div class="sms-template-editor-actions">
+                        <button type="button" class="notification-action-btn muted" data-sms-preview-btn>
+                            Preview
+                        </button>
+                        <button type="submit" class="notification-action-btn primary">
+                            Save template
+                        </button>
+                    </div>
+                </form>
+            </main>
+
+            <aside class="sms-template-preview-card">
+                <h2>Preview</h2>
+                <p class="sms-template-help">Sample data is used for preview only. Actual sends use booking data.</p>
+                <pre data-sms-preview-output>{{ preview_text }}</pre>
+
+                <h3>Placeholders</h3>
+                <div class="sms-placeholder-list">
+                    {% for token, label in placeholders %}
+                        <button type="button" class="sms-placeholder-chip" data-placeholder-token="{{ token }}">
+                            <code>{{ token }}</code>
+                            <span>{{ label }}</span>
+                        </button>
+                    {% endfor %}
+                </div>
+            </aside>
+        {% else %}
+            <main class="sms-template-editor-card">
+                <p class="notification-sms-empty">No template selected.</p>
+            </main>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("[data-sms-template-form]");
+    if (!form) return;
+
+    const textarea = form.querySelector("[data-sms-template-content]");
+    const previewOutput = document.querySelector("[data-sms-preview-output]");
+    const previewButton = document.querySelector("[data-sms-preview-btn]");
+
+    async function refreshPreview() {
+        const formData = new FormData();
+        formData.append("content", textarea.value || "");
+
+        const response = await fetch(form.dataset.previewUrl, {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin"
+        });
+        const data = await response.json();
+        if (data.ok && previewOutput) {
+            previewOutput.textContent = data.preview || "";
+        }
+    }
+
+    if (previewButton) {
+        previewButton.addEventListener("click", refreshPreview);
+    }
+
+    document.querySelectorAll("[data-placeholder-token]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const token = button.dataset.placeholderToken;
+            const start = textarea.selectionStart || 0;
+            const end = textarea.selectionEnd || 0;
+            textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + token.length;
+            refreshPreview();
+        });
+    });
+});
+</script>
+{% endblock %}

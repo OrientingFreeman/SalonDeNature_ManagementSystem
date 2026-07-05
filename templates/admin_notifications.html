@@ -68,6 +68,9 @@
                     SMS {{ 'ON' if sms_enabled else 'OFF' }}
                 </span>
                 <span>From: {{ solapi_from_number or 'Not configured' }}</span>
+                <a class="notification-action-btn muted" href="{{ url_for('dashboard.admin_sms_templates_page') }}">
+                    SMS Templates
+                </a>
             </div>
         </div>
 

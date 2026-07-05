@@ -1,8 +1,7 @@
-from app import app
-from extensions import db
-from sms.models import SmsLog
+"""Backward-compatible SMS table setup script.
 
+Phase11-3 now creates both sms_logs and sms_templates.
+Prefer: python create_sms_tables.py
+"""
 
-with app.app_context():
-    db.create_all()
-    print("sms_logs table is ready.")
+from create_sms_tables import *  # noqa

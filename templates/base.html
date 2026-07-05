@@ -9,6 +9,10 @@
     
     <link rel="stylesheet"
       href="{{ url_for('static', filename='css/theme.css') }}">
+    {% if session.get("admin_logged_in") %}
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/notifications.css') }}">
+    {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -50,5 +54,8 @@
     {% endif %}
 {% endwith %}
 
+{% if session.get("admin_logged_in") %}
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+{% endif %}
 </body>
 </html>

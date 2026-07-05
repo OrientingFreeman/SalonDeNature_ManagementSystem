@@ -1,51 +1,364 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Alerts{% endblock %}
+{% block title %}Admin Notifications{% endblock %}
 
 {% block content %}
-<div class="page-container" style="max-width: 980px; margin: 32px auto; padding: 0 20px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:20px;">
+<section class="admin-notifications-page notification-center">
+
+    <div class="notification-center-hero">
         <div>
-            <h1 style="margin:0 0 8px;">Admin Alerts</h1>
-            <p style="margin:0; color:#666;">Recent booking, deposit, cancellation, and schedule-change notifications.</p>
+            <p class="notification-center-eyebrow">ADMIN CENTER</p>
+            <h1>Notifications</h1>
+            <p class="notification-center-subtitle">
+                Review booking updates, deposit events, cancellations, and operational alerts.
+            </p>
         </div>
-        <a href="/admin/timeline" class="btn-book" style="text-decoration:none;">Go to Timeline</a>
+
+        <div class="notification-center-actions">
+            <button class="notification-action-btn primary" type="button" data-page-mark-all-read>
+                Mark all as read
+            </button>
+
+            <form method="POST"
+                  action="{{ url_for('dashboard.admin_notifications_cleanup') }}"
+                  onsubmit="return confirm('Delete old notifications according to the retention policy?');">
+                <button class="notification-action-btn muted" type="submit">
+                    Cleanup old
+                </button>
+            </form>
+        </div>
     </div>
 
-    {% if notifications %}
-        <div style="display:flex; flex-direction:column; gap:12px;">
-            {% for notification in notifications %}
-                <div style="border:1px solid #eadfd6; border-radius:14px; padding:16px 18px; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
-                        <div>
-                            <div style="font-size:13px; color:#9a7f6d; margin-bottom:6px;">{{ notification.notification_type }}</div>
-                            <h3 style="margin:0 0 8px; font-size:18px;">{{ notification.title }}</h3>
-                            {% if notification.message %}
-                                <p style="margin:0; color:#444; line-height:1.5;">{{ notification.message }}</p>
-                            {% endif %}
-                        </div>
-                        <div style="white-space:nowrap; color:#777; font-size:13px;">
-                            {{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
-                        </div>
+    <div class="notification-stats-grid">
+        <div class="notification-stat-card">
+            <span class="notification-stat-label">Unread</span>
+            <strong>{{ stats.unread_count if stats is defined else unread_count }}</strong>
+        </div>
+
+        <div class="notification-stat-card">
+            <span class="notification-stat-label">Today</span>
+            <strong>{{ stats.today_count if stats is defined else 0 }}</strong>
+        </div>
+
+        <div class="notification-stat-card">
+            <span class="notification-stat-label">Total</span>
+            <strong>{{ stats.total_count if stats is defined else notifications.total }}</strong>
+        </div>
+    </div>
+
+    <div class="notification-retention-card">
+        <div>
+            <strong>Retention policy</strong>
+            <p>
+                Read notifications are deleted after 30 days.
+                Unread notifications are kept for up to 90 days.
+                Booking records and booking event history are never deleted by this cleanup.
+            </p>
+        </div>
+    </div>
+
+    <div class="notification-toolbar">
+        <form method="GET" action="{{ url_for('dashboard.admin_notifications_page') }}" class="notification-search-form">
+            <input type="hidden" name="filter" value="{{ filter_key or 'all' }}">
+            <input type="hidden" name="per_page" value="{{ per_page or 20 }}">
+
+            <input type="search"
+                   name="q"
+                   value="{{ search_query or '' }}"
+                   placeholder="Search title, message, or type..."
+                   class="notification-search-input">
+
+            <button type="submit" class="notification-action-btn primary">
+                Search
+            </button>
+
+            {% if search_query %}
+                <a class="notification-action-btn muted"
+                   href="{{ url_for('dashboard.admin_notifications_page', filter=filter_key or 'all', per_page=per_page or 20) }}">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+
+        <form method="GET" action="{{ url_for('dashboard.admin_notifications_page') }}" class="notification-per-page-form">
+            <input type="hidden" name="filter" value="{{ filter_key or 'all' }}">
+            <input type="hidden" name="q" value="{{ search_query or '' }}">
+            <label>
+                Per page
+                <select name="per_page" onchange="this.form.submit()">
+                    {% for option in [10, 20, 30, 50] %}
+                        <option value="{{ option }}" {% if option == per_page %}selected{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+        </form>
+    </div>
+
+    <div class="notification-result-summary">
+        <span>
+            {% if notifications.total > 0 %}
+                Showing {{ ((notifications.page - 1) * notifications.per_page) + 1 }}–{{ ((notifications.page - 1) * notifications.per_page) + notifications.items|length }} of {{ notifications.total }}
+            {% else %}
+                Showing 0 of 0
+            {% endif %}
+        </span>
+
+        {% if search_query %}
+            <span class="notification-search-result">
+                Results for “{{ search_query }}”
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="notification-filter-tabs">
+        {% for key, label in filter_tabs %}
+            <a class="notification-filter-tab{% if key == filter_key %} is-active{% endif %}"
+               href="{{ url_for('dashboard.admin_notifications_page', filter=key, q=search_query or '', per_page=per_page or 20) }}">
+                <span>{{ label }}</span>
+                <em>{{ filter_counts[key] if filter_counts is defined and key in filter_counts else 0 }}</em>
+            </a>
+        {% endfor %}
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('dashboard.admin_notifications_bulk_action') }}"
+          class="notification-bulk-form"
+          data-notification-bulk-form>
+        <input type="hidden" name="page" value="{{ notifications.page }}">
+        <input type="hidden" name="filter" value="{{ filter_key or 'all' }}">
+        <input type="hidden" name="q" value="{{ search_query or '' }}">
+        <input type="hidden" name="per_page" value="{{ per_page or 20 }}">
+
+        <div class="notification-bulk-bar" data-bulk-bar>
+            <label class="notification-select-all">
+                <input type="checkbox" data-select-all-notifications>
+                <span>Select all on this page</span>
+            </label>
+
+            <div class="notification-bulk-actions">
+                <button type="submit"
+                        name="action"
+                        value="mark_read"
+                        class="notification-action-btn muted"
+                        data-bulk-submit
+                        disabled>
+                    Mark selected read
+                </button>
+
+                <button type="submit"
+                        name="action"
+                        value="delete"
+                        class="notification-action-btn danger"
+                        data-bulk-delete
+                        data-bulk-submit
+                        disabled>
+                    Delete selected
+                </button>
+            </div>
+        </div>
+
+        <div class="notification-card-list">
+            {% for notification in notifications.items %}
+                {% set type_key = notification.notification_type or 'notification' %}
+                {% set visual_type =
+                    'deposit' if 'deposit' in type_key else
+                    'cancelled' if 'cancel' in type_key else
+                    'status' if 'status' in type_key else
+                    'updated' if 'changed' in type_key or 'updated' in type_key else
+                    'booking' if 'booking' in type_key else
+                    'default'
+                %}
+                {% set type_icon =
+                    '💳' if visual_type == 'deposit' else
+                    '❌' if visual_type == 'cancelled' else
+                    '✅' if visual_type == 'status' else
+                    '🔄' if visual_type == 'updated' else
+                    '📅' if visual_type == 'booking' else
+                    '🔔'
+                %}
+
+                <article class="notification-card notification-type-{{ visual_type }}{% if not notification.is_read %} is-unread{% endif %}">
+                    <div class="notification-card-check">
+                        <input type="checkbox"
+                               name="notification_ids"
+                               value="{{ notification.id }}"
+                               data-notification-checkbox>
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:12px;">
-                        <div style="font-size:13px; color:#888;">
-                            {% if notification.booking_id %}
-                                Booking #{{ notification.booking_id }}
-                            {% endif %}
-                        </div>
-                        {% if notification.target_url %}
-                            <a href="{{ notification.target_url }}" style="text-decoration:none; font-weight:600;">Open related page →</a>
-                        {% endif %}
-                    </div>
+                    <a class="notification-card-main"
+                       href="{{ notification.target_url or '/admin/timeline' }}"
+                       data-notification-id="{{ notification.id }}">
+                        <span class="notification-read-dot"></span>
+
+                        <span class="notification-card-title-row">
+                            <span class="notification-type-icon">{{ type_icon }}</span>
+                            <span class="notification-card-title">{{ notification.title }}</span>
+                        </span>
+
+                        <span class="notification-card-message">
+                            {{ notification.message }}
+                        </span>
+
+                        <span class="notification-card-meta">
+                            <span class="notification-type-pill">{{ notification.notification_type.replace('_', ' ') }}</span>
+                            <span>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</span>
+                        </span>
+                    </a>
+
+                    <form method="POST"
+                          action="{{ url_for('dashboard.admin_notification_delete', notification_id=notification.id, page=notifications.page, filter=filter_key or 'all', q=search_query or '', per_page=per_page or 20) }}"
+                          class="notification-card-delete-form"
+                          onsubmit="return confirm('Delete this notification?');">
+                        <button type="submit"
+                                class="notification-icon-delete"
+                                title="Delete notification"
+                                aria-label="Delete notification">
+                            🗑
+                        </button>
+                    </form>
+                </article>
+            {% else %}
+                <div class="notification-empty-state">
+                    <div class="notification-empty-icon">🔔</div>
+                    <strong>You're all caught up.</strong>
+                    <p>There are no notifications matching the current filter or search query.</p>
                 </div>
             {% endfor %}
         </div>
-    {% else %}
-        <div style="border:1px solid #eadfd6; border-radius:14px; padding:28px; background:#fff; color:#666;">
-            No admin alerts yet.
-        </div>
+    </form>
+
+    {% if notifications.pages > 1 %}
+        <nav class="notification-pagination" aria-label="Notification pagination">
+            {% set pagination_args = {'filter': filter_key or 'all', 'q': search_query or '', 'per_page': per_page or 20} %}
+
+            {% if notifications.has_prev %}
+                <a href="{{ url_for('dashboard.admin_notifications_page', page=1, **pagination_args) }}">«</a>
+                <a href="{{ url_for('dashboard.admin_notifications_page', page=notifications.prev_num, **pagination_args) }}">‹</a>
+            {% else %}
+                <span class="disabled">«</span>
+                <span class="disabled">‹</span>
+            {% endif %}
+
+            {% for page_num in notifications.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == notifications.page %}
+                        <span class="current">{{ page_num }}</span>
+                    {% else %}
+                        <a href="{{ url_for('dashboard.admin_notifications_page', page=page_num, **pagination_args) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                    <span class="ellipsis">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if notifications.has_next %}
+                <a href="{{ url_for('dashboard.admin_notifications_page', page=notifications.next_num, **pagination_args) }}">›</a>
+                <a href="{{ url_for('dashboard.admin_notifications_page', page=notifications.pages, **pagination_args) }}">»</a>
+            {% else %}
+                <span class="disabled">›</span>
+                <span class="disabled">»</span>
+            {% endif %}
+        </nav>
     {% endif %}
-</div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const markAllButton = document.querySelector('[data-page-mark-all-read]');
+    const selectAll = document.querySelector('[data-select-all-notifications]');
+    const checkboxes = Array.from(document.querySelectorAll('[data-notification-checkbox]'));
+    const bulkButtons = Array.from(document.querySelectorAll('[data-bulk-submit]'));
+    const bulkDeleteButton = document.querySelector('[data-bulk-delete]');
+    const bulkBar = document.querySelector('[data-bulk-bar]');
+
+    if (markAllButton) {
+        markAllButton.addEventListener('click', async function () {
+            const response = await fetch('/admin/notifications/mark-all-read', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+
+    document.querySelectorAll('[data-notification-id]').forEach(function (item) {
+        item.addEventListener('click', function () {
+            fetch(`/admin/notifications/${item.dataset.notificationId}/read`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+        });
+    });
+
+    function updateBulkState() {
+        const selectedCount = checkboxes.filter(function (checkbox) {
+            return checkbox.checked;
+        }).length;
+
+        bulkButtons.forEach(function (button) {
+            button.disabled = selectedCount === 0;
+        });
+
+        if (bulkDeleteButton) {
+            bulkDeleteButton.textContent = selectedCount > 0
+                ? `Delete selected (${selectedCount})`
+                : 'Delete selected';
+        }
+
+        if (bulkBar) {
+            bulkBar.classList.toggle('has-selection', selectedCount > 0);
+            bulkBar.setAttribute('data-selected-count', String(selectedCount));
+        }
+
+        if (selectAll) {
+            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+
+            updateBulkState();
+        });
+    }
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', updateBulkState);
+    });
+
+    const bulkForm = document.querySelector('[data-notification-bulk-form]');
+
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function (event) {
+            const submitter = event.submitter;
+            const isDelete = submitter && submitter.value === 'delete';
+            const selectedCount = checkboxes.filter(function (checkbox) {
+                return checkbox.checked;
+            }).length;
+
+            if (selectedCount === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            if (isDelete && !confirm(`Delete ${selectedCount} selected notification(s)?`)) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    updateBulkState();
+});
+</script>
 {% endblock %}

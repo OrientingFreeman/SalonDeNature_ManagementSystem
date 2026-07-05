@@ -4,7 +4,7 @@
 
 {% block content %}
 
-{% if request.args.get("embedded") == "1" %}
+{% if request.args.get("embed") == "1" %}
 <style>
     .navbar{
         display:none !important;
@@ -29,7 +29,9 @@
         <p>Create a reservation manually from the admin calendar.</p>
     </div>
 
-    <form method="POST" action="/admin/bookings/create" class="admin-form-card admin-booking-create-card">
+    <form method="POST"
+      action="/admin/bookings/create{% if request.args.get('embed') == '1' %}?embed=1{% endif %}"
+      class="admin-form-card admin-booking-create-card">
 
         <div class="booking-create-group">
             <h2>Customer</h2>
@@ -113,7 +115,7 @@
         </div>
 
         <div class="admin-form-actions">
-            <a href="/admin/calendar" class="booking-action-btn">Back to Calendar</a>
+            <a href="/admin/calendar{% if request.args.get('embed') == '1' %}?embed=1{% endif %}" class="booking-action-btn">Back to Calendar</a>
             <button type="submit" class="btn-primary">Create Booking</button>
         </div>
 

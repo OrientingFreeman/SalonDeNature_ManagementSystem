@@ -6,12 +6,10 @@ from customers.models import Customer
 from extensions import db
 from dashboard.models import ShopSettings
 from dashboard.notifications import (
+    notify_booking_cancelled,
+    notify_booking_changed,
     notify_booking_created,
-    notify_booking_cancelled_by_customer,
-    notify_booking_rescheduled,
-    notify_booking_assignment_changed,
-    notify_deposit_marked_paid,
-    notify_booking_status_changed,
+    notify_deposit_paid,
 )
 
 
@@ -97,8 +95,6 @@ def update_booking_status(booking_id, new_status, memo=None):
             "message": f"{booking.status} 상태에서 {new_status} 상태로는 변경할 수 없습니다."
         }
 
-    old_status = booking.status
-
     if new_status == "no_show":
         booking.previous_status = booking.status
 
@@ -111,7 +107,6 @@ def update_booking_status(booking_id, new_status, memo=None):
     )
 
     db.session.add(event)
-    notify_booking_status_changed(booking, old_status=old_status, new_status=new_status)
 
     if new_status == "completed":
         booking.customer.visit_count += 1
@@ -525,7 +520,7 @@ def cancel_booking_by_customer(booking_id):
     )
 
     db.session.add(event)
-    notify_booking_cancelled_by_customer(booking)
+    notify_booking_cancelled(booking)
     db.session.commit()
 
     return {
@@ -698,7 +693,7 @@ def reschedule_booking(booking_id, new_start_time):
     )
 
     db.session.add(event)
-    notify_booking_rescheduled(booking, old_start=old_start, old_end=old_end)
+    notify_booking_changed(booking, "Rescheduled by customer.")
     db.session.commit()
 
     return {
@@ -802,7 +797,7 @@ def update_deposit_status(booking_id, deposit_status):
 
     db.session.add(event)
     if deposit_status == "paid":
-        notify_deposit_marked_paid(booking, status_auto_confirmed=status_auto_confirmed)
+        notify_deposit_paid(booking, source="Admin")
     db.session.commit()
 
     return {
@@ -957,7 +952,7 @@ def admin_update_booking_assignment(booking_id, staff_id, service_id, new_start_
     )
 
     db.session.add(event)
-    notify_booking_assignment_changed(booking)
+    notify_booking_changed(booking, "Assignment changed by admin.")
     db.session.commit()
 
     return {

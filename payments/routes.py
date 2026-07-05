@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 
 from extensions import db
 from bookings.models import Booking, Payment, BookingEvent
+from dashboard.notifications import notify_deposit_paid
 
 
 payment_bp = Blueprint("payments", __name__, url_prefix="/payment")
@@ -145,6 +146,7 @@ def success():
             memo=f"Toss payment confirmed. order_id={order_id}"
         )
     )
+    notify_deposit_paid(booking, source="Toss payment")
 
     db.session.commit()
 

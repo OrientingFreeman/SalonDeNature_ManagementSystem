@@ -19,11 +19,6 @@ from openpyxl import Workbook
 from io import BytesIO
 
 from dashboard.models import ShopSettings, AdminUser, AdminNotification
-from dashboard.notifications import (
-    notify_deposit_marked_paid,
-    notify_booking_status_changed,
-    notify_booking_rescheduled,
-)
 from extensions import db
 from bookings.models import Booking, Service, StaffService, BookingEvent
 from bookings.services import (
@@ -39,6 +34,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 import os
+
+from dashboard.notifications import (
+    admin_notification_filter_query,
+    cleanup_old_admin_notifications,
+    delete_admin_notifications_by_ids,
+    get_admin_notification_stats,
+    mark_admin_notifications_read_by_ids,
+    mark_notification_read,
+    notify_booking_changed,
+    notify_booking_status_changed,
+    notify_deposit_paid,
+    serialize_admin_notification,
+)
 
 def admin_required(func):
     @wraps(func)
@@ -60,40 +68,23 @@ def allowed_image(filename):
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
-@dashboard_bp.app_context_processor
-def inject_admin_notification_count():
+@dashboard_bp.context_processor
+def inject_admin_notification_context():
     if not session.get("admin_logged_in"):
-        return {"admin_unread_notification_count": 0}
+        return {}
 
     unread_count = AdminNotification.query.filter_by(is_read=False).count()
-    return {"admin_unread_notification_count": unread_count}
-
-
-@dashboard_bp.route("/admin/notifications")
-@admin_required
-def admin_notifications():
-    notifications = (
+    recent_notifications = (
         AdminNotification.query
         .order_by(AdminNotification.created_at.desc())
-        .limit(100)
+        .limit(5)
         .all()
     )
 
-    unread_notifications = AdminNotification.query.filter_by(is_read=False).all()
-    now = datetime.utcnow()
-
-    for notification in unread_notifications:
-        notification.is_read = True
-        notification.read_at = now
-
-    if unread_notifications:
-        db.session.commit()
-
-    return render_template(
-        "admin_notifications.html",
-        notifications=notifications
-    )
-
+    return {
+        "admin_unread_notification_count": unread_count,
+        "admin_recent_notifications": recent_notifications,
+    }
 
 
 @dashboard_bp.route("/admin")
@@ -157,6 +148,210 @@ def admin_logout():
     session.pop("admin_user_id", None)
 
     return redirect("/admin/login")
+
+
+@dashboard_bp.route("/admin/notifications")
+@admin_required
+def admin_notifications_page():
+    page = request.args.get("page", 1, type=int)
+    filter_key = request.args.get("filter", "all")
+    search_query = request.args.get("q", "").strip()
+
+    try:
+        per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        per_page = 20
+
+    if per_page not in [10, 20, 30, 50]:
+        per_page = 20
+
+    base_query = AdminNotification.query
+    filtered_query = admin_notification_filter_query(
+        base_query,
+        filter_key=filter_key,
+        search_query=search_query,
+    )
+
+    notifications = (
+        filtered_query
+        .order_by(AdminNotification.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    stats = get_admin_notification_stats()
+
+    filter_counts = {
+        "all": AdminNotification.query.count(),
+        "unread": AdminNotification.query.filter_by(is_read=False).count(),
+        "booking": AdminNotification.query.filter(
+            AdminNotification.notification_type.in_([
+                "booking_created",
+                "booking_changed",
+            ])
+        ).count(),
+        "deposit": AdminNotification.query.filter(
+            AdminNotification.notification_type.in_([
+                "deposit_paid",
+            ])
+        ).count(),
+        "status": AdminNotification.query.filter(
+            AdminNotification.notification_type == "booking_status_changed"
+        ).count(),
+        "cancelled": AdminNotification.query.filter(
+            AdminNotification.notification_type == "booking_cancelled"
+        ).count(),
+    }
+
+    filter_tabs = [
+        ("all", "All"),
+        ("unread", "Unread"),
+        ("booking", "Booking"),
+        ("deposit", "Deposit"),
+        ("status", "Status"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    return render_template(
+        "admin_notifications.html",
+        notifications=notifications,
+        unread_count=stats["unread_count"],
+        stats=stats,
+        filter_counts=filter_counts,
+        filter_key=filter_key,
+        search_query=search_query,
+        filter_tabs=filter_tabs,
+        per_page=per_page,
+    )
+
+
+@dashboard_bp.route("/admin/notifications/<int:notification_id>/read", methods=["POST"])
+@admin_required
+def admin_notification_mark_read(notification_id):
+    notification = AdminNotification.query.get_or_404(notification_id)
+    mark_notification_read(notification)
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "notification": serialize_admin_notification(notification),
+        "unread_count": AdminNotification.query.filter_by(is_read=False).count(),
+    })
+
+
+
+@dashboard_bp.route("/admin/notifications/<int:notification_id>/delete", methods=["POST"])
+@admin_required
+def admin_notification_delete(notification_id):
+    notification = AdminNotification.query.get_or_404(notification_id)
+    db.session.delete(notification)
+    db.session.commit()
+
+    flash("Notification deleted.", "success")
+    return redirect(url_for(
+        "dashboard.admin_notifications_page",
+        page=request.args.get("page", 1),
+        filter=request.args.get("filter", "all"),
+        q=request.args.get("q", ""),
+        per_page=request.args.get("per_page", 20),
+    ))
+
+
+@dashboard_bp.route("/admin/notifications/mark-all-read", methods=["POST"])
+@admin_required
+def admin_notifications_mark_all_read():
+    now = datetime.utcnow()
+    unread_notifications = AdminNotification.query.filter_by(is_read=False).all()
+
+    for notification in unread_notifications:
+        notification.is_read = True
+        notification.read_at = now
+
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "updated_count": len(unread_notifications),
+        "unread_count": 0,
+    })
+
+
+
+
+@dashboard_bp.route("/admin/notifications/bulk-action", methods=["POST"])
+@admin_required
+def admin_notifications_bulk_action():
+    action = request.form.get("action")
+    notification_ids = [
+        int(notification_id)
+        for notification_id in request.form.getlist("notification_ids")
+        if notification_id.isdigit()
+    ]
+
+    if not notification_ids:
+        flash("Please select at least one notification.", "error")
+        return redirect(url_for(
+            "dashboard.admin_notifications_page",
+            page=request.form.get("page", 1),
+            filter=request.form.get("filter", "all"),
+            q=request.form.get("q", ""),
+            per_page=request.form.get("per_page", 20),
+        ))
+
+    if action == "mark_read":
+        updated_count = mark_admin_notifications_read_by_ids(notification_ids)
+        db.session.commit()
+        flash(f"{updated_count} notification(s) marked as read.", "success")
+    elif action == "delete":
+        deleted_count = delete_admin_notifications_by_ids(notification_ids)
+        db.session.commit()
+        flash(f"{deleted_count} notification(s) deleted.", "success")
+    else:
+        flash("Invalid bulk action.", "error")
+
+    return redirect(url_for(
+        "dashboard.admin_notifications_page",
+        page=request.form.get("page", 1),
+        filter=request.form.get("filter", "all"),
+        q=request.form.get("q", ""),
+        per_page=request.form.get("per_page", 20),
+    ))
+
+
+@dashboard_bp.route("/admin/notifications/cleanup", methods=["POST"])
+@admin_required
+def admin_notifications_cleanup():
+    result = cleanup_old_admin_notifications()
+    db.session.commit()
+
+    flash(
+        (
+            f"Notification cleanup completed. "
+            f"{result['total_deleted_count']} old notification(s) deleted."
+        ),
+        "success"
+    )
+
+    return redirect(url_for("dashboard.admin_notifications_page"))
+
+
+@dashboard_bp.route("/admin/api/notifications/summary")
+@admin_required
+def admin_notifications_summary_api():
+    recent_notifications = (
+        AdminNotification.query
+        .order_by(AdminNotification.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    return jsonify({
+        "ok": True,
+        "unread_count": AdminNotification.query.filter_by(is_read=False).count(),
+        "notifications": [
+            serialize_admin_notification(notification)
+            for notification in recent_notifications
+        ],
+    })
 
 
 @dashboard_bp.route("/admin/calendar")
@@ -859,6 +1054,9 @@ def admin_create_booking_submit():
 
     if not result.get("ok"):
         return result.get("message", "예약 생성 실패"), 400
+
+    if request.args.get("embed") == "1":
+        return redirect(url_for("dashboard.admin_calendar", date=start_time.date(), embed=1))
 
     return redirect(url_for("dashboard.admin_calendar", date=start_time.date()))
 
@@ -1633,7 +1831,7 @@ def admin_timeline_move():
     )
 
     db.session.add(event)
-    notify_booking_rescheduled(booking, old_start=old_start_time, old_end=old_end_time)
+    notify_booking_changed(booking, "Moved on admin timeline.")
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)
@@ -1688,7 +1886,7 @@ def admin_timeline_mark_deposit_paid(booking_id):
     )
 
     db.session.add(event)
-    notify_deposit_marked_paid(booking, status_auto_confirmed=status_auto_confirmed)
+    notify_deposit_paid(booking, source="Admin")
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)
@@ -1736,6 +1934,7 @@ def admin_timeline_update_booking_status(booking_id):
     )
 
     db.session.add(event)
+    notify_booking_status_changed(booking, old_status, new_status)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)

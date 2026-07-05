@@ -31,12 +31,6 @@
                 <a href="/admin/services">Services</a>
                 <a href="/admin/staff">Staff</a>
                 <a href="/admin/revenue">Revenue</a>
-                <a href="/admin/notifications">
-                    Alerts
-                    {% if admin_unread_notification_count|default(0) > 0 %}
-                        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:#8b5e3c;color:white;font-size:11px;line-height:18px;">{{ admin_unread_notification_count }}</span>
-                    {% endif %}
-                </a>
                 <a href="/admin/settings">Settings</a>
                 <a href="/admin/users">AdminAccount</a>
                 <a href="/admin/change-password">My Account</a>
@@ -81,6 +75,38 @@
         {% endif %}
 
         {% if session.get("admin_logged_in") %}
+            <div class="admin-notification-widget" data-notification-widget>
+                <button class="admin-notification-button" type="button" data-notification-toggle aria-label="Admin notifications">
+                    <span class="admin-notification-icon">🔔</span>
+                    <span class="admin-notification-badge{% if not admin_unread_notification_count %} is-hidden{% endif %}" data-notification-badge>
+                        {{ admin_unread_notification_count or 0 }}
+                    </span>
+                </button>
+
+                <div class="admin-notification-dropdown" data-notification-dropdown>
+                    <div class="admin-notification-dropdown-header">
+                        <strong>Notifications</strong>
+                        <button type="button" data-notification-mark-all>Mark all as read</button>
+                    </div>
+
+                    <div class="admin-notification-list" data-notification-list>
+                        {% for notification in admin_recent_notifications or [] %}
+                            <a class="admin-notification-item{% if not notification.is_read %} is-unread{% endif %}"
+                               href="{{ notification.target_url or '/admin/timeline' }}"
+                               data-notification-id="{{ notification.id }}">
+                                <span class="admin-notification-title">{{ notification.title }}</span>
+                                <span class="admin-notification-message">{{ notification.message }}</span>
+                                <span class="admin-notification-time">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</span>
+                            </a>
+                        {% else %}
+                            <div class="admin-notification-empty">No notifications yet.</div>
+                        {% endfor %}
+                    </div>
+
+                    <a class="admin-notification-view-all" href="/admin/notifications">View all notifications</a>
+                </div>
+            </div>
+
             <a class="btn-book" href="/admin/logout">
                 Log Out
             </a>

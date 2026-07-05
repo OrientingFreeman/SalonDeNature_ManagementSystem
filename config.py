@@ -22,3 +22,10 @@ class Config:
     )
     TOSS_CLIENT_KEY = os.getenv("TOSS_CLIENT_KEY")
     TOSS_SECRET_KEY = os.getenv("TOSS_SECRET_KEY")
+
+    SMS_ENABLED = os.getenv("SMS_ENABLED", "false").lower() == "true"
+    SOLAPI_API_KEY = os.getenv("SOLAPI_API_KEY")
+    SOLAPI_API_SECRET = os.getenv("SOLAPI_API_SECRET")
+    SOLAPI_FROM_NUMBER = os.getenv("SOLAPI_FROM_NUMBER")
+    SOLAPI_API_BASE_URL = os.getenv("SOLAPI_API_BASE_URL", "https://api.solapi.com")
+    SOLAPI_TIMEOUT_SECONDS = int(os.getenv("SOLAPI_TIMEOUT_SECONDS", "10"))

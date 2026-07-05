@@ -11,6 +11,13 @@ from dashboard.notifications import (
     notify_booking_created,
     notify_deposit_paid,
 )
+from sms.service import (
+    send_booking_cancelled_sms,
+    send_booking_changed_sms,
+    send_booking_created_sms,
+    send_deposit_paid_sms,
+    send_deposit_request_sms,
+)
 
 
 SLOT_MINUTES = 30
@@ -149,6 +156,7 @@ def update_deposit_request_info(booking_id, payment_link, deposit_note):
     )
 
     db.session.add(event)
+    send_deposit_request_sms(booking)
     db.session.commit()
 
     return {
@@ -467,6 +475,12 @@ def create_booking(customer_id, staff_id, service_id, start_time):
 
     db.session.add(event)
     notify_booking_created(booking)
+
+    if booking.deposit_payment_status == "required":
+        send_deposit_request_sms(booking)
+    else:
+        send_booking_created_sms(booking)
+
     db.session.commit()
 
     return {
@@ -521,6 +535,7 @@ def cancel_booking_by_customer(booking_id):
 
     db.session.add(event)
     notify_booking_cancelled(booking)
+    send_booking_cancelled_sms(booking)
     db.session.commit()
 
     return {
@@ -694,6 +709,7 @@ def reschedule_booking(booking_id, new_start_time):
 
     db.session.add(event)
     notify_booking_changed(booking, "Rescheduled by customer.")
+    send_booking_changed_sms(booking)
     db.session.commit()
 
     return {
@@ -798,6 +814,7 @@ def update_deposit_status(booking_id, deposit_status):
     db.session.add(event)
     if deposit_status == "paid":
         notify_deposit_paid(booking, source="Admin")
+        send_deposit_paid_sms(booking)
     db.session.commit()
 
     return {
@@ -953,6 +970,12 @@ def admin_update_booking_assignment(booking_id, staff_id, service_id, new_start_
 
     db.session.add(event)
     notify_booking_changed(booking, "Assignment changed by admin.")
+
+    if booking.deposit_payment_status == "required" and old_service_id != service_id:
+        send_deposit_request_sms(booking)
+    else:
+        send_booking_changed_sms(booking)
+
     db.session.commit()
 
     return {

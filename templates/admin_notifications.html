@@ -57,6 +57,80 @@
         </div>
     </div>
 
+    <div class="notification-sms-panel">
+        <div class="notification-sms-header">
+            <div>
+                <strong>SMS Test & Logs</strong>
+                <p>Solapi integration check before real customer operation.</p>
+            </div>
+            <div class="notification-sms-status">
+                <span class="sms-status-pill {{ 'is-on' if sms_enabled else 'is-off' }}">
+                    SMS {{ 'ON' if sms_enabled else 'OFF' }}
+                </span>
+                <span>From: {{ solapi_from_number or 'Not configured' }}</span>
+            </div>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('dashboard.admin_notifications_sms_test') }}"
+              class="notification-sms-test-form">
+            <input type="text"
+                   name="recipient_phone"
+                   placeholder="Recipient phone number"
+                   class="notification-search-input"
+                   autocomplete="off">
+            <input type="text"
+                   name="message"
+                   placeholder="Optional test message"
+                   class="notification-search-input">
+            <button type="submit" class="notification-action-btn primary">
+                Send test SMS
+            </button>
+        </form>
+
+        <div class="notification-sms-stats">
+            <span>Sent <strong>{{ sms_stats.sent if sms_stats is defined else 0 }}</strong></span>
+            <span>Skipped <strong>{{ sms_stats.skipped if sms_stats is defined else 0 }}</strong></span>
+            <span>Failed <strong>{{ sms_stats.failed if sms_stats is defined else 0 }}</strong></span>
+            <span>Total <strong>{{ sms_stats.total if sms_stats is defined else 0 }}</strong></span>
+        </div>
+
+        <div class="notification-sms-log-table-wrap">
+            <table class="notification-sms-log-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Event</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in sms_logs %}
+                        <tr>
+                            <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '' }}</td>
+                            <td>{{ log.event_type.replace('_', ' ') }}</td>
+                            <td>{{ log.recipient_phone or '-' }}</td>
+                            <td>
+                                <span class="sms-log-status sms-log-status-{{ log.status }}">
+                                    {{ log.status }}
+                                </span>
+                            </td>
+                            <td>{{ log.message[:70] }}{% if log.message and log.message|length > 70 %}…{% endif %}</td>
+                            <td>{{ log.error_message[:60] if log.error_message else '-' }}{% if log.error_message and log.error_message|length > 60 %}…{% endif %}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="notification-sms-empty">No SMS logs yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="notification-toolbar">
         <form method="GET" action="{{ url_for('dashboard.admin_notifications_page') }}" class="notification-search-form">
             <input type="hidden" name="filter" value="{{ filter_key or 'all' }}">

@@ -47,6 +47,13 @@ from dashboard.notifications import (
     notify_deposit_paid,
     serialize_admin_notification,
 )
+from sms.models import SmsLog
+from sms.service import (
+    send_booking_cancelled_sms,
+    send_booking_changed_sms,
+    send_deposit_paid_sms,
+    send_test_sms,
+)
 
 def admin_required(func):
     @wraps(func)
@@ -211,6 +218,20 @@ def admin_notifications_page():
         ("cancelled", "Cancelled"),
     ]
 
+    sms_logs = (
+        SmsLog.query
+        .order_by(SmsLog.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    sms_stats = {
+        "sent": SmsLog.query.filter_by(status="sent").count(),
+        "skipped": SmsLog.query.filter_by(status="skipped").count(),
+        "failed": SmsLog.query.filter_by(status="failed").count(),
+        "total": SmsLog.query.count(),
+    }
+
     return render_template(
         "admin_notifications.html",
         notifications=notifications,
@@ -221,7 +242,33 @@ def admin_notifications_page():
         search_query=search_query,
         filter_tabs=filter_tabs,
         per_page=per_page,
+        sms_enabled=current_app.config.get("SMS_ENABLED"),
+        solapi_from_number=current_app.config.get("SOLAPI_FROM_NUMBER"),
+        sms_logs=sms_logs,
+        sms_stats=sms_stats,
     )
+
+
+@dashboard_bp.route("/admin/notifications/sms-test", methods=["POST"])
+@admin_required
+def admin_notifications_sms_test():
+    recipient = request.form.get("recipient_phone", "").strip()
+    message = request.form.get("message", "").strip()
+
+    if not recipient:
+        flash("Please enter a recipient phone number.", "error")
+        return redirect(url_for("dashboard.admin_notifications_page"))
+
+    result = send_test_sms(recipient, message or None)
+
+    if result.get("ok") and not result.get("skipped"):
+        flash("Test SMS sent successfully.", "success")
+    elif result.get("skipped"):
+        flash(f"Test SMS skipped: {result.get('reason')}", "warning")
+    else:
+        flash(f"Test SMS failed: {result.get('reason')}", "error")
+
+    return redirect(url_for("dashboard.admin_notifications_page"))
 
 
 @dashboard_bp.route("/admin/notifications/<int:notification_id>/read", methods=["POST"])
@@ -1832,6 +1879,7 @@ def admin_timeline_move():
 
     db.session.add(event)
     notify_booking_changed(booking, "Moved on admin timeline.")
+    send_booking_changed_sms(booking)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)
@@ -1887,6 +1935,7 @@ def admin_timeline_mark_deposit_paid(booking_id):
 
     db.session.add(event)
     notify_deposit_paid(booking, source="Admin")
+    send_deposit_paid_sms(booking)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)
@@ -1935,6 +1984,8 @@ def admin_timeline_update_booking_status(booking_id):
 
     db.session.add(event)
     notify_booking_status_changed(booking, old_status, new_status)
+    if new_status == "cancelled":
+        send_booking_cancelled_sms(booking)
     db.session.commit()
 
     payload = _timeline_booking_payload(booking)

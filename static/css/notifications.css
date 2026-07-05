@@ -828,3 +828,156 @@
     }
 }
 
+
+.notification-sms-panel{
+    margin:0 0 22px;
+    padding:20px;
+    border:1px solid rgba(26,60,52,.12);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 4px 22px rgba(0,0,0,.05);
+}
+
+.notification-sms-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:16px;
+}
+
+.notification-sms-header strong{
+    display:block;
+    color:var(--forest);
+    font-size:18px;
+    margin-bottom:5px;
+}
+
+.notification-sms-header p{
+    margin:0;
+    color:#6e6e6e;
+    line-height:1.45;
+}
+
+.notification-sms-status{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
+    color:#6e6e6e;
+    font-size:13px;
+    white-space:nowrap;
+}
+
+.sms-status-pill,
+.sms-log-status{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:24px;
+    padding:0 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+}
+
+.sms-status-pill.is-on,
+.sms-log-status-sent{
+    background:#e9f6ef;
+    color:#1f7a4d;
+}
+
+.sms-status-pill.is-off,
+.sms-log-status-skipped{
+    background:#f7f4ee;
+    color:#8a6d3b;
+}
+
+.sms-log-status-failed{
+    background:#fff4f1;
+    color:#a33d2b;
+}
+
+.notification-sms-test-form{
+    display:grid;
+    grid-template-columns:minmax(180px, 1fr) minmax(220px, 2fr) auto;
+    gap:10px;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.notification-sms-stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.notification-sms-stats span{
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#f8faf8;
+    color:#607068;
+    font-size:13px;
+    font-weight:700;
+}
+
+.notification-sms-stats strong{
+    color:var(--forest);
+}
+
+.notification-sms-log-table-wrap{
+    overflow:auto;
+    border:1px solid rgba(0,0,0,.06);
+    border-radius:14px;
+}
+
+.notification-sms-log-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:840px;
+    background:#fff;
+}
+
+.notification-sms-log-table th,
+.notification-sms-log-table td{
+    padding:12px 14px;
+    border-bottom:1px solid rgba(0,0,0,.05);
+    text-align:left;
+    vertical-align:top;
+    font-size:13px;
+}
+
+.notification-sms-log-table th{
+    background:#f8faf8;
+    color:var(--forest);
+    font-weight:900;
+}
+
+.notification-sms-log-table td{
+    color:#555;
+}
+
+.notification-sms-empty{
+    text-align:center !important;
+    color:#999 !important;
+    padding:24px 14px !important;
+}
+
+@media(max-width:768px){
+    .notification-sms-header{
+        flex-direction:column;
+    }
+
+    .notification-sms-status{
+        align-items:flex-start;
+    }
+
+    .notification-sms-test-form{
+        grid-template-columns:1fr;
+    }
+}

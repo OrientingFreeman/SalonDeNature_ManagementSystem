@@ -13,3 +13,5 @@ from bookings.models import (
 )
 
 from dashboard.models import ShopSettings, AdminUser, AdminNotification
+
+from sms.models import SmsLog

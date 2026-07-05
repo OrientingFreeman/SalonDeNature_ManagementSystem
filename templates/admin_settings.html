@@ -115,6 +115,49 @@
             </select>
         </div>
 
+
+        <div class="settings-row settings-admin-sms-row">
+            <div>
+                <h2>Admin SMS Notifications</h2>
+                <p>Send booking and deposit event messages to internal admin numbers. Separate multiple numbers with commas or line breaks.</p>
+            </div>
+            <div class="settings-field-stack">
+                <label>
+                    <span>Admin SMS Recipients</span>
+                    <textarea
+                        name="admin_sms_recipients"
+                        rows="4"
+                        placeholder="01012345678, 01098765432"
+                    >{{ settings.admin_sms_recipients or '' }}</textarea>
+                </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_booking_created_enabled" {% if settings.admin_sms_booking_created_enabled is not sameas false %}checked{% endif %}>
+                    <span>New booking</span>
+                </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_booking_changed_enabled" {% if settings.admin_sms_booking_changed_enabled is not sameas false %}checked{% endif %}>
+                    <span>Booking updated</span>
+                </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_booking_cancelled_enabled" {% if settings.admin_sms_booking_cancelled_enabled is not sameas false %}checked{% endif %}>
+                    <span>Booking cancelled</span>
+                </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_deposit_request_enabled" {% if settings.admin_sms_deposit_request_enabled is not sameas false %}checked{% endif %}>
+                    <span>Deposit requested</span>
+                </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_deposit_paid_enabled" {% if settings.admin_sms_deposit_paid_enabled is not sameas false %}checked{% endif %}>
+                    <span>Deposit confirmed</span>
+                </label>
+            </div>
+        </div>
+
         <div class="admin-form-actions">
             <button type="submit" class="btn-primary">Save Settings</button>
         </div>
@@ -210,6 +253,17 @@
         grid-template-columns:1fr;
         gap:14px;
     }
+}
+.settings-checkbox-line{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:14px;
+    color:#445;
+}
+.settings-checkbox-line input{
+    width:auto;
+    min-height:auto;
 }
 </style>
 

@@ -26,6 +26,8 @@ class SmsLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     event_type = db.Column(db.String(50), nullable=False, index=True)
+    template_key = db.Column(db.String(50), nullable=True, index=True)
+    recipient_type = db.Column(db.String(20), nullable=False, default="customer", index=True)
     booking_id = db.Column(db.Integer, db.ForeignKey("bookings.id"), nullable=True, index=True)
 
     recipient_phone = db.Column(db.String(30), nullable=True)

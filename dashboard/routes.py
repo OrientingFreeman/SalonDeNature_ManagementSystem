@@ -549,6 +549,13 @@ def update_settings():
     settings.deposit_account_holder = request.form.get("deposit_account_holder") or None
     settings.deposit_notice = request.form.get("deposit_notice") or None
 
+    settings.admin_sms_recipients = request.form.get("admin_sms_recipients") or None
+    settings.admin_sms_booking_created_enabled = request.form.get("admin_sms_booking_created_enabled") == "on"
+    settings.admin_sms_booking_changed_enabled = request.form.get("admin_sms_booking_changed_enabled") == "on"
+    settings.admin_sms_booking_cancelled_enabled = request.form.get("admin_sms_booking_cancelled_enabled") == "on"
+    settings.admin_sms_deposit_request_enabled = request.form.get("admin_sms_deposit_request_enabled") == "on"
+    settings.admin_sms_deposit_paid_enabled = request.form.get("admin_sms_deposit_paid_enabled") == "on"
+
     deposit_due_minutes_raw = request.form.get("deposit_due_minutes")
     try:
         settings.deposit_due_minutes = int(deposit_due_minutes_raw or 30)

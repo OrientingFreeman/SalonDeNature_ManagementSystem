@@ -16,6 +16,13 @@ class ShopSettings(db.Model):
     deposit_notice = db.Column(db.Text, nullable=True)
     deposit_due_minutes = db.Column(db.Integer, default=30)
 
+    admin_sms_recipients = db.Column(db.Text, nullable=True)
+    admin_sms_booking_created_enabled = db.Column(db.Boolean, default=True)
+    admin_sms_booking_changed_enabled = db.Column(db.Boolean, default=True)
+    admin_sms_booking_cancelled_enabled = db.Column(db.Boolean, default=True)
+    admin_sms_deposit_request_enabled = db.Column(db.Boolean, default=True)
+    admin_sms_deposit_paid_enabled = db.Column(db.Boolean, default=True)
+
     booking_approval_mode = db.Column(db.String(30), default="auto")
     # auto / manual
 

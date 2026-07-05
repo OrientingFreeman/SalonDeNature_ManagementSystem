@@ -1,3 +1,21 @@
+
+## v0.11.4 - Phase11-4A Admin SMS Notifications
+
+Added
+- Admin SMS recipient settings in Shop Settings.
+- Event-level admin SMS toggles for booking created, booking updated, booking cancelled, deposit requested, and deposit confirmed.
+- Admin-only SMS templates: `admin_booking_created`, `admin_booking_changed`, `admin_booking_cancelled`, `admin_deposit_request`, `admin_deposit_paid`.
+- SMS log recipient classification via `recipient_type` and `template_key`.
+
+Changed
+- Booking SMS service now sends both customer SMS and configured admin SMS for booking/deposit events.
+- Default customer SMS templates are now English for newly seeded templates.
+- SMS log table in Notification Center now shows recipient type and template key.
+- `create_sms_tables.py` now performs idempotent SQLite column updates for Phase11-4A.
+
+Notes
+- Existing edited customer templates in the database are not overwritten. Admin templates are inserted when `python create_sms_tables.py` runs.
+- Real SMS is still controlled by `SMS_ENABLED`; with `SMS_ENABLED=false`, logs are created as skipped.
 # Salon De Nature Management System Changelog
 
 ## v0.11.3 - Phase11-3 SMS Template Manager

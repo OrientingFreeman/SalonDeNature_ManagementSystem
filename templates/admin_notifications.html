@@ -104,6 +104,8 @@
                     <tr>
                         <th>Time</th>
                         <th>Event</th>
+                        <th>Type</th>
+                        <th>Template</th>
                         <th>Phone</th>
                         <th>Status</th>
                         <th>Message</th>
@@ -115,6 +117,8 @@
                         <tr>
                             <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '' }}</td>
                             <td>{{ log.event_type.replace('_', ' ') }}</td>
+                            <td>{{ log.recipient_type or 'customer' }}</td>
+                            <td>{{ log.template_key or '-' }}</td>
                             <td>{{ log.recipient_phone or '-' }}</td>
                             <td>
                                 <span class="sms-log-status sms-log-status-{{ log.status }}">
@@ -126,7 +130,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="6" class="notification-sms-empty">No SMS logs yet.</td>
+                            <td colspan="8" class="notification-sms-empty">No SMS logs yet.</td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="admin-booking-detail-page">
+    <div class="booking-detail-header">
+        <div>
+            <p class="eyebrow">BOOKING #{{ booking.id }}</p>
+            <h1>{{ booking.customer.name }} · {{ booking.service.name_ko }}</h1>
+            <p>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }} · {{ booking.staff.name }}</p>
+        </div>
+        <div class="booking-detail-header-actions">
+            <span class="booking-status status-{{ booking.status }}">{{ booking.status }}</span>
+            <a href="{{ url_for('dashboard.admin_timeline', date=booking.start_time.strftime('%Y-%m-%d'), booking_id=booking.id) }}" class="detail-btn">Timeline</a>
+            <a href="{{ url_for('dashboard.admin_calendar', date=booking.start_time.strftime('%Y-%m-%d')) }}" class="detail-btn secondary">Calendar</a>
+        </div>
+    </div>
+
+    <div class="booking-detail-grid">
+        <article class="detail-card">
+            <h2>Booking information</h2>
+            <dl class="detail-list">
+                <div><dt>Customer</dt><dd>{{ booking.customer.name }}</dd></div>
+                <div><dt>Phone</dt><dd>{{ booking.customer.phone or '-' }}</dd></div>
+                <div><dt>Email</dt><dd>{{ booking.customer.email or '-' }}</dd></div>
+                <div><dt>Service</dt><dd>{{ booking.service.name_ko }} · ₩{{ '{:,}'.format(booking.service.price) }}</dd></div>
+                <div><dt>Staff</dt><dd>{{ booking.staff.name }}</dd></div>
+                <div><dt>Schedule</dt><dd>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</dd></div>
+                <div><dt>Deposit</dt><dd>{{ booking.deposit_payment_status or 'none' }}{% if booking.deposit_paid %} · paid{% endif %}</dd></div>
+                <div><dt>Created</dt><dd>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else '-' }}</dd></div>
+            </dl>
+            <div class="detail-note"><strong>Booking memo</strong><p>{{ booking.memo or 'No booking memo.' }}</p></div>
+            <div class="detail-note"><strong>Deposit note</strong><p>{{ booking.deposit_note or 'No deposit note.' }}</p></div>
+        </article>
+
+        <article class="detail-card">
+            <h2>Status management</h2>
+            <p class="card-description">A memo is stored in the booking event history. Cancellation remains a manual administrator action.</p>
+            <form method="POST" action="{{ url_for('dashboard.admin_booking_status_form', booking_id=booking.id) }}">
+                <label class="field-label" for="status">New status</label>
+                <select id="status" name="status" required>
+                    {% for value, label in [('pending','Pending'),('confirmed','Confirmed'),('completed','Completed'),('cancelled','Cancelled'),('no_show','No-show')] %}
+                        <option value="{{ value }}" {% if value == booking.status %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <label class="field-label" for="memo">Reason / processing memo</label>
+                <textarea id="memo" name="memo" rows="4" placeholder="Example: Customer requested cancellation by phone"></textarea>
+                <button type="submit" class="detail-submit" onclick="return confirm('Change this booking status?');">Update status</button>
+            </form>
+        </article>
+    </div>
+
+    <div class="booking-detail-grid lower-grid">
+        <article class="detail-card">
+            <div class="card-title-row"><h2>Booking event history</h2><span>{{ events|length }}</span></div>
+            <div class="history-list">
+                {% for event in events %}
+                    <div class="history-item">
+                        <div><strong>{{ event.event_type.replace('_',' ') }}</strong><p>{{ event.memo or '-' }}</p></div>
+                        <time>{{ event.created_at.strftime('%Y-%m-%d %H:%M') if event.created_at else '-' }}</time>
+                    </div>
+                {% else %}<p class="empty-copy">No event history.</p>{% endfor %}
+            </div>
+        </article>
+
+        <article class="detail-card">
+            <div class="card-title-row"><h2>SMS history</h2><span>{{ sms_logs|length }}</span></div>
+            <div class="history-list">
+                {% for log in sms_logs %}
+                    <div class="history-item sms-history-item">
+                        <div>
+                            <strong>{{ log.template_key or log.event_type }} · {{ log.recipient_type }}</strong>
+                            <p>{{ log.recipient_phone or '-' }} · <span class="sms-status sms-{{ log.status }}">{{ log.status }}</span></p>
+                            <p class="sms-message">{{ log.message }}</p>
+                            {% if log.error_message %}<p class="sms-error">{{ log.error_message }}</p>{% endif %}
+                        </div>
+                        <time>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '-' }}</time>
+                    </div>
+                {% else %}<p class="empty-copy">No SMS history for this booking.</p>{% endfor %}
+            </div>
+        </article>
+    </div>
+</section>
+
+<style>
+.admin-booking-detail-page{max-width:1280px;margin:0 auto;padding:30px 20px 60px}.booking-detail-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}.booking-detail-header h1{margin:5px 0 8px}.booking-detail-header p{margin:0;color:#667085}.booking-detail-header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.booking-status,.detail-btn{border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700}.booking-status{background:#f2f4f7}.status-confirmed{background:#dcfae6;color:#067647}.status-cancelled,.status-no_show{background:#fee4e2;color:#b42318}.status-completed{background:#e0f2fe;color:#026aa2}.status-pending{background:#fef0c7;color:#b54708}.detail-btn{background:#111827;color:#fff;text-decoration:none}.detail-btn.secondary{background:#fff;color:#344054;border:1px solid #d0d5dd}.booking-detail-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:20px}.lower-grid{margin-top:20px;grid-template-columns:1fr 1fr}.detail-card{background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.detail-card h2{margin:0 0 16px;font-size:18px}.detail-list{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:0}.detail-list div{padding:12px 0;border-bottom:1px solid #f0f1f3}.detail-list dt{font-size:12px;color:#667085;margin-bottom:4px}.detail-list dd{margin:0;font-weight:650}.detail-note{margin-top:16px;padding:14px;background:#f9fafb;border-radius:12px}.detail-note p{white-space:pre-wrap;margin:7px 0 0;color:#475467}.card-description{color:#667085;font-size:14px;line-height:1.55}.field-label{display:block;margin:14px 0 7px;font-weight:700;font-size:13px}.detail-card select,.detail-card textarea{width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;padding:11px;background:#fff}.detail-submit{width:100%;margin-top:14px;border:0;border-radius:10px;padding:12px;background:#111827;color:#fff;font-weight:700;cursor:pointer}.card-title-row{display:flex;justify-content:space-between;align-items:center}.card-title-row span{background:#f2f4f7;border-radius:999px;padding:5px 9px;font-size:12px}.history-list{display:flex;flex-direction:column}.history-item{display:flex;justify-content:space-between;gap:15px;padding:14px 0;border-top:1px solid #f0f1f3}.history-item:first-child{border-top:0}.history-item strong{font-size:14px;text-transform:capitalize}.history-item p{margin:5px 0 0;color:#667085;font-size:13px;white-space:pre-wrap}.history-item time{white-space:nowrap;font-size:12px;color:#98a2b3}.sms-message{color:#344054!important}.sms-error{color:#b42318!important}.sms-status{font-weight:700}.sms-sent{color:#067647}.sms-skipped{color:#b54708}.sms-failed{color:#b42318}.empty-copy{color:#98a2b3}@media(max-width:850px){.booking-detail-header{flex-direction:column}.booking-detail-grid,.lower-grid{grid-template-columns:1fr}.detail-list{grid-template-columns:1fr}.history-item{flex-direction:column}.history-item time{white-space:normal}}
+</style>
+{% endblock %}

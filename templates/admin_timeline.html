@@ -222,6 +222,7 @@
         </div>
 
         <div class="modal-actions timeline-modal-actions">
+            <button type="button" class="booking-action-btn" onclick="openFullBookingDetail()">Full Details</button>
             <button type="button" class="booking-action-btn" onclick="goToCalendarForBooking()">Open Calendar</button>
             <button type="button" class="booking-action-btn" onclick="requestTimelineReschedule()">Reschedule</button>
             <button type="button" class="booking-action-btn" onclick="requestTimelineAssignment()">Edit Assignment</button>
@@ -1094,6 +1095,12 @@ function updateTimelineBlockStatus(bookingId, status) {
 
 function isTerminalTimelineStatus(status) {
     return ["completed", "cancelled", "no_show"].includes(status);
+}
+
+
+function openFullBookingDetail() {
+    if (!selectedTimelineBookingId) return;
+    window.location.href = `/admin/bookings/${selectedTimelineBookingId}`;
 }
 
 function goToCalendarForBooking() {

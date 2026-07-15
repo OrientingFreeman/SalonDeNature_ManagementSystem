@@ -26,7 +26,8 @@ from bookings.services import (
     find_available_staff_for_service,
     get_available_slots_any_staff,
     reschedule_booking,
-    admin_update_booking_assignment
+    admin_update_booking_assignment,
+    update_booking_status
 )
 from staff.models import Staff, StaffSchedule, StaffTimeOff
 from customers.models import Customer
@@ -159,6 +160,55 @@ def admin_logout():
     session.pop("admin_user_id", None)
 
     return redirect("/admin/login")
+
+
+@dashboard_bp.route("/admin/bookings/<int:booking_id>")
+@admin_required
+def admin_booking_detail(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    events = (
+        BookingEvent.query
+        .filter_by(booking_id=booking.id)
+        .order_by(BookingEvent.created_at.desc(), BookingEvent.id.desc())
+        .all()
+    )
+    sms_logs = (
+        SmsLog.query
+        .filter_by(booking_id=booking.id)
+        .order_by(SmsLog.created_at.desc(), SmsLog.id.desc())
+        .all()
+    )
+    reminder_logs = [log for log in sms_logs if log.template_key in {"booking_reminder", "admin_booking_reminder"}]
+    return render_template(
+        "admin_booking_detail.html",
+        booking=booking,
+        events=events,
+        sms_logs=sms_logs,
+        reminder_logs=reminder_logs,
+    )
+
+
+@dashboard_bp.route("/admin/bookings/<int:booking_id>/status-form", methods=["POST"])
+@admin_required
+def admin_booking_status_form(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    old_status = booking.status
+    new_status = request.form.get("status", "").strip()
+    memo = request.form.get("memo", "").strip() or None
+
+    result = update_booking_status(booking_id, new_status, memo=memo)
+    if not result.get("ok"):
+        flash(result.get("message", "Unable to update booking status."), "error")
+        return redirect(url_for("dashboard.admin_booking_detail", booking_id=booking_id))
+
+    booking = Booking.query.get(booking_id)
+    notify_booking_status_changed(booking, old_status, new_status)
+    if new_status == "cancelled":
+        send_booking_cancelled_sms(booking)
+    db.session.commit()
+
+    flash(f"Booking status changed: {old_status} → {new_status}", "success")
+    return redirect(url_for("dashboard.admin_booking_detail", booking_id=booking_id))
 
 
 @dashboard_bp.route("/admin/notifications")

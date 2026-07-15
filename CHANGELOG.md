@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+=======
+## v0.11.7 - Phase11-5A Admin Booking Detail Hub
+
+Added
+- Dedicated administrator booking detail page at `/admin/bookings/<booking_id>`.
+- Unified booking, customer, service, staff, schedule, deposit, and memo information.
+- Booking event history ordered newest first.
+- Booking-specific customer and administrator SMS history, including reminder delivery status.
+- Manual status management form with an operational reason/memo saved to `BookingEvent`.
+- Full Details navigation from the administrator timeline booking modal.
+
+Changed
+- Manual cancellation continues to use the existing status-transition policy and customer cancellation SMS flow.
+- No new database columns or migration are required for Phase11-5A.
+
+>>>>>>> edf9fcb (Admin Page Aug)
 ## v0.11.6 - Phase11-4B Same-Day 9 AM Reminder Update
 
 Changed

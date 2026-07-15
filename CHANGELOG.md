@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-=======
+# Salon De Nature Management System Changelog
+
 ## v0.11.7 - Phase11-5A Admin Booking Detail Hub
 
 Added
@@ -14,7 +14,6 @@ Changed
 - Manual cancellation continues to use the existing status-transition policy and customer cancellation SMS flow.
 - No new database columns or migration are required for Phase11-5A.
 
->>>>>>> edf9fcb (Admin Page Aug)
 ## v0.11.6 - Phase11-4B Same-Day 9 AM Reminder Update
 
 Changed
@@ -68,7 +67,6 @@ Changed
 Notes
 - Existing edited customer templates in the database are not overwritten. Admin templates are inserted when `python create_sms_tables.py` runs.
 - Real SMS is still controlled by `SMS_ENABLED`; with `SMS_ENABLED=false`, logs are created as skipped.
-# Salon De Nature Management System Changelog
 
 ## v0.11.3 - Phase11-3 SMS Template Manager
 

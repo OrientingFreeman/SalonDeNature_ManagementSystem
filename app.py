@@ -9,6 +9,7 @@ from bookings.customer_routes import customer_booking_bp
 from auth.routes import auth_bp, oauth
 from staff.routes import staff_bp
 from payments.routes import payment_bp
+from reminders import reminders_cli
 
 
 
@@ -26,6 +27,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(staff_bp)
     app.register_blueprint(payment_bp)
+    app.cli.add_command(reminders_cli)
 
     return app
 

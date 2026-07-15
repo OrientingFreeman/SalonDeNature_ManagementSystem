@@ -57,6 +57,7 @@ from sms.service import (
 )
 from sms.default_templates import SMS_PLACEHOLDERS
 from sms.renderer import render_sample
+from reminders import run_booking_reminders
 
 def admin_required(func):
     @wraps(func)
@@ -350,6 +351,29 @@ def admin_sms_templates_seed_defaults():
     return redirect(url_for("dashboard.admin_sms_templates_page"))
 
 
+@dashboard_bp.route("/admin/notifications/run-reminders", methods=["POST"])
+@admin_required
+def admin_run_booking_reminders():
+    target_date_text = request.form.get("target_date", "").strip()
+    target_date = None
+    if target_date_text:
+        try:
+            target_date = datetime.strptime(target_date_text, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Reminder date must use YYYY-MM-DD format.", "error")
+            return redirect(url_for("dashboard.admin_notifications_page"))
+
+    result = run_booking_reminders(target_date=target_date, source="admin_manual")
+    flash(
+        "Reminder run complete: "
+        f"eligible {result['eligible']}, "
+        f"customer sent {result['customer_sent']}, skipped {result['customer_skipped']}, failed {result['customer_failed']}; "
+        f"admin sent {result['admin_sent']}, skipped {result['admin_skipped']}, failed {result['admin_failed']}.",
+        "success" if not result["customer_failed"] and not result["admin_failed"] else "warning",
+    )
+    return redirect(url_for("dashboard.admin_notifications_page"))
+
+
 @dashboard_bp.route("/admin/notifications/<int:notification_id>/read", methods=["POST"])
 @admin_required
 def admin_notification_mark_read(notification_id):
@@ -555,6 +579,7 @@ def update_settings():
     settings.admin_sms_booking_cancelled_enabled = request.form.get("admin_sms_booking_cancelled_enabled") == "on"
     settings.admin_sms_deposit_request_enabled = request.form.get("admin_sms_deposit_request_enabled") == "on"
     settings.admin_sms_deposit_paid_enabled = request.form.get("admin_sms_deposit_paid_enabled") == "on"
+    settings.admin_sms_booking_reminder_enabled = request.form.get("admin_sms_booking_reminder_enabled") == "on"
 
     deposit_due_minutes_raw = request.form.get("deposit_due_minutes")
     try:

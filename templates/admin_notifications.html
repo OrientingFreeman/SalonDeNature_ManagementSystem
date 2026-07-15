@@ -75,6 +75,20 @@
         </div>
 
         <form method="POST"
+              action="{{ url_for('dashboard.admin_run_booking_reminders') }}"
+              class="notification-sms-test-form"
+              onsubmit="return confirm('Run same-day booking reminders now? Duplicate reminders for the same booking schedule will be skipped.');">
+            <input type="date"
+                   name="target_date"
+                   class="notification-search-input"
+                   aria-label="Reminder booking date">
+            <button type="submit" class="notification-action-btn muted">
+                Run reminders now
+            </button>
+            <span class="notification-sms-manual-note">Leave the date blank to process today (Asia/Seoul).</span>
+        </form>
+
+        <form method="POST"
               action="{{ url_for('dashboard.admin_notifications_sms_test') }}"
               class="notification-sms-test-form">
             <input type="text"

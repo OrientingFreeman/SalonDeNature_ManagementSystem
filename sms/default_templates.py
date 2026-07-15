@@ -77,6 +77,36 @@ DEFAULT_SMS_TEMPLATES = [
         "sort_order": 50,
     },
     {
+        "template_key": "booking_reminder",
+        "name": "Booking Reminder",
+        "content": (
+            "[{shop_name}]\n\n"
+            "Hello {customer_name},\n\n"
+            "This is a reminder for your booking today.\n\n"
+            "Service: {service_name}\n"
+            "Staff: {staff_name}\n"
+            "Date & Time: {booking_datetime}\n\n"
+            "Please contact us in advance if you need to make a change."
+        ),
+        "description": "Sent to the customer at 9:00 AM on the day of a confirmed booking.",
+        "sort_order": 60,
+    },
+    {
+        "template_key": "admin_booking_reminder",
+        "name": "Admin - Booking Reminder",
+        "content": (
+            "[{shop_name} Admin]\n\n"
+            "Today's confirmed booking\n\n"
+            "Customer: {customer_name}\n"
+            "Phone: {customer_phone}\n"
+            "Service: {service_name}\n"
+            "Staff: {staff_name}\n"
+            "Date & Time: {booking_datetime}"
+        ),
+        "description": "Sent to configured admin recipients for each confirmed booking at 9:00 AM on the visit date.",
+        "sort_order": 160,
+    },
+    {
         "template_key": "admin_booking_created",
         "name": "Admin - New Booking",
         "content": (

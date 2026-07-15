@@ -22,6 +22,7 @@ class SmsTemplate(db.Model):
 
 class SmsLog(db.Model):
     __tablename__ = "sms_logs"
+    __table_args__ = (db.UniqueConstraint("dedupe_key", name="uq_sms_logs_dedupe_key"),)
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -29,6 +30,9 @@ class SmsLog(db.Model):
     template_key = db.Column(db.String(50), nullable=True, index=True)
     recipient_type = db.Column(db.String(20), nullable=False, default="customer", index=True)
     booking_id = db.Column(db.Integer, db.ForeignKey("bookings.id"), nullable=True, index=True)
+    scheduled_for = db.Column(db.DateTime, nullable=True, index=True)
+    reminder_date = db.Column(db.Date, nullable=True, index=True)
+    dedupe_key = db.Column(db.String(255), nullable=True, index=True)
 
     recipient_phone = db.Column(db.String(30), nullable=True)
     message = db.Column(db.Text, nullable=False)

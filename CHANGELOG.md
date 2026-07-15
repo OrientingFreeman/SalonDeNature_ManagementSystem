@@ -1,3 +1,38 @@
+## v0.11.6 - Phase11-4B Same-Day 9 AM Reminder Update
+
+Changed
+- Automatic reminder target changed from the next day to the booking date itself.
+- Default CLI and admin manual runs now process today in the `Asia/Seoul` timezone.
+- Recommended systemd timer changed to 09:00 Asia/Seoul.
+- Customer and administrator default reminder wording changed from “tomorrow” to “today”.
+- `create_sms_tables.py` migrates the legacy default reminder wording without overwriting unrelated template edits.
+
+Notes
+- Existing deduplication remains based on booking ID, template, recipient, and booking start datetime.
+- A changed booking schedule can therefore be evaluated and reminded again for its new schedule.
+
+## v0.11.5 - Phase11-4B Booking Reminder Scheduler
+
+Added
+- Dedicated Flask CLI reminder job: `flask --app app reminders run`.
+- Optional `--date YYYY-MM-DD` processing for manual verification and recovery runs.
+- Customer `booking_reminder` and admin `admin_booking_reminder` editable SMS templates.
+- Admin setting toggle for one-day-before reminder notifications.
+- Admin Notification Center action to run reminders manually.
+- SMS reminder history fields: `scheduled_for`, `reminder_date`, and `dedupe_key`.
+- Database-level unique reminder claim to prevent duplicate sends across concurrent or repeated runs.
+- `REMINDER_SCHEDULER.md` with systemd timer and disabled-SMS verification instructions.
+
+Changed
+- Reminder processing targets only `confirmed` bookings on the selected date.
+- Cancelled, completed, no-show, and pending bookings are excluded by the query.
+- Booking schedule changes produce a new dedupe key, so the changed schedule can receive a new reminder.
+- `create_sms_tables.py` now upgrades Phase11-4B columns, settings, index, and templates idempotently.
+
+Architecture
+- The production recommendation is a dedicated Flask CLI job triggered by systemd timer or cron, not an in-process APScheduler. This avoids Flask reloader and multi-worker duplicate scheduler execution.
+- With `SMS_ENABLED=false`, eligible attempts are stored as `skipped`, allowing end-to-end verification without a Solapi account.
+
 
 ## v0.11.4 - Phase11-4A Admin SMS Notifications
 

@@ -155,6 +155,11 @@
                     <input type="checkbox" name="admin_sms_deposit_paid_enabled" {% if settings.admin_sms_deposit_paid_enabled is not sameas false %}checked{% endif %}>
                     <span>Deposit confirmed</span>
                 </label>
+
+                <label class="settings-checkbox-line">
+                    <input type="checkbox" name="admin_sms_booking_reminder_enabled" {% if settings.admin_sms_booking_reminder_enabled is not sameas false %}checked{% endif %}>
+                    <span>Same-day 9 AM booking reminder</span>
+                </label>
             </div>
         </div>
 

@@ -22,6 +22,7 @@ class ShopSettings(db.Model):
     admin_sms_booking_cancelled_enabled = db.Column(db.Boolean, default=True)
     admin_sms_deposit_request_enabled = db.Column(db.Boolean, default=True)
     admin_sms_deposit_paid_enabled = db.Column(db.Boolean, default=True)
+    admin_sms_booking_reminder_enabled = db.Column(db.Boolean, default=True)
 
     booking_approval_mode = db.Column(db.String(30), default="auto")
     # auto / manual

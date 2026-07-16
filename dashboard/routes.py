@@ -20,6 +20,12 @@ from io import BytesIO
 
 from dashboard.models import ShopSettings, AdminUser, AdminNotification
 from dashboard.analytics import build_revenue_analytics
+from dashboard.crm import (
+    build_customer_crm_rows,
+    filter_customer_crm_rows,
+    sort_customer_crm_rows,
+    summarize_customer_crm,
+)
 from extensions import db
 from bookings.models import Booking, Service, StaffService, BookingEvent
 from bookings.services import (
@@ -1198,11 +1204,40 @@ def update_staff_services(staff_id):
 @dashboard_bp.route("/admin/customers")
 @admin_required
 def admin_customers():
-    customers = Customer.query.order_by(Customer.id.asc()).all()
+    query = request.args.get("q", "").strip()
+    segment = request.args.get("segment", "all").strip().lower()
+    status = request.args.get("status", "all").strip().lower()
+    sort_key = request.args.get("sort", "recent").strip().lower()
+
+    valid_segments = {"all", "new", "returning", "vip", "dormant"}
+    valid_statuses = {"all", "normal", "restricted"}
+    valid_sorts = {"recent", "revenue", "visits", "no_show", "name"}
+
+    if segment not in valid_segments:
+        segment = "all"
+    if status not in valid_statuses:
+        status = "all"
+    if sort_key not in valid_sorts:
+        sort_key = "recent"
+
+    all_rows = build_customer_crm_rows()
+    summary = summarize_customer_crm(all_rows)
+    customer_rows = filter_customer_crm_rows(
+        all_rows,
+        query=query,
+        segment=segment,
+        status=status,
+    )
+    customer_rows = sort_customer_crm_rows(customer_rows, sort_key=sort_key)
 
     return render_template(
         "admin_customers.html",
-        customers=customers
+        customer_rows=customer_rows,
+        summary=summary,
+        query=query,
+        segment=segment,
+        status=status,
+        sort_key=sort_key,
     )
 
 

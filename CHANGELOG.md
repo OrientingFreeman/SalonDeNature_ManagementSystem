@@ -1,5 +1,23 @@
 # Salon De Nature Management System Changelog
 
+## v0.15.0 - Phase15-A1 Customer CRM Portfolio
+
+Added
+- Customer CRM portfolio with booking-derived revenue, completed visits, last visit, next booking, cancellation, and no-show metrics.
+- New, returning, VIP, and dormant customer segmentation without adding database columns.
+- Customer search by name, phone, or email, plus segment, restriction, and sorting controls.
+- Preferred completed service and staff indicators.
+- CRM summary cards for customer count, returning/VIP/dormant customers, completed-booking revenue, and average customer value.
+
+Changed
+- Customer Management now recalculates operational metrics from actual booking records instead of relying on legacy stored counters.
+- Existing customer creation and customer detail navigation remain available.
+
+Notes
+- VIP means at least five completed visits or at least KRW 300,000 in completed-booking revenue.
+- Dormant means the last completed visit was more than 90 days ago and there is no upcoming pending or confirmed booking.
+- No database migration is required.
+
 ## v0.14.3 - Phase14-4 API Operations and Security
 
 Added

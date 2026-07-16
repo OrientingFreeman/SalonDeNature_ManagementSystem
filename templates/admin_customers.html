@@ -1,322 +1,144 @@
 {% extends "base.html" %}
 
-{% block title %}Customer Management{% endblock %}
+{% block title %}Customer CRM{% endblock %}
 
 {% block content %}
-
-<section class="admin-services-section admin-customers-section">
-
-    <div class="admin-page-header">
-        <p class="eyebrow">CUSTOMER MANAGEMENT</p>
-        <h1>Customers</h1>
-        <p>Manage customer profiles, preferences, no-show history, and reservation restrictions.</p>
+<section class="admin-services-section crm-page">
+    <div class="admin-page-header crm-header">
+        <div>
+            <p class="eyebrow">CUSTOMER CRM</p>
+            <h1>Customer Relationship Management</h1>
+            <p>Review customer value, visit behavior, cancellation risk, and next reservations from actual booking history.</p>
+        </div>
+        <button type="button" class="btn-primary" id="toggleCreateCustomer">Add Customer</button>
     </div>
 
-    <div class="admin-form-card customer-create-card">
-        <h2>Add New Customer</h2>
+    <div class="crm-kpi-grid">
+        <article><span>Total Customers</span><strong>{{ summary.customer_count }}</strong><small>{{ summary.restricted_count }} restricted</small></article>
+        <article><span>Returning Customers</span><strong>{{ summary.returning_count }}</strong><small>Two or more completed visits</small></article>
+        <article><span>VIP Customers</span><strong>{{ summary.vip_count }}</strong><small>5+ visits or ₩300,000+ revenue</small></article>
+        <article><span>Dormant Customers</span><strong>{{ summary.dormant_count }}</strong><small>No visit for 90+ days</small></article>
+        <article><span>Customer Revenue</span><strong>₩{{ "{:,}".format(summary.total_revenue) }}</strong><small>Completed bookings only</small></article>
+        <article><span>Average Customer Value</span><strong>₩{{ "{:,}".format(summary.average_customer_value) }}</strong><small>Revenue per registered customer</small></article>
+    </div>
 
+    <div class="admin-form-card customer-create-card" id="customerCreateCard" hidden>
+        <div class="crm-card-heading">
+            <div><h2>Add New Customer</h2><p>Create a customer profile for administrator-managed bookings.</p></div>
+            <button type="button" class="text-button" id="closeCreateCustomer">Close</button>
+        </div>
         <form method="POST" action="/admin/customers/create" class="admin-customer-form">
-
             <div class="form-grid two-columns">
-                <div>
-                    <label for="name">Name</label>
-                    <input id="name" type="text" name="name" required>
-                </div>
-
-                <div>
-                    <label for="phone">Phone</label>
-                    <input id="phone" type="text" name="phone" required>
-                </div>
+                <div><label for="name">Name</label><input id="name" type="text" name="name" required></div>
+                <div><label for="phone">Phone</label><input id="phone" type="text" name="phone" required></div>
             </div>
-
             <div class="form-grid two-columns">
-                <div>
-                    <label for="email">Email</label>
-                    <input id="email" type="email" name="email">
-                </div>
-
-                <div>
-                    <label for="preferred_style">Preferred Style</label>
-                    <input id="preferred_style" type="text" name="preferred_style">
-                </div>
+                <div><label for="email">Email</label><input id="email" type="email" name="email"></div>
+                <div><label for="preferred_style">Preferred Style</label><input id="preferred_style" type="text" name="preferred_style"></div>
             </div>
-
             <div class="form-grid two-columns">
-                <div>
-                    <label for="skin_sensitivity">Skin Sensitivity</label>
-                    <input id="skin_sensitivity" type="text" name="skin_sensitivity">
-                </div>
-
-                <div>
-                    <label for="complaint_note">Complaint Note</label>
-                    <input id="complaint_note" type="text" name="complaint_note">
-                </div>
+                <div><label for="skin_sensitivity">Skin Sensitivity</label><input id="skin_sensitivity" type="text" name="skin_sensitivity"></div>
+                <div><label for="complaint_note">Complaint Note</label><input id="complaint_note" type="text" name="complaint_note"></div>
             </div>
-
-            <div>
-                <label for="memo">Memo</label>
-                <textarea id="memo" name="memo" rows="4"></textarea>
-            </div>
-
-            <div class="admin-form-actions">
-                <button type="submit" class="btn-primary">Add Customer</button>
-            </div>
-
+            <div><label for="memo">Internal Memo</label><textarea id="memo" name="memo" rows="4"></textarea></div>
+            <div class="admin-form-actions"><button type="submit" class="btn-primary">Add Customer</button></div>
         </form>
     </div>
 
-    <div class="admin-section-header">
-        <h2>Customer List</h2>
-        <p>{{ customers|length }} customers registered</p>
+    <form method="GET" class="admin-form-card crm-filter-card">
+        <div class="crm-filter-grid">
+            <div class="crm-search-field">
+                <label for="q">Search</label>
+                <input id="q" name="q" value="{{ query }}" placeholder="Name, phone, or email">
+            </div>
+            <div>
+                <label for="segment">Segment</label>
+                <select id="segment" name="segment">
+                    {% for value, label in [('all','All segments'),('new','New'),('returning','Returning'),('vip','VIP'),('dormant','Dormant')] %}
+                    <option value="{{ value }}" {% if segment == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="status">Restriction</label>
+                <select id="status" name="status">
+                    {% for value, label in [('all','All customers'),('normal','Normal'),('restricted','Restricted')] %}
+                    <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="sort">Sort</label>
+                <select id="sort" name="sort">
+                    {% for value, label in [('recent','Recent visit'),('revenue','Highest revenue'),('visits','Most visits'),('no_show','Highest no-show'),('name','Customer name')] %}
+                    <option value="{{ value }}" {% if sort_key == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="crm-filter-actions">
+                <button type="submit" class="btn-primary">Apply</button>
+                <a href="{{ url_for('dashboard.admin_customers') }}" class="booking-action-btn">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="admin-section-header crm-list-heading">
+        <div><h2>Customer Portfolio</h2><p>{{ customer_rows|length }} matching customers</p></div>
+        <p class="metric-note">Metrics are recalculated from booking records; stored legacy counters are not used.</p>
     </div>
 
-    {% if customers %}
-        <div class="customer-card-grid">
-            {% for customer in customers %}
-                <article class="customer-admin-card">
-                    <div class="customer-card-header">
-                        <div>
-                            <h3>
-                                <a href="/admin/customers/{{ customer.id }}">
-                                    {{ customer.name }}
-                                </a>
-                            </h3>
-                            <p>{{ customer.phone }}</p>
-                        </div>
-
-                        {% if customer.booking_restricted %}
-                            <span class="status-badge status-cancelled">Restricted</span>
-                        {% else %}
-                            <span class="status-badge status-confirmed">Normal</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="customer-meta-grid">
-                        <div>
-                            <span>Visits</span>
-                            <strong>{{ customer.visit_count }}</strong>
-                        </div>
-
-                        <div>
-                            <span>No Show</span>
-                            <strong>{{ customer.no_show_count }}</strong>
-                        </div>
-
-                        <div>
-                            <span>Revenue</span>
-                            <strong>₩{{ "{:,}".format(customer.total_revenue or 0) }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="customer-detail-list">
-                        <p>
-                            <span>Email</span>
-                            <strong>{{ customer.email or "-" }}</strong>
-                        </p>
-
-                        <p>
-                            <span>Preferred Style</span>
-                            <strong>{{ customer.preferred_style or "-" }}</strong>
-                        </p>
-
-                        <p>
-                            <span>Skin Sensitivity</span>
-                            <strong>{{ customer.skin_sensitivity or "-" }}</strong>
-                        </p>
-
-                        <p>
-                            <span>Complaint Note</span>
-                            <strong>{{ customer.complaint_note or "-" }}</strong>
-                        </p>
-
-                        <p>
-                            <span>Memo</span>
-                            <strong>{{ customer.memo or "-" }}</strong>
-                        </p>
-                    </div>
-
-                    <div class="customer-card-actions">
-                        <a href="/admin/customers/{{ customer.id }}" class="booking-action-btn">
-                            View Detail
-                        </a>
-                    </div>
-                </article>
-            {% endfor %}
+    {% if customer_rows %}
+    <div class="crm-table-card">
+        <div class="table-scroll">
+            <table class="admin-data-table crm-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th><th>Segment</th><th>Visits</th><th>Revenue</th><th>Last / Next</th>
+                        <th>Cancellation</th><th>No-show</th><th>Preference</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in customer_rows %}
+                    <tr>
+                        <td>
+                            <a class="crm-customer-name" href="{{ url_for('dashboard.customer_detail', customer_id=row.customer.id) }}">{{ row.customer.name }}</a>
+                            <small>{{ row.customer.phone }}</small>
+                            <small>{{ row.customer.email or 'No email' }}</small>
+                            {% if row.customer.booking_restricted %}<span class="crm-restricted">Restricted</span>{% endif %}
+                        </td>
+                        <td><span class="segment-badge segment-{{ row.segment }}">{{ row.segment|title }}</span></td>
+                        <td><strong>{{ row.completed_count }}</strong><small>{{ row.booking_count }} total bookings</small></td>
+                        <td><strong>₩{{ "{:,}".format(row.total_revenue) }}</strong><small>Avg ₩{{ "{:,}".format(row.average_ticket) }}</small></td>
+                        <td>
+                            <small>Last: {{ row.last_visit_at.strftime('%Y-%m-%d') if row.last_visit_at else '-' }}</small>
+                            <small>Next: {{ row.next_booking_at.strftime('%Y-%m-%d %H:%M') if row.next_booking_at else '-' }}</small>
+                        </td>
+                        <td><strong>{{ row.cancelled_count }}</strong><small>{{ row.cancellation_rate }}%</small></td>
+                        <td><strong>{{ row.no_show_count }}</strong><small>{{ row.no_show_rate }}%</small></td>
+                        <td><small>{{ row.preferred_service or 'No completed service' }}</small><small>{{ row.preferred_staff or 'No preferred staff' }}</small></td>
+                        <td><a href="{{ url_for('dashboard.customer_detail', customer_id=row.customer.id) }}" class="booking-action-btn">Detail</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+    </div>
     {% else %}
-        <div class="admin-form-card empty-customer-card">
-            <h2>No customers</h2>
-            <p>No customers have been registered yet.</p>
-        </div>
+    <div class="admin-form-card empty-customer-card"><h2>No matching customers</h2><p>Change the search or filter conditions.</p></div>
     {% endif %}
-
-    <div class="admin-bottom-links">
-        <a href="/admin/calendar">Reservation Calendar</a>
-        <span>|</span>
-        <a href="/admin/staff">Staff Management</a>
-        <span>|</span>
-        <a href="/admin/services">Service Management</a>
-    </div>
-
 </section>
 
 <style>
-.admin-customers-section{
-    max-width:1200px;
-}
-
-.customer-create-card{
-    margin-bottom:56px;
-}
-
-.customer-create-card h2{
-    margin-top:0;
-    color:var(--forest);
-}
-
-.admin-customer-form .form-grid.two-columns{
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:20px;
-}
-
-.customer-card-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
-    gap:24px;
-}
-
-.customer-admin-card{
-    background:white;
-    border-radius:18px;
-    padding:26px;
-    box-shadow:0 4px 24px rgba(0,0,0,.08);
-    display:flex;
-    flex-direction:column;
-    gap:20px;
-}
-
-.customer-card-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:18px;
-}
-
-.customer-card-header h3{
-    margin:0;
-    color:var(--forest);
-    font-size:24px;
-}
-
-.customer-card-header h3 a:hover{
-    color:var(--gold);
-}
-
-.customer-card-header p{
-    margin:6px 0 0;
-    color:#777;
-}
-
-.customer-meta-grid{
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:12px;
-}
-
-.customer-meta-grid div{
-    background:#F9F7F2;
-    border-radius:14px;
-    padding:14px;
-}
-
-.customer-meta-grid span{
-    display:block;
-    margin-bottom:4px;
-    color:var(--sage);
-    font-size:12px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.4px;
-}
-
-.customer-meta-grid strong{
-    display:block;
-    color:var(--forest);
-    font-size:16px;
-}
-
-.customer-detail-list{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.customer-detail-list p{
-    display:grid;
-    grid-template-columns:120px 1fr;
-    gap:12px;
-    margin:0;
-    padding-bottom:10px;
-    border-bottom:1px solid #eee;
-}
-
-.customer-detail-list p:last-child{
-    border-bottom:none;
-    padding-bottom:0;
-}
-
-.customer-detail-list span{
-    color:var(--sage);
-    font-weight:700;
-    font-size:13px;
-}
-
-.customer-detail-list strong{
-    color:var(--charcoal);
-    font-weight:500;
-    word-break:break-word;
-}
-
-.customer-card-actions{
-    margin-top:auto;
-    display:flex;
-    justify-content:flex-end;
-}
-
-.empty-customer-card{
-    text-align:center;
-}
-
-.empty-customer-card h2{
-    margin-top:0;
-    color:var(--forest);
-}
-
-@media(max-width:768px){
-    .admin-customer-form .form-grid.two-columns{
-        grid-template-columns:1fr;
-        gap:0;
-    }
-
-    .customer-card-grid{
-        grid-template-columns:1fr;
-    }
-
-    .customer-meta-grid{
-        grid-template-columns:1fr;
-    }
-
-    .customer-detail-list p{
-        grid-template-columns:1fr;
-        gap:4px;
-    }
-
-    .customer-card-actions .booking-action-btn{
-        width:100%;
-        text-align:center;
-    }
-}
+.crm-page{max-width:1440px}.crm-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.crm-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin:24px 0}.crm-kpi-grid article{background:#fff;border:1px solid #ece9e1;border-radius:16px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.04)}.crm-kpi-grid span,.crm-kpi-grid small{display:block;color:#718078}.crm-kpi-grid span{font-size:12px;font-weight:800;text-transform:uppercase}.crm-kpi-grid strong{display:block;margin:8px 0 5px;color:var(--forest);font-size:25px}.crm-kpi-grid small{font-size:11px;line-height:1.35}.customer-create-card{margin-bottom:22px}.crm-card-heading{display:flex;justify-content:space-between;gap:20px}.crm-card-heading h2{margin:0}.crm-card-heading p{margin:5px 0 18px;color:#6b7280}.text-button{border:0;background:transparent;color:var(--forest);font-weight:700;cursor:pointer}.admin-customer-form .form-grid.two-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.crm-filter-card{margin:22px 0}.crm-filter-grid{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:14px;align-items:end}.crm-filter-grid label{display:block;margin-bottom:7px}.crm-filter-grid input,.crm-filter-grid select{width:100%;box-sizing:border-box}.crm-filter-actions{display:flex;gap:8px;align-items:center}.crm-list-heading{display:flex;justify-content:space-between;align-items:end}.metric-note{max-width:430px;text-align:right;color:#7a817c;font-size:12px}.crm-table-card{background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,.07);overflow:hidden}.crm-table{min-width:1220px}.crm-table td{vertical-align:top}.crm-table td small{display:block;margin-top:5px;color:#777;white-space:nowrap}.crm-customer-name{display:block;color:var(--forest);font-size:16px;font-weight:800}.segment-badge,.crm-restricted{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}.segment-new{background:#eef4ff;color:#3538cd}.segment-returning{background:#e8f5e9;color:#2e7d32}.segment-vip{background:#fff3d6;color:#9a6700}.segment-dormant{background:#f2f4f7;color:#667085}.crm-restricted{margin-top:7px;background:#fee4e2;color:#b42318}.empty-customer-card{text-align:center}@media(max-width:1100px){.crm-kpi-grid{grid-template-columns:repeat(3,1fr)}.crm-filter-grid{grid-template-columns:repeat(2,1fr)}.crm-filter-actions{grid-column:1/-1}}@media(max-width:700px){.crm-header,.crm-list-heading{flex-direction:column;align-items:stretch}.crm-kpi-grid{grid-template-columns:1fr 1fr}.admin-customer-form .form-grid.two-columns,.crm-filter-grid{grid-template-columns:1fr}.metric-note{text-align:left}.crm-header .btn-primary{width:100%}}@media(max-width:430px){.crm-kpi-grid{grid-template-columns:1fr}}
 </style>
-
+<script>
+(function(){
+    const card=document.getElementById('customerCreateCard');
+    const open=document.getElementById('toggleCreateCustomer');
+    const close=document.getElementById('closeCreateCustomer');
+    if(!card||!open||!close)return;
+    open.addEventListener('click',()=>{card.hidden=false;card.scrollIntoView({behavior:'smooth',block:'start'});});
+    close.addEventListener('click',()=>{card.hidden=true;});
+})();
+</script>
 {% endblock %}

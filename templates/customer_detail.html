@@ -1,278 +1,103 @@
 {% extends "base.html" %}
-
-{% block title %}Customer Detail{% endblock %}
-
+{% block title %}Customer CRM Detail{% endblock %}
 {% block content %}
-
-<section class="admin-services-section customer-detail-section">
-
-    <div class="admin-page-header">
-        <p class="eyebrow">CUSTOMER DETAIL</p>
+<section class="crm-detail-page">
+  <header class="crm-hero">
+    <div>
+      <p class="eyebrow">CUSTOMER CRM</p>
+      <div class="crm-title-row">
         <h1>{{ customer.name }}</h1>
-        <p>Review customer information, risk indicators, preferences, and booking history.</p>
+        <span class="segment-badge segment-{{ crm.segment }}">{{ crm.segment|upper }}</span>
+        <span class="risk-badge risk-{{ crm.risk_level }}">{{ crm.risk_level|upper }} RISK</span>
+      </div>
+      <p>{{ customer.phone }}{% if customer.email %} · {{ customer.email }}{% endif %}</p>
     </div>
-
-    <div class="customer-detail-layout">
-        <form method="POST" action="/admin/customers/{{ customer.id }}/update" class="admin-form-card customer-detail-form">
-            <h2>Basic Information</h2>
-
-            <div class="form-grid two-columns">
-                <div>
-                    <label for="name">Name</label>
-                    <input id="name" type="text" name="name" value="{{ customer.name }}" required>
-                </div>
-
-                <div>
-                    <label for="phone">Phone</label>
-                    <input id="phone" type="text" name="phone" value="{{ customer.phone }}" required>
-                </div>
-            </div>
-
-            <label for="email">Email</label>
-            <input id="email" type="email" name="email" value="{{ customer.email or '' }}">
-
-            <label for="preferred_style">Preferred Style</label>
-            <textarea id="preferred_style" name="preferred_style" rows="3">{{ customer.preferred_style or '' }}</textarea>
-
-            <label for="skin_sensitivity">Skin Sensitivity</label>
-            <textarea id="skin_sensitivity" name="skin_sensitivity" rows="3">{{ customer.skin_sensitivity or '' }}</textarea>
-
-            <label for="complaint_note">Complaint Note</label>
-            <textarea id="complaint_note" name="complaint_note" rows="3">{{ customer.complaint_note or '' }}</textarea>
-
-            <label for="memo">Memo</label>
-            <textarea id="memo" name="memo" rows="4">{{ customer.memo or '' }}</textarea>
-
-            <div class="admin-form-actions">
-                <a href="/admin/customers" class="booking-action-btn">Back</a>
-                <button type="submit" class="btn-primary">Save Customer</button>
-            </div>
-        </form>
-
-        <aside class="customer-metric-panel">
-            <div class="admin-form-card">
-                <h2>Customer Metrics</h2>
-
-                <div class="customer-metric-grid">
-                    <div>
-                        <span>Visits</span>
-                        <strong>{{ customer.visit_count }}</strong>
-                    </div>
-
-                    <div>
-                        <span>No Show</span>
-                        <strong>{{ customer.no_show_count }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Revenue</span>
-                        <strong>₩{{ "{:,}".format(customer.total_revenue or 0) }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Restriction</span>
-                        {% if customer.booking_restricted %}
-                            <strong class="metric-danger">Restricted</strong>
-                        {% else %}
-                            <strong>Normal</strong>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </aside>
+    <div class="hero-actions">
+      <a href="{{ url_for('dashboard.admin_customers') }}" class="secondary-btn">Customer list</a>
+      <a href="{{ url_for('dashboard.admin_create_booking_page', customer_id=customer.id) }}" class="primary-link">Create booking</a>
     </div>
+  </header>
 
-    <section class="admin-form-card customer-booking-history">
-        <div class="admin-section-header">
-            <h2>Booking History</h2>
-            <p>{{ bookings|length }} bookings</p>
-        </div>
+  <div class="kpi-grid">
+    <article><span>Completed visits</span><strong>{{ crm.completed_count }}</strong></article>
+    <article><span>Total revenue</span><strong>₩{{ '{:,}'.format(crm.total_revenue) }}</strong></article>
+    <article><span>Average ticket</span><strong>₩{{ '{:,}'.format(crm.average_ticket) }}</strong></article>
+    <article><span>Last visit</span><strong>{{ crm.last_visit_at.strftime('%Y-%m-%d') if crm.last_visit_at else '-' }}</strong></article>
+    <article><span>Next booking</span><strong>{{ crm.next_booking_at.strftime('%Y-%m-%d %H:%M') if crm.next_booking_at else '-' }}</strong></article>
+    <article><span>Visit cycle</span><strong>{% if crm.average_visit_cycle_days %}{{ crm.average_visit_cycle_days }} days{% else %}-{% endif %}</strong></article>
+    <article><span>Cancellation</span><strong>{{ crm.cancelled_count }} · {{ crm.cancellation_rate }}%</strong></article>
+    <article><span>No-show</span><strong>{{ crm.no_show_count }} · {{ crm.no_show_rate }}%</strong></article>
+  </div>
 
-        {% if bookings %}
-            <div class="table-scroll">
-                <table class="admin-data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Service</th>
-                            <th>Staff</th>
-                            <th>Status</th>
-                            <th>Price</th>
-                            <th>Deposit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for booking in bookings %}
-                            <tr>
-                                <td>{{ booking.start_time.strftime("%Y-%m-%d") }}</td>
-                                <td>{{ booking.start_time.strftime("%H:%M") }} ~ {{ booking.end_time.strftime("%H:%M") }}</td>
-                                <td>{{ booking.service.name_ko }}</td>
-                                <td>{{ booking.staff.name }}</td>
-                                <td>{{ booking.status }}</td>
-                                <td>₩{{ "{:,}".format(booking.service.price) }}</td>
-                                <td>
-                                    {% if booking.deposit_payment_status == 'paid' %}
-                                        <span class="deposit-table-badge deposit-paid">Paid</span>
-                                    {% elif booking.deposit_payment_status == 'required' %}
-                                        <span class="deposit-table-badge deposit-required">Required</span>
-                                    {% elif booking.deposit_payment_status %}
-                                        <span class="deposit-table-badge">{{ booking.deposit_payment_status }}</span>
-                                    {% else %}
-                                        <span class="deposit-table-badge deposit-none">None</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="empty-note">No booking history.</p>
-        {% endif %}
-    </section>
-
-    <div class="admin-form-card password-reset-card">
-    <h2>Password Reset</h2>
-
-    {% if customer.login_provider == "local" %}
-    <form method="POST"
-          action="/admin/customers/{{ customer.id }}/reset-password">
-
-        <label>Temporary Password</label>
-        <input type="password"
-               name="new_password"
-               minlength="8"
-               required>
-
-        <label>Confirm Password</label>
-        <input type="password"
-               name="confirm_password"
-               minlength="8"
-               required>
-
-        <button type="submit"
-                class="btn-primary"
-                onclick="return confirm('Reset this customer password?')">
-            Reset Password
-        </button>
+  <div class="content-grid">
+    <form method="POST" action="{{ url_for('dashboard.update_customer', customer_id=customer.id) }}" class="panel customer-form">
+      <div class="panel-heading"><div><h2>Customer profile & admin notes</h2><p>Internal information is visible to administrators only.</p></div></div>
+      <div class="two-col">
+        <label>Name<input type="text" name="name" value="{{ customer.name }}" required></label>
+        <label>Phone<input type="text" name="phone" value="{{ customer.phone }}" required></label>
+      </div>
+      <label>Email<input type="email" name="email" value="{{ customer.email or '' }}"></label>
+      <label>Preferred style<textarea name="preferred_style" rows="3">{{ customer.preferred_style or '' }}</textarea></label>
+      <label>Skin sensitivity<textarea name="skin_sensitivity" rows="3">{{ customer.skin_sensitivity or '' }}</textarea></label>
+      <label>Complaint / caution<textarea name="complaint_note" rows="3">{{ customer.complaint_note or '' }}</textarea></label>
+      <label>Administrator memo<textarea name="memo" rows="6" placeholder="Treatment preferences, communication notes, allergies, or other internal context">{{ customer.memo or '' }}</textarea></label>
+      <div class="form-actions"><button type="submit">Save customer notes</button></div>
     </form>
 
-    {% else %}
+    <aside class="side-stack">
+      <section class="panel preference-panel">
+        <h2>Preference analysis</h2>
+        <dl>
+          <div><dt>Preferred service</dt><dd>{{ crm.preferred_service or '-' }}{% if crm.preferred_service_count %}<small>{{ crm.preferred_service_count }} visits</small>{% endif %}</dd></div>
+          <div><dt>Preferred staff</dt><dd>{{ crm.preferred_staff or '-' }}{% if crm.preferred_staff_count %}<small>{{ crm.preferred_staff_count }} visits</small>{% endif %}</dd></div>
+          <div><dt>Typical start time</dt><dd>{% if crm.preferred_hour is not none %}{{ '%02d:00'|format(crm.preferred_hour) }}<small>{{ crm.preferred_hour_share }}% of completed visits</small>{% else %}-{% endif %}</dd></div>
+          <div><dt>Total bookings</dt><dd>{{ crm.booking_count }}</dd></div>
+        </dl>
+      </section>
 
-    <div class="social-login-note">
-        <strong>{{ customer.login_provider|title }}</strong>
-        account
+      <section class="panel risk-panel risk-panel-{{ crm.risk_level }}">
+        <h2>Operational risk</h2>
+        <p>Calculated from completed, cancelled, and no-show bookings.</p>
+        <strong>{{ crm.risk_level|upper }}</strong>
+        {% if customer.booking_restricted %}<span class="restriction">Booking restricted</span>{% endif %}
+      </section>
+    </aside>
+  </div>
 
-        <p>
-            Password reset is not available for social login accounts.
-        </p>
-    </div>
+  <section class="panel booking-history">
+    <div class="panel-heading"><div><h2>Booking history</h2><p>{{ bookings|length }} total bookings · newest first</p></div></div>
+    {% if bookings %}
+    <div class="table-scroll"><table>
+      <thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Status</th><th>Price</th><th>Deposit</th><th></th></tr></thead>
+      <tbody>
+      {% for booking in bookings %}
+        <tr>
+          <td><strong>{{ booking.start_time.strftime('%Y-%m-%d') }}</strong><small>{{ booking.start_time.strftime('%H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</small></td>
+          <td>{{ booking.service.name_ko if booking.service else '-' }}</td>
+          <td>{{ booking.staff.name if booking.staff else '-' }}</td>
+          <td><span class="status status-{{ booking.status }}">{{ booking.status }}</span></td>
+          <td>₩{{ '{:,}'.format(booking.service.price if booking.service else 0) }}</td>
+          <td>{{ booking.deposit_payment_status or 'none' }}</td>
+          <td><a href="{{ url_for('dashboard.admin_booking_detail', booking_id=booking.id) }}">Details</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty-state">No booking history.</div>{% endif %}
+  </section>
 
-    {% endif %}
-</div>
-
+  <section class="panel password-panel">
+    <h2>Password reset</h2>
+    {% if customer.login_provider == 'local' %}
+    <form method="POST" action="{{ url_for('dashboard.reset_customer_password', customer_id=customer.id) }}" class="password-form">
+      <input type="password" name="new_password" minlength="8" placeholder="Temporary password" required>
+      <input type="password" name="confirm_password" minlength="8" placeholder="Confirm password" required>
+      <button type="submit" onclick="return confirm('Reset this customer password?')">Reset password</button>
+    </form>
+    {% else %}<p>Password reset is unavailable for {{ customer.login_provider|title }} accounts.</p>{% endif %}
+  </section>
 </section>
-
 <style>
-.customer-detail-layout{
-    display:grid;
-    grid-template-columns:1fr 340px;
-    gap:24px;
-    align-items:start;
-    margin-bottom:24px;
-}
-.customer-detail-form h2,
-.customer-metric-panel h2,
-.customer-booking-history h2{
-    margin-top:0;
-    color:var(--forest);
-}
-.customer-detail-form .form-grid.two-columns{
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:20px;
-}
-.customer-metric-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:14px;
-}
-.customer-metric-grid div{
-    background:#F9F7F2;
-    border-radius:14px;
-    padding:16px;
-}
-.customer-metric-grid span{
-    display:block;
-    color:var(--sage);
-    font-size:12px;
-    font-weight:800;
-    text-transform:uppercase;
-}
-.customer-metric-grid strong{
-    display:block;
-    margin-top:4px;
-    color:var(--forest);
-    font-size:24px;
-}
-.customer-metric-grid .metric-danger{
-    color:#9b2c2c;
-}
-.table-scroll{
-    overflow-x:auto;
-}
-.admin-data-table{
-    width:100%;
-    border-collapse:collapse;
-}
-.admin-data-table th,
-.admin-data-table td{
-    padding:14px;
-    border-bottom:1px solid #eee;
-    text-align:left;
-}
-.admin-data-table th{
-    color:var(--forest);
-    background:#F9F7F2;
-}
-.empty-note{
-    color:#777;
-}
-.deposit-table-badge{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-width:74px;
-    padding:4px 8px;
-    border-radius:999px;
-    background:#eee;
-    color:#555;
-    font-size:11px;
-    font-weight:900;
-    text-transform:uppercase;
-}
-.deposit-table-badge.deposit-paid{
-    background:#e4f4ea;
-    color:#137333;
-}
-.deposit-table-badge.deposit-required{
-    background:#fff4d8;
-    color:#9a6b00;
-}
-.deposit-table-badge.deposit-none{
-    background:#f1f1f1;
-    color:#777;
-}
-
-@media(max-width:900px){
-    .customer-detail-layout{
-        grid-template-columns:1fr;
-    }
-    .customer-detail-form .form-grid.two-columns{
-        grid-template-columns:1fr;
-    }
-}
+.crm-detail-page{max-width:1320px;margin:0 auto;padding:30px 20px 60px}.crm-hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px}.crm-hero h1{margin:4px 0}.crm-hero p{margin:0;color:#667085}.crm-title-row,.hero-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.segment-badge,.risk-badge,.status{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}.segment-vip{background:#fef0c7;color:#93370d}.segment-returning{background:#dcfae6;color:#067647}.segment-dormant{background:#f2f4f7;color:#475467}.segment-new{background:#eef4ff;color:#3538cd}.risk-low{background:#dcfae6;color:#067647}.risk-medium{background:#fef0c7;color:#b54708}.risk-high{background:#fee4e2;color:#b42318}.primary-link,.secondary-btn{padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:750}.primary-link{background:#111827;color:white}.secondary-btn{border:1px solid #d0d5dd;color:#344054;background:white}.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}.kpi-grid article,.panel{background:#fff;border:1px solid #e4e7ec;border-radius:16px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.kpi-grid article{padding:17px}.kpi-grid span{display:block;color:#667085;font-size:12px}.kpi-grid strong{display:block;margin-top:6px;font-size:20px;color:#101828}.content-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr);gap:20px}.panel{padding:22px}.panel h2{margin:0 0 8px}.panel-heading{display:flex;justify-content:space-between;margin-bottom:16px}.panel-heading p,.risk-panel p{margin:0;color:#667085;font-size:13px}.customer-form label{display:block;margin-top:14px;font-size:13px;font-weight:700}.customer-form input,.customer-form textarea,.password-form input{width:100%;box-sizing:border-box;margin-top:6px;border:1px solid #d0d5dd;border-radius:10px;padding:11px;background:white}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-actions{display:flex;justify-content:flex-end;margin-top:18px}.form-actions button,.password-form button{border:0;background:#111827;color:#fff;border-radius:10px;padding:11px 15px;font-weight:750}.side-stack{display:grid;gap:20px;align-content:start}.preference-panel dl{margin:0}.preference-panel dl div{padding:13px 0;border-bottom:1px solid #f0f1f3}.preference-panel dt{font-size:12px;color:#667085}.preference-panel dd{margin:4px 0 0;font-weight:750}.preference-panel small{display:block;color:#98a2b3;margin-top:3px}.risk-panel>strong{display:block;font-size:27px;margin-top:15px}.risk-panel-low{border-left:5px solid #12b76a}.risk-panel-medium{border-left:5px solid #f79009}.risk-panel-high{border-left:5px solid #f04438}.restriction{display:inline-block;margin-top:10px;background:#fee4e2;color:#b42318;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.booking-history,.password-panel{margin-top:20px}.table-scroll{overflow:auto}.booking-history table{width:100%;border-collapse:collapse}.booking-history th,.booking-history td{padding:13px;border-bottom:1px solid #f0f1f3;text-align:left;white-space:nowrap}.booking-history th{background:#f9fafb;font-size:12px;color:#475467}.booking-history td small{display:block;color:#98a2b3;margin-top:3px}.booking-history a{font-weight:750;color:#344054}.status-confirmed,.status-completed{background:#dcfae6;color:#067647}.status-pending{background:#fef0c7;color:#b54708}.status-cancelled,.status-no_show{background:#fee4e2;color:#b42318}.password-form{display:flex;gap:10px;align-items:end}.password-form input{max-width:260px}.empty-state{padding:26px;text-align:center;color:#98a2b3;background:#f9fafb;border-radius:12px}@media(max-width:980px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}.crm-hero{flex-direction:column}}@media(max-width:620px){.kpi-grid,.two-col{grid-template-columns:1fr}.password-form{flex-direction:column;align-items:stretch}.password-form input{max-width:none}}
 </style>
-
 {% endblock %}

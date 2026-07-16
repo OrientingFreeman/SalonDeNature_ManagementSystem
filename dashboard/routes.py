@@ -15,6 +15,7 @@ from flask import (
 )
 
 from functools import wraps
+from sqlalchemy.orm import joinedload
 from openpyxl import Workbook
 from io import BytesIO
 
@@ -25,6 +26,7 @@ from dashboard.crm import (
     filter_customer_crm_rows,
     sort_customer_crm_rows,
     summarize_customer_crm,
+    build_customer_crm_detail,
 )
 from extensions import db
 from bookings.models import Booking, Service, StaffService, BookingEvent
@@ -1268,14 +1270,20 @@ def customer_detail(customer_id):
     if not customer:
         return redirect(url_for("dashboard.admin_customers"))
 
-    bookings = Booking.query.filter_by(
-        customer_id=customer_id
-    ).order_by(Booking.start_time.desc()).all()
+    bookings = (
+        Booking.query
+        .options(joinedload(Booking.service), joinedload(Booking.staff))
+        .filter_by(customer_id=customer_id)
+        .order_by(Booking.start_time.desc())
+        .all()
+    )
+    crm = build_customer_crm_detail(customer, bookings)
 
     return render_template(
         "customer_detail.html",
         customer=customer,
-        bookings=bookings
+        bookings=bookings,
+        crm=crm,
     )
 
 

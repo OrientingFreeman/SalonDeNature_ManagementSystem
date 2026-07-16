@@ -1,5 +1,21 @@
 # Salon De Nature Management System Changelog
 
+## v0.15.2 - Phase15-A2 Customer CRM Detail
+
+Added
+- CRM customer detail dashboard with live booking-derived KPIs.
+- Preferred service, preferred staff, typical appointment hour, and average visit-cycle analysis.
+- Operational risk classification based on cancellation, no-show, and booking restriction data.
+- Administrator-only customer notes and direct navigation to each booking detail.
+
+Changed
+- Customer detail metrics now use actual booking records rather than stored aggregate counters.
+- Existing profile, preference, caution, memo, and password reset workflows remain available.
+
+Notes
+- No database migration is required.
+- Risk classification is an operational heuristic and not a predictive model.
+
 ## v0.15.0 - Phase15-A1 Customer CRM Portfolio
 
 Added

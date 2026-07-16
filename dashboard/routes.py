@@ -2116,15 +2116,8 @@ def admin_timeline_mark_deposit_paid(booking_id):
 @admin_required
 def admin_timeline_update_booking_status(booking_id):
     data = request.get_json() or {}
-    new_status = data.get("status")
-
-    allowed_statuses = {"pending", "confirmed", "completed", "cancelled", "no_show"}
-
-    if new_status not in allowed_statuses:
-        return jsonify({
-            "ok": False,
-            "message": "Invalid booking status."
-        }), 400
+    new_status = (data.get("status") or "").strip()
+    memo = (data.get("memo") or "").strip() or None
 
     booking = Booking.query.get(booking_id)
 
@@ -2135,15 +2128,12 @@ def admin_timeline_update_booking_status(booking_id):
         }), 404
 
     old_status = booking.status
-    booking.status = new_status
+    result = update_booking_status(booking_id, new_status, memo=memo)
 
-    event = BookingEvent(
-        booking_id=booking.id,
-        event_type="timeline_status_changed",
-        memo=f"status {old_status} -> {new_status}"
-    )
+    if not result.get("ok"):
+        return jsonify(result), 400
 
-    db.session.add(event)
+    booking = Booking.query.get(booking_id)
     notify_booking_status_changed(booking, old_status, new_status)
     if new_status == "cancelled":
         send_booking_cancelled_sms(booking)

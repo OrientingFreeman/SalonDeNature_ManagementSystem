@@ -33,18 +33,24 @@
 
         <article class="detail-card">
             <h2>Status management</h2>
-            <p class="card-description">A memo is stored in the booking event history. Cancellation remains a manual administrator action.</p>
-            <form method="POST" action="{{ url_for('dashboard.admin_booking_status_form', booking_id=booking.id) }}">
-                <label class="field-label" for="status">New status</label>
-                <select id="status" name="status" required>
-                    {% for value, label in [('pending','Pending'),('confirmed','Confirmed'),('completed','Completed'),('cancelled','Cancelled'),('no_show','No-show')] %}
-                        <option value="{{ value }}" {% if value == booking.status %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                <label class="field-label" for="memo">Reason / processing memo</label>
-                <textarea id="memo" name="memo" rows="4" placeholder="Example: Customer requested cancellation by phone"></textarea>
-                <button type="submit" class="detail-submit" onclick="return confirm('Change this booking status?');">Update status</button>
-            </form>
+            <p class="card-description">Only valid next actions are shown. Cancellation and no-show require a reason. Every action is recorded in BookingEvent.</p>
+
+            {% if booking.status == 'pending' %}
+                <div class="status-action-list">
+                    <button type="button" class="status-action status-confirm" data-status="confirmed" data-label="Confirm booking" data-reason-required="false">Confirm booking</button>
+                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">Cancel booking</button>
+                </div>
+            {% elif booking.status == 'confirmed' %}
+                <div class="status-action-list">
+                    <button type="button" class="status-action status-complete" data-status="completed" data-label="Complete booking" data-reason-required="false">Complete booking</button>
+                    <button type="button" class="status-action status-noshow" data-status="no_show" data-label="Mark as no-show" data-reason-required="true">Mark as no-show</button>
+                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">Cancel booking</button>
+                </div>
+            {% else %}
+                <div class="terminal-status-notice">
+                    This booking is in a terminal status. Further status changes are not permitted.
+                </div>
+            {% endif %}
         </article>
     </div>
 
@@ -80,7 +86,81 @@
     </div>
 </section>
 
+<div class="status-modal-backdrop" id="statusModal" hidden>
+    <div class="status-modal" role="dialog" aria-modal="true" aria-labelledby="statusModalTitle">
+        <h2 id="statusModalTitle">Confirm status action</h2>
+        <p id="statusModalDescription"></p>
+        <form method="POST" action="{{ url_for('dashboard.admin_booking_status_form', booking_id=booking.id) }}" id="statusActionForm">
+            <input type="hidden" id="statusInput" name="status">
+            <label class="field-label" for="statusMemo">Reason / processing memo</label>
+            <textarea id="statusMemo" name="memo" rows="4" placeholder="Enter the operational reason or memo"></textarea>
+            <p class="reason-help" id="reasonHelp"></p>
+            <div class="status-modal-actions">
+                <button type="button" class="modal-btn secondary" id="statusModalCancel">Back</button>
+                <button type="submit" class="modal-btn primary" id="statusModalConfirm">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <style>
-.admin-booking-detail-page{max-width:1280px;margin:0 auto;padding:30px 20px 60px}.booking-detail-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}.booking-detail-header h1{margin:5px 0 8px}.booking-detail-header p{margin:0;color:#667085}.booking-detail-header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.booking-status,.detail-btn{border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700}.booking-status{background:#f2f4f7}.status-confirmed{background:#dcfae6;color:#067647}.status-cancelled,.status-no_show{background:#fee4e2;color:#b42318}.status-completed{background:#e0f2fe;color:#026aa2}.status-pending{background:#fef0c7;color:#b54708}.detail-btn{background:#111827;color:#fff;text-decoration:none}.detail-btn.secondary{background:#fff;color:#344054;border:1px solid #d0d5dd}.booking-detail-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:20px}.lower-grid{margin-top:20px;grid-template-columns:1fr 1fr}.detail-card{background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.detail-card h2{margin:0 0 16px;font-size:18px}.detail-list{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:0}.detail-list div{padding:12px 0;border-bottom:1px solid #f0f1f3}.detail-list dt{font-size:12px;color:#667085;margin-bottom:4px}.detail-list dd{margin:0;font-weight:650}.detail-note{margin-top:16px;padding:14px;background:#f9fafb;border-radius:12px}.detail-note p{white-space:pre-wrap;margin:7px 0 0;color:#475467}.card-description{color:#667085;font-size:14px;line-height:1.55}.field-label{display:block;margin:14px 0 7px;font-weight:700;font-size:13px}.detail-card select,.detail-card textarea{width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;padding:11px;background:#fff}.detail-submit{width:100%;margin-top:14px;border:0;border-radius:10px;padding:12px;background:#111827;color:#fff;font-weight:700;cursor:pointer}.card-title-row{display:flex;justify-content:space-between;align-items:center}.card-title-row span{background:#f2f4f7;border-radius:999px;padding:5px 9px;font-size:12px}.history-list{display:flex;flex-direction:column}.history-item{display:flex;justify-content:space-between;gap:15px;padding:14px 0;border-top:1px solid #f0f1f3}.history-item:first-child{border-top:0}.history-item strong{font-size:14px;text-transform:capitalize}.history-item p{margin:5px 0 0;color:#667085;font-size:13px;white-space:pre-wrap}.history-item time{white-space:nowrap;font-size:12px;color:#98a2b3}.sms-message{color:#344054!important}.sms-error{color:#b42318!important}.sms-status{font-weight:700}.sms-sent{color:#067647}.sms-skipped{color:#b54708}.sms-failed{color:#b42318}.empty-copy{color:#98a2b3}@media(max-width:850px){.booking-detail-header{flex-direction:column}.booking-detail-grid,.lower-grid{grid-template-columns:1fr}.detail-list{grid-template-columns:1fr}.history-item{flex-direction:column}.history-item time{white-space:normal}}
+.admin-booking-detail-page{max-width:1280px;margin:0 auto;padding:30px 20px 60px}.booking-detail-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}.booking-detail-header h1{margin:5px 0 8px}.booking-detail-header p{margin:0;color:#667085}.booking-detail-header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.booking-status,.detail-btn{border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700}.booking-status{background:#f2f4f7}.status-confirmed{background:#dcfae6;color:#067647}.status-cancelled,.status-no_show{background:#fee4e2;color:#b42318}.status-completed{background:#e0f2fe;color:#026aa2}.status-pending{background:#fef0c7;color:#b54708}.detail-btn{background:#111827;color:#fff;text-decoration:none}.detail-btn.secondary{background:#fff;color:#344054;border:1px solid #d0d5dd}.booking-detail-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:20px}.lower-grid{margin-top:20px;grid-template-columns:1fr 1fr}.detail-card{background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.detail-card h2{margin:0 0 16px;font-size:18px}.detail-list{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:0}.detail-list div{padding:12px 0;border-bottom:1px solid #f0f1f3}.detail-list dt{font-size:12px;color:#667085;margin-bottom:4px}.detail-list dd{margin:0;font-weight:650}.detail-note{margin-top:16px;padding:14px;background:#f9fafb;border-radius:12px}.detail-note p{white-space:pre-wrap;margin:7px 0 0;color:#475467}.card-description{color:#667085;font-size:14px;line-height:1.55}.field-label{display:block;margin:14px 0 7px;font-weight:700;font-size:13px}.status-action-list{display:grid;gap:10px;margin-top:18px}.status-action{width:100%;border:0;border-radius:11px;padding:13px 14px;font-weight:750;cursor:pointer;text-align:left}.status-confirm{background:#dcfae6;color:#067647}.status-complete{background:#e0f2fe;color:#026aa2}.status-noshow,.status-cancel{background:#fee4e2;color:#b42318}.terminal-status-notice{margin-top:18px;padding:14px;border:1px solid #e4e7ec;border-radius:12px;background:#f9fafb;color:#667085;line-height:1.5}.card-title-row{display:flex;justify-content:space-between;align-items:center}.card-title-row span{background:#f2f4f7;border-radius:999px;padding:5px 9px;font-size:12px}.history-list{display:flex;flex-direction:column}.history-item{display:flex;justify-content:space-between;gap:15px;padding:14px 0;border-top:1px solid #f0f1f3}.history-item:first-child{border-top:0}.history-item strong{font-size:14px;text-transform:capitalize}.history-item p{margin:5px 0 0;color:#667085;font-size:13px;white-space:pre-wrap}.history-item time{white-space:nowrap;font-size:12px;color:#98a2b3}.sms-message{color:#344054!important}.sms-error{color:#b42318!important}.sms-status{font-weight:700}.sms-sent{color:#067647}.sms-skipped{color:#b54708}.sms-failed{color:#b42318}.empty-copy{color:#98a2b3}.status-modal-backdrop{position:fixed;inset:0;z-index:2000;background:rgba(16,24,40,.55);display:flex;align-items:center;justify-content:center;padding:20px}.status-modal-backdrop[hidden]{display:none}.status-modal{width:min(520px,100%);background:#fff;border-radius:18px;padding:24px;box-shadow:0 24px 80px rgba(16,24,40,.25)}.status-modal h2{margin:0 0 8px}.status-modal>p{margin:0;color:#667085;line-height:1.5}.status-modal textarea{width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;padding:11px;background:#fff}.reason-help{min-height:20px;margin:7px 0 0;color:#667085;font-size:12px}.reason-help.required{color:#b42318;font-weight:700}.status-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.modal-btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}.modal-btn.primary{background:#111827;color:#fff}.modal-btn.secondary{background:#f2f4f7;color:#344054}@media(max-width:850px){.booking-detail-header{flex-direction:column}.booking-detail-grid,.lower-grid{grid-template-columns:1fr}.detail-list{grid-template-columns:1fr}.history-item{flex-direction:column}.history-item time{white-space:normal}}
 </style>
+
+<script>
+(function () {
+    const modal = document.getElementById('statusModal');
+    const form = document.getElementById('statusActionForm');
+    const statusInput = document.getElementById('statusInput');
+    const memoInput = document.getElementById('statusMemo');
+    const title = document.getElementById('statusModalTitle');
+    const description = document.getElementById('statusModalDescription');
+    const reasonHelp = document.getElementById('reasonHelp');
+    const cancelButton = document.getElementById('statusModalCancel');
+    let reasonRequired = false;
+
+    document.querySelectorAll('.status-action').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const nextStatus = button.dataset.status;
+            const label = button.dataset.label;
+            reasonRequired = button.dataset.reasonRequired === 'true';
+
+            statusInput.value = nextStatus;
+            memoInput.value = '';
+            memoInput.required = reasonRequired;
+            title.textContent = label;
+            description.textContent = `Change booking #{{ booking.id }} from {{ booking.status }} to ${nextStatus}?`;
+            reasonHelp.textContent = reasonRequired
+                ? 'A reason is required for cancellation and no-show processing.'
+                : 'A processing memo is optional for this action.';
+            reasonHelp.classList.toggle('required', reasonRequired);
+            modal.hidden = false;
+            memoInput.focus();
+        });
+    });
+
+    function closeModal() {
+        modal.hidden = true;
+        statusInput.value = '';
+        memoInput.value = '';
+    }
+
+    cancelButton.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    form.addEventListener('submit', function (event) {
+        if (reasonRequired && !memoInput.value.trim()) {
+            event.preventDefault();
+            reasonHelp.textContent = 'Enter a reason before confirming this action.';
+            reasonHelp.classList.add('required');
+            memoInput.focus();
+        }
+    });
+})();
+</script>
 {% endblock %}

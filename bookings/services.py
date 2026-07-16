@@ -95,6 +95,9 @@ def update_booking_status(booking_id, new_status, memo=None):
             "message": "예약을 찾을 수 없습니다."
         }
 
+    new_status = (new_status or "").strip()
+    memo = (memo or "").strip()
+
     if not can_change_reservation_status(booking.status, new_status):
         return {
             "ok": False,
@@ -102,15 +105,28 @@ def update_booking_status(booking_id, new_status, memo=None):
             "message": f"{booking.status} 상태에서 {new_status} 상태로는 변경할 수 없습니다."
         }
 
+    if new_status in {"cancelled", "no_show"} and not memo:
+        return {
+            "ok": False,
+            "error": "STATUS_REASON_REQUIRED",
+            "message": "취소 및 노쇼 처리에는 사유가 필요합니다."
+        }
+
+    old_status = booking.status
+
     if new_status == "no_show":
-        booking.previous_status = booking.status
+        booking.previous_status = old_status
 
     booking.status = new_status
+
+    event_memo = f"예약 상태 변경: {old_status} -> {new_status}"
+    if memo:
+        event_memo += f"\n처리 사유: {memo}"
 
     event = BookingEvent(
         booking_id=booking.id,
         event_type=new_status,
-        memo=memo or f"예약 상태 변경: {new_status}"
+        memo=event_memo
     )
 
     db.session.add(event)

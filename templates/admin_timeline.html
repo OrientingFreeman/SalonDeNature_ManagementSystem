@@ -1361,6 +1361,17 @@ function requestTimelineStatusChange(newStatus) {
 
     const label = getTimelineStatusLabel(newStatus);
     const terminal = isTerminalTimelineStatus(newStatus);
+    const reasonRequired = newStatus === "cancelled" || newStatus === "no_show";
+    let memo = "";
+
+    if (reasonRequired) {
+        memo = window.prompt(`Enter the required reason for ${label}:`, "") || "";
+        if (!memo.trim()) {
+            showTimelineNotice("Cancellation and no-show require a reason.", "error");
+            return;
+        }
+    }
+
     const confirmMessage = terminal
         ? `Change this booking to ${label} and remove it from the timeline?`
         : `Change this booking to ${label}?`;
@@ -1378,6 +1389,7 @@ function requestTimelineStatusChange(newStatus) {
         },
         body: JSON.stringify({
             status: newStatus,
+            memo: memo.trim(),
         }),
     })
     .then((response) => response.json())

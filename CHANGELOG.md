@@ -1,5 +1,24 @@
 # Salon De Nature Management System Changelog
 
+## v0.11.8 - Phase11-5B Controlled Admin Status Processing
+
+Added
+- Status-specific administrator actions on the booking detail page.
+- Pending bookings can be confirmed or cancelled.
+- Confirmed bookings can be completed, marked as no-show, or cancelled.
+- Confirmation modal before each booking detail status action.
+- Required cancellation and no-show reason validation in both the UI and service layer.
+
+Changed
+- Completed, no-show, and cancelled bookings no longer expose further status actions.
+- BookingEvent now records the previous status, next status, and supplied processing reason.
+- Timeline status processing now uses the same service-layer transition policy and reason validation.
+- Existing customer and administrator cancellation SMS delivery remains active.
+- Completed and no-show processing does not trigger automatic SMS.
+
+Notes
+- No new database columns or migration are required for Phase11-5B.
+
 ## v0.11.7 - Phase11-5A Admin Booking Detail Hub
 
 Added

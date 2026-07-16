@@ -1,5 +1,21 @@
 # Salon De Nature Management System Changelog
 
+## v0.13.0 - Phase13 Revenue and Operations Analytics
+
+Added
+- Selected-period KPI cards for revenue, average ticket, completion conversion, cancellation rate, no-show rate, and returning-customer rate.
+- Booking status, weekday, and start-time operating charts.
+- Service and staff performance tables with completed counts and revenue.
+- Explicit metric definitions separating completed-booking revenue from all-booking operating rates.
+
+Changed
+- Existing Revenue Dashboard expanded into a combined revenue and operating analytics workspace.
+- Existing date filtering and Excel export remain available.
+
+Notes
+- No database migration is required.
+- Revenue continues to use service price on completed bookings; refunds and discounts are not modeled by the current schema.
+
 ## v0.12.0 - Phase11-7 Customer My Booking Hub
 
 Added

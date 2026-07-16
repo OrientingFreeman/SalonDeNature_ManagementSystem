@@ -1386,96 +1386,104 @@ def create_admin_user():
 @admin_required
 def admin_revenue():
     today = date.today()
-
     start_date_str = request.args.get("start_date")
     end_date_str = request.args.get("end_date")
 
-    if start_date_str and end_date_str:
-        filter_start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-        filter_end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-    else:
-        filter_start_date = today.replace(day=1)
-        filter_end_date = today
+    try:
+        filter_start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else today.replace(day=1)
+        filter_end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else today
+    except ValueError:
+        flash("Invalid date range.", "error")
+        return redirect(url_for("dashboard.admin_revenue"))
+
+    if filter_start_date > filter_end_date:
+        filter_start_date, filter_end_date = filter_end_date, filter_start_date
 
     filter_start = datetime.combine(filter_start_date, time.min)
     filter_end = datetime.combine(filter_end_date, time.max)
-
     day_start = datetime.combine(today, time.min)
     day_end = datetime.combine(today, time.max)
+    week_start = datetime.combine(today - timedelta(days=today.weekday()), time.min)
+    month_start = datetime.combine(today.replace(day=1), time.min)
 
-    week_start_date = today - timedelta(days=today.weekday())
-    week_start = datetime.combine(week_start_date, time.min)
+    completed_bookings = Booking.query.filter(Booking.status == "completed").all()
+    period_bookings = Booking.query.filter(
+        Booking.start_time >= filter_start,
+        Booking.start_time <= filter_end,
+    ).order_by(Booking.start_time.asc()).all()
+    filtered_bookings = [booking for booking in period_bookings if booking.status == "completed"]
 
-    month_start_date = today.replace(day=1)
-    month_start = datetime.combine(month_start_date, time.min)
+    def booking_revenue(items):
+        return sum((booking.service.price or 0) for booking in items if booking.service)
 
-    completed_bookings = Booking.query.filter(
-        Booking.status == "completed"
-    ).all()
-
-    filtered_bookings = [
-       booking for booking in completed_bookings
-        if filter_start <= booking.start_time <= filter_end
-    ]
+    today_revenue = booking_revenue([b for b in completed_bookings if day_start <= b.start_time <= day_end])
+    week_revenue = booking_revenue([b for b in completed_bookings if b.start_time >= week_start])
+    month_revenue = booking_revenue([b for b in completed_bookings if b.start_time >= month_start])
+    total_revenue = booking_revenue(completed_bookings)
+    filtered_revenue = booking_revenue(filtered_bookings)
 
     daily_revenue = {}
+    staff_revenue, staff_count = {}, {}
+    category_revenue, category_count = {}, {}
+    service_revenue, service_count = {}, {}
+    weekday_count = {name: 0 for name in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
+    hour_count = {f"{hour:02d}:00": 0 for hour in range(9, 21)}
 
     for booking in filtered_bookings:
         day = booking.start_time.date().isoformat()
-
-        if day not in daily_revenue:
-            daily_revenue[day] = {
-                "count": 0,
-                "revenue": 0
-            }
-
+        daily_revenue.setdefault(day, {"count": 0, "revenue": 0})
         daily_revenue[day]["count"] += 1
-        daily_revenue[day]["revenue"] += booking.service.price
+        daily_revenue[day]["revenue"] += booking.service.price or 0
 
-    today_revenue = sum(
-        booking.service.price
-        for booking in completed_bookings
-        if day_start <= booking.start_time <= day_end
-    )
-
-    week_revenue = sum(
-        booking.service.price
-        for booking in completed_bookings
-        if booking.start_time >= week_start
-    )
-
-    month_revenue = sum(
-        booking.service.price
-        for booking in completed_bookings
-        if booking.start_time >= month_start
-    )
-
-    total_revenue = sum(
-        booking.service.price
-        for booking in completed_bookings
-    )
-
-    staff_revenue = {}
-    category_revenue = {}
-
-    for booking in filtered_bookings:
-        staff_name = booking.staff.name
-        category = booking.service.category
-
-        staff_revenue[staff_name] = staff_revenue.get(staff_name, 0) + booking.service.price
-        category_revenue[category] = category_revenue.get(category, 0) + booking.service.price
-
-    staff_count = {}
-    category_count = {}
-    daily_revenue = dict(sorted(daily_revenue.items()))
-
-    for booking in filtered_bookings:
-        staff_name = booking.staff.name
-        category = booking.service.category
-
+        staff_name = booking.staff.name if booking.staff else "Unassigned"
+        category = booking.service.category if booking.service else "Unknown"
+        service_name = booking.service.name_ko if booking.service else "Unknown"
+        amount = booking.service.price or 0 if booking.service else 0
+        staff_revenue[staff_name] = staff_revenue.get(staff_name, 0) + amount
         staff_count[staff_name] = staff_count.get(staff_name, 0) + 1
+        category_revenue[category] = category_revenue.get(category, 0) + amount
         category_count[category] = category_count.get(category, 0) + 1
+        service_revenue[service_name] = service_revenue.get(service_name, 0) + amount
+        service_count[service_name] = service_count.get(service_name, 0) + 1
 
+    for booking in period_bookings:
+        weekday_count[["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][booking.start_time.weekday()]] += 1
+        hour_label = f"{booking.start_time.hour:02d}:00"
+        if hour_label in hour_count:
+            hour_count[hour_label] += 1
+
+    status_order = ["pending", "confirmed", "completed", "cancelled", "no_show"]
+    status_counts = {status: 0 for status in status_order}
+    for booking in period_bookings:
+        status_counts[booking.status] = status_counts.get(booking.status, 0) + 1
+
+    total_period_count = len(period_bookings)
+    cancelled_count = status_counts.get("cancelled", 0)
+    no_show_count = status_counts.get("no_show", 0)
+    terminal_count = status_counts.get("completed", 0) + cancelled_count + no_show_count
+    cancellation_rate = round(cancelled_count / total_period_count * 100, 1) if total_period_count else 0
+    no_show_rate = round(no_show_count / total_period_count * 100, 1) if total_period_count else 0
+    completion_rate = round(status_counts.get("completed", 0) / terminal_count * 100, 1) if terminal_count else 0
+    average_ticket = round(filtered_revenue / len(filtered_bookings)) if filtered_bookings else 0
+
+    customer_ids = {booking.customer_id for booking in filtered_bookings}
+    new_customer_count = 0
+    returning_customer_count = 0
+    for customer_id in customer_ids:
+        first_completed = Booking.query.filter(
+            Booking.customer_id == customer_id,
+            Booking.status == "completed",
+        ).order_by(Booking.start_time.asc()).first()
+        if first_completed and filter_start <= first_completed.start_time <= filter_end:
+            new_customer_count += 1
+        else:
+            returning_customer_count += 1
+    repeat_customer_rate = round(returning_customer_count / len(customer_ids) * 100, 1) if customer_ids else 0
+
+    daily_revenue = dict(sorted(daily_revenue.items()))
+    staff_revenue = dict(sorted(staff_revenue.items(), key=lambda item: item[1], reverse=True))
+    category_revenue = dict(sorted(category_revenue.items(), key=lambda item: item[1], reverse=True))
+    service_revenue = dict(sorted(service_revenue.items(), key=lambda item: item[1], reverse=True))
 
     return render_template(
         "admin_revenue.html",
@@ -1483,26 +1491,39 @@ def admin_revenue():
         week_revenue=week_revenue,
         month_revenue=month_revenue,
         total_revenue=total_revenue,
-        staff_revenue=staff_revenue,
-        category_revenue=category_revenue,
+        filtered_revenue=filtered_revenue,
+        average_ticket=average_ticket,
         completed_count=len(completed_bookings),
         filtered_bookings=filtered_bookings,
+        period_booking_count=total_period_count,
         filter_start_date=filter_start_date,
         filter_end_date=filter_end_date,
-        filtered_revenue=sum(booking.service.price for booking in filtered_bookings),
+        cancellation_rate=cancellation_rate,
+        no_show_rate=no_show_rate,
+        completion_rate=completion_rate,
+        new_customer_count=new_customer_count,
+        returning_customer_count=returning_customer_count,
+        repeat_customer_rate=repeat_customer_rate,
+        status_counts=status_counts,
+        staff_revenue=staff_revenue,
         staff_count=staff_count,
+        category_revenue=category_revenue,
         category_count=category_count,
+        service_revenue=service_revenue,
+        service_count=service_count,
         daily_revenue=daily_revenue,
         chart_labels=list(daily_revenue.keys()),
-        chart_values=[
-            data["revenue"]
-            for data in daily_revenue.values()
-        ],
+        chart_values=[data["revenue"] for data in daily_revenue.values()],
         staff_chart_labels=list(staff_revenue.keys()),
         staff_chart_values=list(staff_revenue.values()),
         category_chart_labels=list(category_revenue.keys()),
         category_chart_values=list(category_revenue.values()),
-
+        status_chart_labels=[status.replace("_", " ").title() for status in status_order],
+        status_chart_values=[status_counts.get(status, 0) for status in status_order],
+        weekday_chart_labels=list(weekday_count.keys()),
+        weekday_chart_values=list(weekday_count.values()),
+        hour_chart_labels=list(hour_count.keys()),
+        hour_chart_values=list(hour_count.values()),
     )
 
 @dashboard_bp.route("/admin/revenue/export")

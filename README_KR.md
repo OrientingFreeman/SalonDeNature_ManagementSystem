@@ -1,32 +1,32 @@
 # 💅 Salon De Nature
 
-**Language:** 🇺🇸 English \| 🇰🇷 [한국어](README_KR.md)
+**언어:** 🇰🇷 한국어 \| 🇺🇸 [English](README.md)
 
-## Nail Salon Reservation & CRM Management System
+## 네일샵 예약 및 CRM 관리 시스템
 
-Salon De Nature is a production-oriented reservation platform for small
-nail salons built with **Flask**.
+Salon De Nature는 실제 소규모 네일샵 운영을 목표로 개발한 **Flask 기반
+예약 관리 플랫폼**입니다.
 
-## Features
+## 주요 기능
 
--   Online reservation / reschedule / cancellation
--   Customer & Admin portals
--   CRM with customer segmentation
--   Revenue analytics dashboard
--   REST API (OpenAPI/Swagger)
--   Booking timeline & BookingEvent history
--   AWS EC2 + Nginx deployment
--   Google & Kakao OAuth
--   SOLAPI integration ready
+-   온라인 예약 / 변경 / 취소
+-   고객·관리자 전용 화면
+-   고객 CRM 및 세그먼트
+-   매출 분석 대시보드
+-   REST API(OpenAPI/Swagger)
+-   Booking Timeline 및 BookingEvent 이력
+-   AWS EC2 + Nginx 배포
+-   Google / Kakao OAuth
+-   SOLAPI 연동 준비
 
-## Tech Stack
+## 기술 스택
 
 -   Backend: Python, Flask, SQLAlchemy
 -   Frontend: HTML, Jinja2, Bootstrap, JavaScript
 -   Database: SQLite
 -   Infrastructure: AWS EC2, Gunicorn, Nginx
 
-## Architecture
+## 시스템 구성
 
 ``` text
 Browser
@@ -42,13 +42,13 @@ SQLAlchemy
 SQLite
 ```
 
-## Main Modules
+## 주요 모듈
 
--   Reservation Management
--   Customer CRM
--   Revenue Analytics
+-   예약 관리
+-   고객 CRM
+-   매출 분석
 -   REST API
--   Administrator Dashboard
+-   관리자 대시보드
 
 ## REST API
 
@@ -63,7 +63,7 @@ SQLite
 
 Swagger: - `/api/docs` - `/api/openapi.json`
 
-## Project Structure
+## 프로젝트 구조
 
 ``` text
 api/
@@ -75,7 +75,7 @@ app.py
 config.py
 ```
 
-## Local Setup
+## 실행 방법
 
 ``` bash
 git clone <repository>
@@ -86,7 +86,7 @@ cp .env.example .env
 python app.py
 ```
 
-## Environment Variables
+## 환경 변수
 
 ``` env
 SECRET_KEY=
@@ -100,10 +100,10 @@ SOLAPI_API_SECRET=
 SOLAPI_SENDER_NUMBER=
 ```
 
-## Roadmap
+## 향후 계획
 
--   Production SOLAPI activation
+-   SOLAPI 실발송
 -   PostgreSQL
 -   Docker
 -   GitHub Actions
--   Monitoring
+-   모니터링

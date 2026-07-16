@@ -1,5 +1,23 @@
 # Salon De Nature Management System Changelog
 
+## v0.15.3 - Phase15-A3 Automated CRM Segmentation
+
+Added
+- Mutually exclusive New, Returning, Potential VIP, VIP, Dormant, and At-risk customer segments.
+- Segment reason text on CRM list and customer detail views.
+- Potential VIP and At-risk CRM summary cards, filters, and operational-risk sorting.
+
+Changed
+- CRM list and detail now share one centralized segmentation policy and precedence order.
+- Segments are recalculated from completed visits, completed-booking revenue, recent activity, upcoming bookings, cancellation/no-show rates, and booking restriction.
+
+Notes
+- VIP: at least five completed visits or KRW 300,000 in completed-booking revenue.
+- At risk: booking restricted, no-show rate at least 20%, or cancellation rate at least 40%.
+- Dormant: last completed visit more than 90 days ago with no upcoming pending/confirmed booking.
+- Potential VIP: at least three completed visits, KRW 180,000 revenue, or a recent repeat customer with an upcoming booking.
+- No database migration is required.
+
 ## v0.15.2 - Phase15-A2 Customer CRM Detail
 
 Added

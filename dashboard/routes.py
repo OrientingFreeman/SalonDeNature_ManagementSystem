@@ -1211,9 +1211,9 @@ def admin_customers():
     status = request.args.get("status", "all").strip().lower()
     sort_key = request.args.get("sort", "recent").strip().lower()
 
-    valid_segments = {"all", "new", "returning", "vip", "dormant"}
+    valid_segments = {"all", "new", "returning", "potential_vip", "vip", "dormant", "at_risk"}
     valid_statuses = {"all", "normal", "restricted"}
-    valid_sorts = {"recent", "revenue", "visits", "no_show", "name"}
+    valid_sorts = {"recent", "revenue", "visits", "no_show", "risk", "name"}
 
     if segment not in valid_segments:
         segment = "all"

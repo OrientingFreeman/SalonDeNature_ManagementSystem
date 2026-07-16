@@ -1,5 +1,23 @@
 # Salon De Nature Management System Changelog
 
+## v0.14.0 - Phase14-1 REST API Foundation
+
+Added
+- Versioned public API Blueprint at `/api/v1`.
+- Standard success and error JSON envelopes.
+- Public health, active service, active staff, and booking availability endpoints.
+- Optional staff filtering by service and availability lookup across one or all eligible staff members.
+- OpenAPI 3.0 document at `/api/openapi.json` and Swagger UI at `/api/docs`.
+- Basic API contract tests for health, documentation, and validation behavior.
+
+Changed
+- Existing `/api/bookings` web AJAX endpoints remain unchanged for backward compatibility.
+- Public availability calls reuse the existing booking service-layer slot calculation.
+
+Notes
+- No database migration is required.
+- Swagger UI assets load from jsDelivr; `/api/openapi.json` remains available without the CDN.
+
 ## v0.13.0 - Phase13 Revenue and Operations Analytics
 
 Added

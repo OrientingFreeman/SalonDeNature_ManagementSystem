@@ -22,14 +22,25 @@ def _booking_customer_name(booking):
     if booking and booking.customer and booking.customer.name:
         return booking.customer.name
 
-    return "Customer"
+    return "고객"
 
 
 def _booking_service_name(booking):
     if booking and booking.service:
-        return booking.service.name_en or booking.service.name_ko or "Service"
+        return booking.service.name_ko or booking.service.name_en or "서비스"
 
-    return "Service"
+    return "서비스"
+
+
+
+def _status_label(status):
+    return {
+        "pending": "대기",
+        "confirmed": "확정",
+        "completed": "완료",
+        "cancelled": "취소",
+        "no_show": "노쇼",
+    }.get(status, status)
 
 
 def create_admin_notification(notification_type, title, message, booking=None, target_url=None):
@@ -50,12 +61,12 @@ def notify_booking_created(booking):
     service_name = _booking_service_name(booking)
     booking_time = _format_booking_time(booking)
 
-    title = "New booking"
-    message = f"{customer_name} booked {service_name} at {booking_time}."
+    title = "새 예약"
+    message = f"{customer_name} 고객이 {booking_time}에 {service_name} 예약을 등록했습니다."
 
     if booking.deposit_payment_status == "required":
-        title = "New booking · deposit required"
-        message = f"{customer_name} booked {service_name} at {booking_time}. Deposit payment is required."
+        title = "새 예약 · 예약금 필요"
+        message = f"{customer_name} 고객이 {booking_time}에 {service_name} 예약을 등록했습니다. 예약금 입금이 필요합니다."
 
     return create_admin_notification(
         notification_type="booking_created",
@@ -72,8 +83,8 @@ def notify_booking_cancelled(booking):
 
     return create_admin_notification(
         notification_type="booking_cancelled",
-        title="Booking cancelled",
-        message=f"{customer_name} cancelled {service_name} at {booking_time}.",
+        title="예약 취소",
+        message=f"{customer_name} 고객의 {booking_time} {service_name} 예약이 취소되었습니다.",
         booking=booking,
     )
 
@@ -82,25 +93,25 @@ def notify_booking_changed(booking, change_summary=None):
     customer_name = _booking_customer_name(booking)
     service_name = _booking_service_name(booking)
     booking_time = _format_booking_time(booking)
-    detail = f" {change_summary}" if change_summary else ""
+    detail = f" ({change_summary})" if change_summary else ""
 
     return create_admin_notification(
         notification_type="booking_changed",
-        title="Booking updated",
-        message=f"{customer_name}'s {service_name} booking is now set for {booking_time}.{detail}",
+        title="예약 변경",
+        message=f"{customer_name} 고객의 {service_name} 예약이 {booking_time}으로 변경되었습니다.{detail}",
         booking=booking,
     )
 
 
-def notify_deposit_paid(booking, source="Admin"):
+def notify_deposit_paid(booking, source="관리자"):
     customer_name = _booking_customer_name(booking)
     service_name = _booking_service_name(booking)
     booking_time = _format_booking_time(booking)
 
     return create_admin_notification(
         notification_type="deposit_paid",
-        title="Deposit marked as paid",
-        message=f"{source}: {customer_name}'s deposit for {service_name} at {booking_time} is paid.",
+        title="예약금 입금 확인",
+        message=f"{source}: {customer_name} 고객의 {booking_time} {service_name} 예약금이 입금 완료 처리되었습니다.",
         booking=booking,
     )
 
@@ -111,8 +122,8 @@ def notify_booking_status_changed(booking, old_status, new_status):
 
     return create_admin_notification(
         notification_type="booking_status_changed",
-        title="Booking status changed",
-        message=f"{customer_name}'s {service_name} booking changed from {old_status} to {new_status}.",
+        title="예약 상태 변경",
+        message=f"{customer_name} 고객의 {service_name} 예약 상태가 {_status_label(old_status)}에서 {_status_label(new_status)}(으)로 변경되었습니다.",
         booking=booking,
     )
 

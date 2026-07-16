@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ lang|default('ko') }}">
+<html lang="{{ 'ko' if session.get('admin_logged_in') or session.get('staff_id') else lang|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -65,29 +65,15 @@
 <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 {% endif %}
 <aside class="pwa-install-banner" id="pwaInstallBanner" hidden aria-live="polite">
+    {% set internal_ko = session.get('admin_logged_in') or session.get('staff_id') %}
     <div>
-        <strong>Install Salon De Nature</strong>
-        <p id="pwaIosHelp" hidden>
-            Tap the <strong>Share</strong> button in Safari, then choose
-            <strong>Add to Home Screen</strong>.
-        </p>
-        <p class="pwa-install-default">
-            Install the app for faster access to your appointments.
-        </p>
+        <strong>{% if internal_ko %}Salon De Nature 앱 설치{% else %}{{ text.install_app if text is defined else 'Install Salon De Nature' }}{% endif %}</strong>
+        <p id="pwaIosHelp" hidden>{% if internal_ko %}Safari의 공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 선택하세요.{% else %}{{ text.install_ios if text is defined else 'Tap the Share button in Safari, then choose Add to Home Screen.' }}{% endif %}</p>
+        <p class="pwa-install-default">{% if internal_ko %}앱을 설치하면 예약과 운영 화면에 더 빠르게 접근할 수 있습니다.{% else %}{{ text.install_desc if text is defined else 'Install the app for faster access to your appointments.' }}{% endif %}</p>
     </div>
-
     <div class="pwa-install-actions">
-        <button type="button" id="pwaInstallButton">
-            Install
-        </button>
-
-        <button
-            type="button"
-            class="secondary"
-            id="pwaInstallDismiss"
-            aria-label="Dismiss installation prompt">
-            Later
-        </button>
+        <button type="button" id="pwaInstallButton">{% if internal_ko %}설치{% else %}{{ text.install if text is defined else 'Install' }}{% endif %}</button>
+        <button type="button" class="secondary" id="pwaInstallDismiss" aria-label="{% if internal_ko %}설치 안내 닫기{% else %}Dismiss installation prompt{% endif %}">{% if internal_ko %}나중에{% else %}{{ text.later if text is defined else 'Later' }}{% endif %}</button>
     </div>
 </aside>
 <script src="{{ url_for('static', filename='pwa/pwa.js') }}" defer></script>

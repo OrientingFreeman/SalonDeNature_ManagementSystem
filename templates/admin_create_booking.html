@@ -24,9 +24,9 @@
 <section class="admin-create-booking-section">
 
     <div class="admin-page-header compact">
-        <p class="eyebrow">ADMIN BOOKING</p>
-        <h1>Create Booking</h1>
-        <p>Create a reservation manually from the admin calendar.</p>
+        <p class="eyebrow">관리자 예약</p>
+        <h1>예약 등록</h1>
+        <p>관리자 캘린더에서 예약을 직접 등록합니다.</p>
     </div>
 
     <form method="POST"
@@ -34,11 +34,11 @@
       class="admin-form-card admin-booking-create-card">
 
         <div class="booking-create-group">
-            <h2>Customer</h2>
+            <h2>고객</h2>
 
-            <label for="customerSelect">Existing Customer</label>
+            <label for="customerSelect">기존 고객</label>
             <select name="customer_id" id="customerSelect">
-                <option value="">Enter as new customer</option>
+                <option value="">신규 고객으로 등록</option>
                 {% for customer in customers %}
                     <option value="{{ customer.id }}">
                         {{ customer.name }} / {{ customer.phone }}
@@ -49,12 +49,12 @@
             <div id="newCustomerForm" class="new-customer-box">
                 <div class="form-grid two-columns">
                     <div>
-                        <label for="new_customer_name">New Customer Name</label>
+                        <label for="new_customer_name">신규 고객명</label>
                         <input id="new_customer_name" type="text" name="new_customer_name">
                     </div>
 
                     <div>
-                        <label for="new_customer_phone">New Customer Phone</label>
+                        <label for="new_customer_phone">신규 고객 연락처</label>
                         <input id="new_customer_phone" type="text" name="new_customer_phone">
                     </div>
                 </div>
@@ -62,13 +62,13 @@
         </div>
 
         <div class="booking-create-group">
-            <h2>Service Assignment</h2>
+            <h2>서비스 배정</h2>
 
             <div class="form-grid two-columns">
                 <div>
-                    <label for="staffSelect">Staff</label>
+                    <label for="staffSelect">직원</label>
                     <select name="staff_id" id="staffSelect" required>
-                        <option value="any">Any available staff</option>
+                        <option value="any">가능한 직원 자동 배정</option>
                         {% for staff in staff_list %}
                             <option value="{{ staff.id }}">
                                 {{ staff.name }}
@@ -78,7 +78,7 @@
                 </div>
 
                 <div>
-                    <label for="serviceSelect">Service</label>
+                    <label for="serviceSelect">서비스</label>
                     <select name="service_id" id="serviceSelect" required>
                         {% for service in services %}
                             <option value="{{ service.id }}">
@@ -93,30 +93,30 @@
         </div>
 
         <div class="booking-create-group">
-            <h2>Reservation Time</h2>
+            <h2>예약 시간</h2>
 
             <div class="form-grid two-columns">
                 <div>
-                    <label for="bookingDate">Booking Date</label>
+                    <label for="bookingDate">예약 날짜</label>
                     <input type="date" id="bookingDate" required>
                 </div>
 
                 <div>
-                    <label for="availableSlotSelect">Available Slot</label>
+                    <label for="availableSlotSelect">예약 가능 시간</label>
                     <select name="start_time" id="availableSlotSelect" required>
-                        <option value="">Select staff, service, and date</option>
+                        <option value="">직원, 서비스, 날짜를 선택하세요.</option>
                     </select>
                 </div>
             </div>
 
             <p class="booking-create-help">
-                Available slots are calculated from staff schedules, linked services, existing bookings, and service duration.
+                직원 근무 일정, 담당 서비스, 기존 예약 및 서비스 소요 시간을 기준으로 예약 가능 시간이 계산됩니다.
             </p>
         </div>
 
         <div class="admin-form-actions">
-            <a href="/admin/calendar{% if request.args.get('embed') == '1' %}?embed=1{% endif %}" class="booking-action-btn">Back to Calendar</a>
-            <button type="submit" class="btn-primary">Create Booking</button>
+            <a href="/admin/calendar{% if request.args.get('embed') == '1' %}?embed=1{% endif %}" class="booking-action-btn">캘린더로 돌아가기</a>
+            <button type="submit" class="btn-primary">예약 등록</button>
         </div>
 
     </form>
@@ -264,7 +264,7 @@ async function loadAvailableSlots() {
         slotSelect.innerHTML = "";
 
         if (!data.ok && staffId !== "any") {
-            slotSelect.innerHTML = `<option value="">${data.message || "Failed to load slots"}</option>`;
+            slotSelect.innerHTML = `<option value="">${data.message || "예약 가능 시간을 불러오지 못했습니다."}</option>`;
             return;
         }
 

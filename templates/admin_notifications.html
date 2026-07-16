@@ -7,23 +7,23 @@
 
     <div class="notification-center-hero">
         <div>
-            <p class="notification-center-eyebrow">ADMIN CENTER</p>
-            <h1>Notifications</h1>
+            <p class="notification-center-eyebrow">관리자 센터</p>
+            <h1>알림</h1>
             <p class="notification-center-subtitle">
-                Review booking updates, deposit events, cancellations, and operational alerts.
+                예약 변경, 예약금, 취소 및 운영 알림을 확인합니다.
             </p>
         </div>
 
         <div class="notification-center-actions">
             <button class="notification-action-btn primary" type="button" data-page-mark-all-read>
-                Mark all as read
+                모두 읽음 처리
             </button>
 
             <form method="POST"
                   action="{{ url_for('dashboard.admin_notifications_cleanup') }}"
                   onsubmit="return confirm('Delete old notifications according to the retention policy?');">
                 <button class="notification-action-btn muted" type="submit">
-                    Cleanup old
+                    오래된 알림 정리
                 </button>
             </form>
         </div>
@@ -31,24 +31,24 @@
 
     <div class="notification-stats-grid">
         <div class="notification-stat-card">
-            <span class="notification-stat-label">Unread</span>
+            <span class="notification-stat-label">읽지 않음</span>
             <strong>{{ stats.unread_count if stats is defined else unread_count }}</strong>
         </div>
 
         <div class="notification-stat-card">
-            <span class="notification-stat-label">Today</span>
+            <span class="notification-stat-label">오늘</span>
             <strong>{{ stats.today_count if stats is defined else 0 }}</strong>
         </div>
 
         <div class="notification-stat-card">
-            <span class="notification-stat-label">Total</span>
+            <span class="notification-stat-label">전체</span>
             <strong>{{ stats.total_count if stats is defined else notifications.total }}</strong>
         </div>
     </div>
 
     <div class="notification-retention-card">
         <div>
-            <strong>Retention policy</strong>
+            <strong>고객 유지 정책</strong>
             <p>
                 Read notifications are deleted after 30 days.
                 Unread notifications are kept for up to 90 days.
@@ -60,16 +60,16 @@
     <div class="notification-sms-panel">
         <div class="notification-sms-header">
             <div>
-                <strong>SMS Test & Logs</strong>
-                <p>Solapi integration check before real customer operation.</p>
+                <strong>문자 테스트 및 이력</strong>
+                <p>실제 고객 운영 전 SOLAPI 연동 상태를 확인합니다.</p>
             </div>
             <div class="notification-sms-status">
                 <span class="sms-status-pill {{ 'is-on' if sms_enabled else 'is-off' }}">
-                    SMS {{ 'ON' if sms_enabled else 'OFF' }}
+                    문자 발송 {{ '사용' if sms_enabled else '중지' }}
                 </span>
-                <span>From: {{ solapi_from_number or 'Not configured' }}</span>
+                <span>발신번호: {{ solapi_from_number or '미설정' }}</span>
                 <a class="notification-action-btn muted" href="{{ url_for('dashboard.admin_sms_templates_page') }}">
-                    SMS Templates
+                    문자 템플릿
                 </a>
             </div>
         </div>
@@ -83,9 +83,9 @@
                    class="notification-search-input"
                    aria-label="Reminder booking date">
             <button type="submit" class="notification-action-btn muted">
-                Run reminders now
+                예약 알림 지금 실행
             </button>
-            <span class="notification-sms-manual-note">Leave the date blank to process today (Asia/Seoul).</span>
+            <span class="notification-sms-manual-note">날짜를 비워두면 한국 시간 기준 오늘 예약을 처리합니다.</span>
         </form>
 
         <form method="POST"
@@ -98,32 +98,32 @@
                    autocomplete="off">
             <input type="text"
                    name="message"
-                   placeholder="Optional test message"
+                   placeholder="선택 입력 테스트 메시지"
                    class="notification-search-input">
             <button type="submit" class="notification-action-btn primary">
-                Send test SMS
+                테스트 문자 발송
             </button>
         </form>
 
         <div class="notification-sms-stats">
-            <span>Sent <strong>{{ sms_stats.sent if sms_stats is defined else 0 }}</strong></span>
-            <span>Skipped <strong>{{ sms_stats.skipped if sms_stats is defined else 0 }}</strong></span>
-            <span>Failed <strong>{{ sms_stats.failed if sms_stats is defined else 0 }}</strong></span>
-            <span>Total <strong>{{ sms_stats.total if sms_stats is defined else 0 }}</strong></span>
+            <span>발송 완료 <strong>{{ sms_stats.sent if sms_stats is defined else 0 }}</strong></span>
+            <span>발송 안 함 <strong>{{ sms_stats.skipped if sms_stats is defined else 0 }}</strong></span>
+            <span>실패 <strong>{{ sms_stats.failed if sms_stats is defined else 0 }}</strong></span>
+            <span>전체 <strong>{{ sms_stats.total if sms_stats is defined else 0 }}</strong></span>
         </div>
 
         <div class="notification-sms-log-table-wrap">
             <table class="notification-sms-log-table">
                 <thead>
                     <tr>
-                        <th>Time</th>
-                        <th>Event</th>
-                        <th>Type</th>
-                        <th>Template</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Message</th>
-                        <th>Error</th>
+                        <th>시간</th>
+                        <th>이벤트</th>
+                        <th>유형</th>
+                        <th>템플릿</th>
+                        <th>연락처</th>
+                        <th>상태</th>
+                        <th>메시지</th>
+                        <th>오류</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -144,7 +144,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="8" class="notification-sms-empty">No SMS logs yet.</td>
+                            <td colspan="8" class="notification-sms-empty">문자 발송 이력이 없습니다.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -160,17 +160,17 @@
             <input type="search"
                    name="q"
                    value="{{ search_query or '' }}"
-                   placeholder="Search title, message, or type..."
+                   placeholder="검색 title, message, or type..."
                    class="notification-search-input">
 
             <button type="submit" class="notification-action-btn primary">
-                Search
+                검색
             </button>
 
             {% if search_query %}
                 <a class="notification-action-btn muted"
                    href="{{ url_for('dashboard.admin_notifications_page', filter=filter_key or 'all', per_page=per_page or 20) }}">
-                    Clear
+                    지우기
                 </a>
             {% endif %}
         </form>
@@ -179,7 +179,7 @@
             <input type="hidden" name="filter" value="{{ filter_key or 'all' }}">
             <input type="hidden" name="q" value="{{ search_query or '' }}">
             <label>
-                Per page
+                페이지당 표시
                 <select name="per_page" onchange="this.form.submit()">
                     {% for option in [10, 20, 30, 50] %}
                         <option value="{{ option }}" {% if option == per_page %}selected{% endif %}>
@@ -202,7 +202,7 @@
 
         {% if search_query %}
             <span class="notification-search-result">
-                Results for “{{ search_query }}”
+                “{{ search_query }}” 검색 결과
             </span>
         {% endif %}
     </div>
@@ -229,7 +229,7 @@
         <div class="notification-bulk-bar" data-bulk-bar>
             <label class="notification-select-all">
                 <input type="checkbox" data-select-all-notifications>
-                <span>Select all on this page</span>
+                <span>현재 페이지 전체 선택</span>
             </label>
 
             <div class="notification-bulk-actions">
@@ -239,7 +239,7 @@
                         class="notification-action-btn muted"
                         data-bulk-submit
                         disabled>
-                    Mark selected read
+                    선택 항목 읽음 처리
                 </button>
 
                 <button type="submit"
@@ -249,7 +249,7 @@
                         data-bulk-delete
                         data-bulk-submit
                         disabled>
-                    Delete selected
+                    선택 삭제
                 </button>
             </div>
         </div>
@@ -308,7 +308,7 @@
                           onsubmit="return confirm('Delete this notification?');">
                         <button type="submit"
                                 class="notification-icon-delete"
-                                title="Delete notification"
+                                title="삭제 notification"
                                 aria-label="Delete notification">
                             🗑
                         </button>
@@ -317,8 +317,8 @@
             {% else %}
                 <div class="notification-empty-state">
                     <div class="notification-empty-icon">🔔</div>
-                    <strong>You're all caught up.</strong>
-                    <p>There are no notifications matching the current filter or search query.</p>
+                    <strong>모든 알림을 확인했습니다.</strong>
+                    <p>현재 필터 또는 검색 조건에 맞는 알림이 없습니다.</p>
                 </div>
             {% endfor %}
         </div>

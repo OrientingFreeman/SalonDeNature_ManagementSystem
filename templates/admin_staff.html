@@ -7,82 +7,82 @@
 <section class="admin-staff-page">
 
     <div class="admin-staff-header">
-        <p class="eyebrow">ADMIN PANEL</p>
-        <h1>Staff Management</h1>
+        <p class="eyebrow">관리자 패널</p>
+        <h1>직원 관리</h1>
         <p class="admin-staff-subtitle">
-            Manage artists, profiles, schedules, and available services.
+            디자이너 프로필, 근무 일정 및 담당 서비스를 관리합니다.
         </p>
     </div>
 
     <div class="admin-staff-layout">
 
         <section class="admin-staff-form-card">
-            <h2>Add New Artist</h2>
+            <h2>새 디자이너 추가</h2>
 
             <form method="POST" action="/admin/staff/create" enctype="multipart/form-data">
 
                 <div class="admin-form-grid">
 
                     <div>
-                        <label>Name</label>
+                        <label>이름</label>
                         <input type="text" name="name" required>
                     </div>
 
                     <div>
-                        <label>Username</label>
+                        <label>아이디</label>
                         <input type="text" name="username" required>
                     </div>
 
                     <div>
-                        <label>Password</label>
+                        <label>비밀번호</label>
                         <input type="password" name="password" required>
                     </div>
 
                     <div>
-                        <label>Role</label>
+                        <label>권한</label>
                         <select name="role">
-                            <option value="staff">Staff</option>
+                            <option value="staff">직원</option>
                         </select>
                     </div>
 
                     <div>
-                        <label>Phone</label>
+                        <label>연락처</label>
                         <input type="text" name="phone">
                     </div>
 
                     <div>
-                        <label>Position</label>
-                        <input type="text" name="position" placeholder="Senior Nail Artist">
+                        <label>직책</label>
+                        <input type="text" name="position" placeholder="선임 네일 아티스트">
                     </div>
 
                     <div>
-                        <label>Specialties</label>
-                        <input type="text" name="specialties" placeholder="Gel Nail, Nail Art">
+                        <label>전문 분야</label>
+                        <input type="text" name="specialties" placeholder="젤 네일, 네일 아트">
                     </div>
 
                     <div>
-                        <label>Career Years</label>
+                        <label>경력 연수</label>
                         <input type="number" name="career_years" min="0">
                     </div>
 
                     <div>
-                        <label>Profile Image URL</label>
+                        <label>프로필 이미지 URL</label>
                         <input type="file" name="profile_image" accept="image/*">
                     </div>
 
                     <div>
-                        <label>Display Order</label>
+                        <label>표시 순서</label>
                         <input type="number" name="display_order" value="0">
                     </div>
 
                 </div>
 
-                <label>Introduction</label>
+                <label>소개</label>
                 <textarea name="introduction" rows="4" placeholder="Short artist introduction"></textarea>
 
                 <div class="admin-form-actions">
                     <button type="submit" class="btn-primary">
-                        Add Artist
+                        디자이너 추가
                     </button>
                 </div>
 
@@ -91,9 +91,9 @@
 
         <section class="admin-staff-list-section">
             <div class="admin-staff-list-header">
-                <h2>Artists</h2>
+                <h2>디자이너</h2>
                 <a class="btn-secondary" href="/admin/calendar">
-                    Reservation Calendar
+                    예약 캘린더
                 </a>
             </div>
 
@@ -114,7 +114,7 @@
                         <div>
                             <h3>{{ staff.name }}</h3>
                             <p class="admin-staff-position">
-                                {{ staff.position or "Nail Artist" }}
+                                {{ staff.position or "네일 아티스트" }}
                             </p>
 
                             {% if staff.specialties %}
@@ -129,21 +129,21 @@
                     <div class="admin-staff-meta">
 
                         <div>
-                            <span>Username</span>
+                            <span>아이디</span>
                             <strong>{{ staff.username or "-" }}</strong>
                         </div>
 
                         <div>
-                            <span>Phone</span>
+                            <span>연락처</span>
                             <strong>{{ staff.phone or "-" }}</strong>
                         </div>
 
                         <div>
-                            <span>Status</span>
+                            <span>상태</span>
                             {% if staff.is_active %}
-                                <strong class="status-badge status-confirmed">Active</strong>
+                                <strong class="status-badge status-confirmed">활성</strong>
                             {% else %}
-                                <strong class="status-badge status-cancelled">Inactive</strong>
+                                <strong class="status-badge status-cancelled">비활성</strong>
                             {% endif %}
                         </div>
 
@@ -153,28 +153,28 @@
 
                         <a class="booking-action-btn"
                            href="/admin/staff/{{ staff.id }}/edit">
-                            Edit
+                            수정
                         </a>
 
                         <a class="booking-action-btn"
                            href="/admin/staff/{{ staff.id }}/schedule">
-                            Schedule
+                            일정
                         </a>
 
                         <a class="booking-action-btn"
                            href="/admin/staff/{{ staff.id }}/services">
-                            Services
+                            서비스
                         </a>
 
                         <form method="POST"
                               action="/admin/staff/{{ staff.id }}/toggle">
                             {% if staff.is_active %}
                                 <button type="submit" class="booking-action-btn danger">
-                                    Disable
+                                    사용 안 함
                                 </button>
                             {% else %}
                                 <button type="submit" class="booking-action-btn">
-                                    Activate
+                                    활성화
                                 </button>
                             {% endif %}
                         </form>

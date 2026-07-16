@@ -5,26 +5,26 @@
 
 <section class="admin-timeline-section">
     <div class="admin-page-header">
-        <p class="eyebrow">RESERVATION BOARD</p>
-        <h1>Timeline Dashboard</h1>
-        <p>Daily reservation timeline by staff.</p>
+        <p class="eyebrow">예약 현황판</p>
+        <h1>타임라인 대시보드</h1>
+        <p>직원별 일일 예약 타임라인입니다.</p>
     </div>
 
     <div class="timeline-toolbar">
-    <a class="booking-action-btn" href="/admin/timeline?date={{ prev_date }}">← Previous</a>
+    <a class="booking-action-btn" href="/admin/timeline?date={{ prev_date }}">← 이전</a>
 
     <form method="get" action="/admin/timeline" class="timeline-date-form">
         <input type="date" name="date" value="{{ target_date }}">
-        <button type="submit" class="booking-action-btn">Search</button>
+        <button type="submit" class="booking-action-btn">검색</button>
     </form>
 
-    <a class="booking-action-btn" href="/admin/timeline?date={{ today }}">Today</a>
-    <a class="booking-action-btn" href="/admin/timeline?date={{ next_date }}">Next →</a>
+    <a class="booking-action-btn" href="/admin/timeline?date={{ today }}">오늘</a>
+    <a class="booking-action-btn" href="/admin/timeline?date={{ next_date }}">다음 →</a>
     </div>
 
     <div class="timeline-board">
         <div class="timeline-header">
-            <div class="timeline-time-header">Time</div>
+            <div class="timeline-time-header">시간</div>
 
             {% for staff in staffs %}
                 <div class="timeline-staff-header">{{ staff.name }}</div>
@@ -72,7 +72,7 @@
                                 class="timeline-unavailable-block"
                                 style="top: {{ top_px }}px; height: {{ height_px }}px;"
                             >
-                                <strong>Break</strong>
+                                <strong>휴게시간</strong>
                                 <small>{{ schedule.break_start_time.strftime("%H:%M") }}~{{ schedule.break_end_time.strftime("%H:%M") }}</small>
                             </div>
                         {% endif %}
@@ -89,7 +89,7 @@
                                 class="timeline-unavailable-block time-off"
                                 style="top: {{ top_px }}px; height: {{ height_px }}px;"
                             >
-                                <strong>Time Off</strong>
+                                <strong>휴무</strong>
                                 <small>{{ time_off.start_time.strftime("%H:%M") }}~{{ time_off.end_time.strftime("%H:%M") }}</small>
                             </div>
                         {% endif %}
@@ -127,9 +127,9 @@
                                 onclick="if (!isTimelineDragging && Date.now() - lastTimelineDragEndAt > 300) openBookingDetailModalFromBlock(this)" ondblclick="openBookingDetailModalFromBlock(this)"
                             >
                                 <div class="booking-badges">
-                                    {% if booking.customer.visit_count == 0 %}<span class="booking-badge badge-new">NEW</span>{% endif %}
-                                    {% if booking.customer.no_show_count and booking.customer.no_show_count > 0 %}<span class="booking-badge badge-warning">NO-SHOW</span>{% endif %}
-                                    {% if booking.deposit_payment_status == "paid" %}<span class="booking-badge badge-paid">PAID</span>{% elif booking.deposit_payment_status == "required" %}<span class="booking-badge badge-pending">PENDING</span>{% endif %}
+                                    {% if booking.customer.visit_count == 0 %}<span class="booking-badge badge-new">신규</span>{% endif %}
+                                    {% if booking.customer.no_show_count and booking.customer.no_show_count > 0 %}<span class="booking-badge badge-warning">노쇼</span>{% endif %}
+                                    {% if booking.deposit_payment_status == "paid" %}<span class="booking-badge badge-paid">입금 완료</span>{% elif booking.deposit_payment_status == "required" %}<span class="booking-badge badge-pending">대기</span>{% endif %}
                                 </div>
                                 <button
                                     type="button"
@@ -138,7 +138,7 @@
                                     onmousedown="event.preventDefault(); event.stopPropagation();"
                                     onclick="event.preventDefault(); event.stopPropagation(); openBookingDetailModalSafe(this);"
                                 >
-                                    Details
+                                    상세
                                 </button>
                                 <strong>{{ booking.customer.name }}</strong>
                                 <span>{{ booking.service.name_ko }}</span>
@@ -148,9 +148,9 @@
                                     <p>{{ booking.customer.phone or "-" }}</p>
                                     <p>{{ booking.service.name_ko }} · {{ booking.staff.name }}</p>
                                     <p>{{ booking.start_time.strftime("%H:%M") }} ~ {{ booking.end_time.strftime("%H:%M") }}</p>
-                                    <p>Visits: {{ booking.customer.visit_count or 0 }}</p>
-                                    <p>No-show: {{ booking.customer.no_show_count or 0 }}</p>
-                                    <p>Deposit: {{ booking.deposit_payment_status or "none" }}</p>
+                                    <p>방문: {{ booking.customer.visit_count or 0 }}</p>
+                                    <p>노쇼: {{ booking.customer.no_show_count or 0 }}</p>
+                                    <p>예약금: {{ booking.deposit_payment_status or "없음" }}</p>
                                 </div>
                             </div>
                         {% endif %}
@@ -162,7 +162,7 @@
                {% set now_minutes = ((now - timeline_start).total_seconds() / 60)|int %}
                 {% if now_minutes >= 0 and now_minutes <= total_minutes %}
                     <div class="now-line" style="top: {{ now_minutes * 2 }}px;">
-                        <span>Now</span>
+                        <span>현재</span>
                     </div>
                 {% endif %}
             {% endif %}
@@ -177,7 +177,7 @@
     <div class="modal-box timeline-detail-modal">
         <div class="modal-topline">
             <div>
-                <p class="eyebrow">BOOKING DETAIL</p>
+                <p class="eyebrow">예약 상세</p>
                 <h3 id="modalCustomerName"></h3>
                 <p id="modalServiceName"></p>
             </div>
@@ -185,19 +185,19 @@
         </div>
 
         <div class="booking-info-grid modal-booking-info-grid">
-            <div><span>Phone</span><strong id="modalPhone"></strong></div>
-            <div><span>Staff</span><strong id="modalStaff"></strong></div>
-            <div><span>Time</span><strong id="modalTime"></strong></div>
-            <div><span>Visits</span><strong id="modalVisits"></strong></div>
-            <div><span>No-show</span><strong id="modalNoShow"></strong></div>
-            <div><span>Deposit</span><strong id="modalDeposit"></strong></div>
+            <div><span>연락처</span><strong id="modalPhone"></strong></div>
+            <div><span>직원</span><strong id="modalStaff"></strong></div>
+            <div><span>시간</span><strong id="modalTime"></strong></div>
+            <div><span>방문 횟수</span><strong id="modalVisits"></strong></div>
+            <div><span>노쇼</span><strong id="modalNoShow"></strong></div>
+            <div><span>예약금</span><strong id="modalDeposit"></strong></div>
         </div>
 
 
         <div id="timelineDepositActions" class="timeline-deposit-actions">
             <div>
-                <span>Deposit Status</span>
-                <strong id="modalDepositActionStatus">none</strong>
+                <span>예약금 상태</span>
+                <strong id="modalDepositActionStatus">없음</strong>
                 <p id="modalDepositActionNote"></p>
             </div>
             <button
@@ -206,28 +206,28 @@
                 class="booking-action-btn deposit-paid-btn"
                 onclick="requestTimelineDepositPaid()"
             >
-                Mark as Paid
+                입금 확인
             </button>
         </div>
 
         <div class="modal-memo-box">
-            <span>Memo</span>
+            <span>메모</span>
             <p id="modalMemo"></p>
         </div>
 
         <div class="timeline-status-actions">
-            <button type="button" class="booking-action-btn status-confirm" onclick="requestTimelineStatusChange('confirmed')">Confirm</button>
-            <button type="button" class="booking-action-btn status-complete" onclick="requestTimelineStatusChange('completed')">Complete</button>
-            <button type="button" class="booking-action-btn status-noshow" onclick="requestTimelineStatusChange('no_show')">No-show</button>
+            <button type="button" class="booking-action-btn status-confirm" onclick="requestTimelineStatusChange('confirmed')">확인</button>
+            <button type="button" class="booking-action-btn status-complete" onclick="requestTimelineStatusChange('completed')">완료</button>
+            <button type="button" class="booking-action-btn status-noshow" onclick="requestTimelineStatusChange('no_show')">노쇼</button>
         </div>
 
         <div class="modal-actions timeline-modal-actions">
-            <button type="button" class="booking-action-btn" onclick="openFullBookingDetail()">Full Details</button>
-            <button type="button" class="booking-action-btn" onclick="goToCalendarForBooking()">Open Calendar</button>
-            <button type="button" class="booking-action-btn" onclick="requestTimelineReschedule()">Reschedule</button>
-            <button type="button" class="booking-action-btn" onclick="requestTimelineAssignment()">Edit Assignment</button>
-            <button type="button" class="booking-action-btn danger" onclick="requestTimelineCancel()">Cancel</button>
-            <button type="button" class="booking-action-btn" onclick="closeBookingDetailModal()">Close</button>
+            <button type="button" class="booking-action-btn" onclick="openFullBookingDetail()">전체 상세</button>
+            <button type="button" class="booking-action-btn" onclick="goToCalendarForBooking()">캘린더 열기</button>
+            <button type="button" class="booking-action-btn" onclick="requestTimelineReschedule()">예약 변경</button>
+            <button type="button" class="booking-action-btn" onclick="requestTimelineAssignment()">예약 배정 변경</button>
+            <button type="button" class="booking-action-btn danger" onclick="requestTimelineCancel()">취소</button>
+            <button type="button" class="booking-action-btn" onclick="closeBookingDetailModal()">닫기</button>
         </div>
     </div>
 </div>
@@ -236,21 +236,21 @@
     <div class="modal-box timeline-reschedule-modal">
         <div class="modal-topline">
             <div>
-                <p class="eyebrow">RESCHEDULE</p>
-                <h3>Change booking time</h3>
+                <p class="eyebrow">예약 변경</p>
+                <h3>예약 시간 변경</h3>
                 <p id="rescheduleBookingSummary"></p>
             </div>
         </div>
 
         <div class="timeline-form-row">
-            <label for="timelineRescheduleInput">New date and time</label>
+            <label for="timelineRescheduleInput">새 날짜 및 시간</label>
             <input id="timelineRescheduleInput" type="datetime-local" step="900">
-            <small>Bookings can be rescheduled in 15-minute increments.</small>
+            <small>예약은 15분 단위로 변경할 수 있습니다.</small>
         </div>
 
         <div class="modal-actions timeline-modal-actions">
-            <button type="button" class="booking-action-btn" onclick="submitTimelineReschedule()">Save</button>
-            <button type="button" class="booking-action-btn" onclick="closeTimelineRescheduleModal()">Close</button>
+            <button type="button" class="booking-action-btn" onclick="submitTimelineReschedule()">저장</button>
+            <button type="button" class="booking-action-btn" onclick="closeTimelineRescheduleModal()">닫기</button>
         </div>
     </div>
 </div>
@@ -259,17 +259,17 @@
     <div class="modal-box timeline-assignment-modal">
         <div class="modal-topline">
             <div>
-                <p class="eyebrow">EDIT ASSIGNMENT</p>
-                <h3>Change staff, service, and time</h3>
+                <p class="eyebrow">예약 배정 변경</p>
+                <h3>직원·서비스·시간 변경</h3>
                 <p id="assignmentBookingSummary"></p>
             </div>
         </div>
 
         <div class="timeline-form-grid">
             <div class="timeline-form-row">
-                <label for="timelineAssignmentStaff">Staff</label>
+                <label for="timelineAssignmentStaff">직원</label>
                 <select id="timelineAssignmentStaff">
-                    <option value="">Select staff</option>
+                    <option value="">직원 선택</option>
                     {% for staff in staffs %}
                         <option value="{{ staff.id }}">{{ staff.name }}</option>
                     {% endfor %}
@@ -277,7 +277,7 @@
             </div>
 
             <div class="timeline-form-row">
-                <label for="timelineAssignmentService">Service</label>
+                <label for="timelineAssignmentService">서비스</label>
                 <select id="timelineAssignmentService">
                     {% for service in services %}
                         <option value="{{ service.id }}">{{ service.name_ko }}</option>
@@ -286,15 +286,15 @@
             </div>
 
             <div class="timeline-form-row full-width">
-                <label for="timelineAssignmentInput">Date and time</label>
+                <label for="timelineAssignmentInput">날짜 및 시간</label>
                 <input id="timelineAssignmentInput" type="datetime-local" step="900">
-                <small>Assignment changes are saved in 15-minute increments.</small>
+                <small>배정 변경은 15분 단위로 저장됩니다.</small>
             </div>
         </div>
 
         <div class="modal-actions timeline-modal-actions">
-            <button type="button" class="booking-action-btn" onclick="submitTimelineAssignment()">Save</button>
-            <button type="button" class="booking-action-btn" onclick="closeTimelineAssignmentModal()">Close</button>
+            <button type="button" class="booking-action-btn" onclick="submitTimelineAssignment()">저장</button>
+            <button type="button" class="booking-action-btn" onclick="closeTimelineAssignmentModal()">닫기</button>
         </div>
     </div>
 </div>
@@ -1161,7 +1161,7 @@ function submitTimelineReschedule() {
         applyTimelineBookingUpdate(data);
         closeTimelineRescheduleModal();
         closeBookingDetailModal();
-        showTimelineNotice("Booking rescheduled successfully.", "success");
+        showTimelineNotice("예약 시간을 변경했습니다.", "success");
     })
     .catch(() => {
         showTimelineNotice("Failed to reschedule booking. Please check your connection and try again.", "error");
@@ -1200,7 +1200,7 @@ function submitTimelineAssignment() {
     const newStartTime = document.getElementById("timelineAssignmentInput").value;
 
     if (!staffId || !serviceId || !newStartTime) {
-        showTimelineNotice("Please select staff, service, and date/time.", "error");
+        showTimelineNotice("직원, 서비스, 날짜와 시간을 선택하세요.", "error");
         return;
     }
 
@@ -1284,7 +1284,7 @@ function updateTimelineBlockDeposit(bookingId, depositStatus) {
 
     const tooltipParagraphs = block.querySelectorAll(".booking-tooltip p");
     tooltipParagraphs.forEach((p) => {
-        if (p.textContent.trim().startsWith("Deposit:")) {
+        if (p.textContent.trim().startsWith("예약금:")) {
             p.textContent = `Deposit: ${depositStatus || "none"}`;
         }
     });
@@ -1297,7 +1297,7 @@ function updateTimelineBlockDeposit(bookingId, depositStatus) {
     }
 
     badges.querySelectorAll(".badge-paid, .badge-pending").forEach((badge) => {
-        if (badge.textContent.trim() === "PAID" || badge.textContent.trim() === "PENDING") {
+        if (badge.textContent.trim() === "입금 완료" || badge.textContent.trim() === "대기") {
             badge.remove();
         }
     });
@@ -1305,12 +1305,12 @@ function updateTimelineBlockDeposit(bookingId, depositStatus) {
     if (depositStatus === "paid") {
         const paid = document.createElement("span");
         paid.className = "booking-badge badge-paid";
-        paid.textContent = "PAID";
+        paid.textContent = "입금 완료";
         badges.appendChild(paid);
     } else if (depositStatus === "required") {
         const pending = document.createElement("span");
         pending.className = "booking-badge badge-pending";
-        pending.textContent = "PENDING";
+        pending.textContent = "대기";
         badges.appendChild(pending);
     }
 }
@@ -1318,7 +1318,7 @@ function updateTimelineBlockDeposit(bookingId, depositStatus) {
 function requestTimelineDepositPaid() {
     if (!selectedTimelineBookingId) return;
 
-    if (!confirm("Mark this booking deposit as paid?")) {
+    if (!confirm("이 예약의 예약금을 입금 완료 처리하시겠습니까?")) {
         return;
     }
 
@@ -1333,7 +1333,7 @@ function requestTimelineDepositPaid() {
     .then((response) => response.json())
     .then((data) => {
         if (!data.ok) {
-            showTimelineNotice(data.message || "Failed to update deposit status.", "error");
+            showTimelineNotice(data.message || "예약금 상태 변경에 실패했습니다.", "error");
             return;
         }
 
@@ -1349,7 +1349,7 @@ function requestTimelineDepositPaid() {
             setTimelineModalStatus(newStatus);
         }
 
-        showTimelineNotice(data.message || "Deposit marked as paid.", "success");
+        showTimelineNotice(data.message || "예약금을 입금 완료 처리했습니다.", "success");
     })
     .catch(() => {
         showTimelineNotice("Failed to update deposit status. Please check your connection and try again.", "error");
@@ -1828,7 +1828,7 @@ document.querySelectorAll(".timeline-staff-column[data-staff-id]").forEach(funct
         .then((data) => {
             if (data.ok) {
                 updateBookingBlockAfterMove(data, column, minutesFromTimelineStart);
-                showTimelineNotice("Booking moved successfully.", "success");
+                showTimelineNotice("예약을 이동했습니다.", "success");
             } else {
                 showTimelineNotice(data.message || "Failed to move booking.", "error");
             }

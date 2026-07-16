@@ -49,6 +49,13 @@ TRANSLATIONS = {
         "late_notice_fail": "늦음 알림 실패",
         "already_have_account": "이미 계정이 있나요?",
         "no_account": "계정이 없나요?",
+        "account": "계정",
+        "contact": "문의",
+        "install_app": "Salon De Nature 앱 설치",
+        "install_ios": "Safari의 공유 버튼을 누른 뒤 홈 화면에 추가를 선택하세요.",
+        "install_desc": "앱을 설치하면 예약 내역을 더 빠르게 확인할 수 있습니다.",
+        "install": "설치",
+        "later": "나중에",
     },
     "en": {
         "booking_title": "Book Appointment",
@@ -100,6 +107,13 @@ TRANSLATIONS = {
         "late_notice_fail": "Failed to send late notice",
         "already_have_account": "Already have an account?",
         "no_account": "Don’t have an account?",
+        "account": "Account",
+        "contact": "Contact",
+        "install_app": "Install Salon De Nature",
+        "install_ios": "Tap the Share button in Safari, then choose Add to Home Screen.",
+        "install_desc": "Install the app for faster access to your appointments.",
+        "install": "Install",
+        "later": "Later",
     }
 }
 

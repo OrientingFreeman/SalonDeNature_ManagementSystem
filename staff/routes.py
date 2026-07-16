@@ -204,19 +204,19 @@ def change_password():
             staff.password_hash,
             current_password
         ):
-            flash("Current password is incorrect.")
+            flash("현재 비밀번호가 올바르지 않습니다.")
             return redirect(
                 url_for("staff.change_password")
             )
 
         if new_password != confirm_password:
-            flash("New passwords do not match.")
+            flash("새 비밀번호가 일치하지 않습니다.")
             return redirect(
                 url_for("staff.change_password")
             )
 
         if len(new_password) < 8:
-            flash("Password must be at least 8 characters.")
+            flash("비밀번호는 8자 이상이어야 합니다.")
             return redirect(
                 url_for("staff.change_password")
             )
@@ -227,7 +227,7 @@ def change_password():
 
         db.session.commit()
 
-        flash("Password updated successfully.")
+        flash("비밀번호를 변경했습니다.")
 
         return redirect("/staff/dashboard")
 

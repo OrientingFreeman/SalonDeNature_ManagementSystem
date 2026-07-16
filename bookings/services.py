@@ -728,7 +728,7 @@ def reschedule_booking(booking_id, new_start_time):
     )
 
     db.session.add(event)
-    notify_booking_changed(booking, "Rescheduled by customer.")
+    notify_booking_changed(booking, "고객이 예약 시간 변경")
     send_booking_changed_sms(booking)
     db.session.commit()
 
@@ -833,7 +833,7 @@ def update_deposit_status(booking_id, deposit_status):
 
     db.session.add(event)
     if deposit_status == "paid":
-        notify_deposit_paid(booking, source="Admin")
+        notify_deposit_paid(booking, source="관리자")
         send_deposit_paid_sms(booking)
     db.session.commit()
 
@@ -989,7 +989,7 @@ def admin_update_booking_assignment(booking_id, staff_id, service_id, new_start_
     )
 
     db.session.add(event)
-    notify_booking_changed(booking, "Assignment changed by admin.")
+    notify_booking_changed(booking, "관리자가 배정 변경")
 
     if booking.deposit_payment_status == "required" and old_service_id != service_id:
         send_deposit_request_sms(booking)

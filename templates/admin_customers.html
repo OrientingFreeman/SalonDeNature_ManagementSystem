@@ -6,87 +6,87 @@
 <section class="admin-services-section crm-page">
     <div class="admin-page-header crm-header">
         <div>
-            <p class="eyebrow">CUSTOMER CRM</p>
-            <h1>Customer Relationship Management</h1>
-            <p>Review customer value, visit behavior, cancellation risk, and next reservations from actual booking history.</p>
+            <p class="eyebrow">고객 CRM</p>
+            <h1>고객 관계 관리</h1>
+            <p>실제 예약 이력을 기준으로 고객 가치, 방문 패턴, 취소 위험 및 다음 예약을 확인합니다.</p>
         </div>
-        <button type="button" class="btn-primary" id="toggleCreateCustomer">Add Customer</button>
+        <button type="button" class="btn-primary" id="toggleCreateCustomer">고객 추가</button>
     </div>
 
     <div class="crm-kpi-grid">
-        <article><span>Total Customers</span><strong>{{ summary.customer_count }}</strong><small>{{ summary.restricted_count }} restricted</small></article>
-        <article><span>Returning Customers</span><strong>{{ summary.returning_count }}</strong><small>Returning, potential VIP, and VIP</small></article>
-        <article><span>Potential VIP</span><strong>{{ summary.potential_vip_count }}</strong><small>Near the VIP value threshold</small></article>
-        <article><span>VIP Customers</span><strong>{{ summary.vip_count }}</strong><small>5+ visits or ₩300,000+ revenue</small></article>
-        <article><span>At-risk Customers</span><strong>{{ summary.at_risk_count }}</strong><small>Restriction or elevated cancellation/no-show</small></article>
-        <article><span>Dormant Customers</span><strong>{{ summary.dormant_count }}</strong><small>No visit for 90+ days</small></article>
-        <article><span>Customer Revenue</span><strong>₩{{ "{:,}".format(summary.total_revenue) }}</strong><small>Completed bookings only</small></article>
-        <article><span>Average Customer Value</span><strong>₩{{ "{:,}".format(summary.average_customer_value) }}</strong><small>Revenue per registered customer</small></article>
+        <article><span>전체 고객</span><strong>{{ summary.customer_count }}</strong><small>{{ summary.restricted_count }} restricted</small></article>
+        <article><span>재방문 고객</span><strong>{{ summary.returning_count }}</strong><small>재방문·잠재 VIP·VIP 고객</small></article>
+        <article><span>잠재 VIP</span><strong>{{ summary.potential_vip_count }}</strong><small>VIP 기준에 근접한 고객</small></article>
+        <article><span>VIP 고객</span><strong>{{ summary.vip_count }}</strong><small>완료 방문 5회 이상 또는 누적 매출 30만 원 이상</small></article>
+        <article><span>주의 고객</span><strong>{{ summary.at_risk_count }}</strong><small>예약 제한 또는 높은 취소·노쇼 비율</small></article>
+        <article><span>휴면 고객</span><strong>{{ summary.dormant_count }}</strong><small>90일 이상 미방문</small></article>
+        <article><span>고객 누적 매출</span><strong>₩{{ "{:,}".format(summary.total_revenue) }}</strong><small>완료 예약 기준</small></article>
+        <article><span>평균 고객 가치</span><strong>₩{{ "{:,}".format(summary.average_customer_value) }}</strong><small>등록 고객 1인당 매출</small></article>
     </div>
 
     <div class="admin-form-card customer-create-card" id="customerCreateCard" hidden>
         <div class="crm-card-heading">
-            <div><h2>Add New Customer</h2><p>Create a customer profile for administrator-managed bookings.</p></div>
-            <button type="button" class="text-button" id="closeCreateCustomer">Close</button>
+            <div><h2>신규 고객 추가</h2><p>관리자 예약용 고객 정보를 등록합니다.</p></div>
+            <button type="button" class="text-button" id="closeCreateCustomer">닫기</button>
         </div>
         <form method="POST" action="/admin/customers/create" class="admin-customer-form">
             <div class="form-grid two-columns">
-                <div><label for="name">Name</label><input id="name" type="text" name="name" required></div>
-                <div><label for="phone">Phone</label><input id="phone" type="text" name="phone" required></div>
+                <div><label for="name">이름</label><input id="name" type="text" name="name" required></div>
+                <div><label for="phone">연락처</label><input id="phone" type="text" name="phone" required></div>
             </div>
             <div class="form-grid two-columns">
-                <div><label for="email">Email</label><input id="email" type="email" name="email"></div>
-                <div><label for="preferred_style">Preferred Style</label><input id="preferred_style" type="text" name="preferred_style"></div>
+                <div><label for="email">이메일</label><input id="email" type="email" name="email"></div>
+                <div><label for="preferred_style">선호 스타일</label><input id="preferred_style" type="text" name="preferred_style"></div>
             </div>
             <div class="form-grid two-columns">
-                <div><label for="skin_sensitivity">Skin Sensitivity</label><input id="skin_sensitivity" type="text" name="skin_sensitivity"></div>
-                <div><label for="complaint_note">Complaint Note</label><input id="complaint_note" type="text" name="complaint_note"></div>
+                <div><label for="skin_sensitivity">피부 민감도</label><input id="skin_sensitivity" type="text" name="skin_sensitivity"></div>
+                <div><label for="complaint_note">주의·불만 메모</label><input id="complaint_note" type="text" name="complaint_note"></div>
             </div>
-            <div><label for="memo">Internal Memo</label><textarea id="memo" name="memo" rows="4"></textarea></div>
-            <div class="admin-form-actions"><button type="submit" class="btn-primary">Add Customer</button></div>
+            <div><label for="memo">관리자 메모</label><textarea id="memo" name="memo" rows="4"></textarea></div>
+            <div class="admin-form-actions"><button type="submit" class="btn-primary">고객 추가</button></div>
         </form>
     </div>
 
     <form method="GET" class="admin-form-card crm-filter-card">
         <div class="crm-filter-grid">
             <div class="crm-search-field">
-                <label for="q">Search</label>
-                <input id="q" name="q" value="{{ query }}" placeholder="Name, phone, or email">
+                <label for="q">검색</label>
+                <input id="q" name="q" value="{{ query }}" placeholder="이름, phone, or email">
             </div>
             <div>
-                <label for="segment">Segment</label>
+                <label for="segment">고객 분류</label>
                 <select id="segment" name="segment">
-                    {% for value, label in [('all','All segments'),('new','New'),('returning','Returning'),('potential_vip','Potential VIP'),('vip','VIP'),('dormant','Dormant'),('at_risk','At risk')] %}
+                    {% for value, label in [('all','전체 분류'),('new','신규'),('returning','재방문'),('potential_vip','잠재 VIP'),('vip','VIP'),('dormant','휴면'),('at_risk','주의')] %}
                     <option value="{{ value }}" {% if segment == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label for="status">Restriction</label>
+                <label for="status">예약 제한</label>
                 <select id="status" name="status">
-                    {% for value, label in [('all','All customers'),('normal','Normal'),('restricted','Restricted')] %}
+                    {% for value, label in [('all','전체 고객'),('normal','일반'),('restricted','예약 제한')] %}
                     <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label for="sort">Sort</label>
+                <label for="sort">정렬</label>
                 <select id="sort" name="sort">
-                    {% for value, label in [('recent','Recent visit'),('revenue','Highest revenue'),('visits','Most visits'),('no_show','Highest no-show'),('risk','Highest operational risk'),('name','Customer name')] %}
+                    {% for value, label in [('recent','최근 방문순'),('revenue','매출 높은순'),('visits','방문 많은순'),('no_show','노쇼 높은순'),('risk','운영 위험 높은순'),('name','고객 이름순')] %}
                     <option value="{{ value }}" {% if sort_key == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="crm-filter-actions">
-                <button type="submit" class="btn-primary">Apply</button>
-                <a href="{{ url_for('dashboard.admin_customers') }}" class="booking-action-btn">Reset</a>
+                <button type="submit" class="btn-primary">조회</button>
+                <a href="{{ url_for('dashboard.admin_customers') }}" class="booking-action-btn">초기화</a>
             </div>
         </div>
     </form>
 
     <div class="admin-section-header crm-list-heading">
-        <div><h2>Customer Portfolio</h2><p>{{ customer_rows|length }} matching customers</p></div>
-        <p class="metric-note">Metrics are recalculated from booking records; stored legacy counters are not used.</p>
+        <div><h2>고객 현황</h2><p>{{ customer_rows|length }} matching customers</p></div>
+        <p class="metric-note">모든 지표는 실제 예약 기록을 기준으로 다시 계산됩니다.</p>
     </div>
 
     {% if customer_rows %}
@@ -95,8 +95,8 @@
             <table class="admin-data-table crm-table">
                 <thead>
                     <tr>
-                        <th>Customer</th><th>Segment</th><th>Visits</th><th>Revenue</th><th>Last / Next</th>
-                        <th>Cancellation</th><th>No-show</th><th>Preference</th><th></th>
+                        <th>고객</th><th>고객 분류</th><th>방문 횟수</th><th>매출</th><th>최근 / 다음 방문</th>
+                        <th>취소</th><th>노쇼</th><th>선호 정보</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,20 +105,20 @@
                         <td>
                             <a class="crm-customer-name" href="{{ url_for('dashboard.customer_detail', customer_id=row.customer.id) }}">{{ row.customer.name }}</a>
                             <small>{{ row.customer.phone }}</small>
-                            <small>{{ row.customer.email or 'No email' }}</small>
-                            {% if row.customer.booking_restricted %}<span class="crm-restricted">Restricted</span>{% endif %}
+                            <small>{{ row.customer.email or '이메일 없음' }}</small>
+                            {% if row.customer.booking_restricted %}<span class="crm-restricted">예약 제한</span>{% endif %}
                         </td>
                         <td><span class="segment-badge segment-{{ row.segment }}">{{ row.segment_label }}</span><small class="segment-reason">{{ row.segment_reason }}</small></td>
                         <td><strong>{{ row.completed_count }}</strong><small>{{ row.booking_count }} total bookings</small></td>
-                        <td><strong>₩{{ "{:,}".format(row.total_revenue) }}</strong><small>Avg ₩{{ "{:,}".format(row.average_ticket) }}</small></td>
+                        <td><strong>₩{{ "{:,}".format(row.total_revenue) }}</strong><small>평균 ₩{{ "{:,}".format(row.average_ticket) }}</small></td>
                         <td>
-                            <small>Last: {{ row.last_visit_at.strftime('%Y-%m-%d') if row.last_visit_at else '-' }}</small>
-                            <small>Next: {{ row.next_booking_at.strftime('%Y-%m-%d %H:%M') if row.next_booking_at else '-' }}</small>
+                            <small>최근: {{ row.last_visit_at.strftime('%Y-%m-%d') if row.last_visit_at else '-' }}</small>
+                            <small>다음: {{ row.next_booking_at.strftime('%Y-%m-%d %H:%M') if row.next_booking_at else '-' }}</small>
                         </td>
                         <td><strong>{{ row.cancelled_count }}</strong><small>{{ row.cancellation_rate }}%</small></td>
                         <td><strong>{{ row.no_show_count }}</strong><small>{{ row.no_show_rate }}%</small></td>
-                        <td><small>{{ row.preferred_service or 'No completed service' }}</small><small>{{ row.preferred_staff or 'No preferred staff' }}</small></td>
-                        <td><a href="{{ url_for('dashboard.customer_detail', customer_id=row.customer.id) }}" class="booking-action-btn">Detail</a></td>
+                        <td><small>{{ row.preferred_service or '완료된 서비스 없음' }}</small><small>{{ row.preferred_staff or '선호 직원 없음' }}</small></td>
+                        <td><a href="{{ url_for('dashboard.customer_detail', customer_id=row.customer.id) }}" class="booking-action-btn">상세</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -126,7 +126,7 @@
         </div>
     </div>
     {% else %}
-    <div class="admin-form-card empty-customer-card"><h2>No matching customers</h2><p>Change the search or filter conditions.</p></div>
+    <div class="admin-form-card empty-customer-card"><h2>조건에 맞는 고객이 없습니다.</h2><p>검색어나 필터 조건을 변경해 보세요.</p></div>
     {% endif %}
 </section>
 

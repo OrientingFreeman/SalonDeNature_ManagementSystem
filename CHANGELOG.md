@@ -1,5 +1,18 @@
 # Salon De Nature Management System Changelog
 
+## v0.16.1 - Internal Korean UI / Customer Bilingual UI
+
+Added
+- Korean-only navigation, labels, forms, dialogs, alerts, and operational notifications for administrator and staff pages.
+- Customer navigation and PWA installation text now follow the existing English/Korean language selection.
+
+Changed
+- Customer pages continue to use English as the default language and preserve Korean switching through `lang=ko`.
+- Administrator and staff sessions force the document language and shared operational UI to Korean.
+
+Notes
+- No database migration or environment variable change is required.
+
 ## v0.16.0 - Phase16 Progressive Web App
 
 Added

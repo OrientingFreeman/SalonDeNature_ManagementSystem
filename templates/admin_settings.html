@@ -7,17 +7,17 @@
 <section class="admin-services-section admin-settings-section">
 
     <div class="admin-page-header">
-        <p class="eyebrow">SHOP SETTINGS</p>
-        <h1>Shop Settings</h1>
-        <p>Configure no-show policy, deposit usage, and booking approval mode.</p>
+        <p class="eyebrow">샵 설정</p>
+        <h1>샵 설정</h1>
+        <p>노쇼 정책, 예약금 사용 여부 및 예약 승인 방식을 설정합니다.</p>
     </div>
 
     <form method="POST" action="/admin/settings/update" class="admin-form-card settings-card">
 
         <div class="settings-row">
             <div>
-                <h2>No-show Limit</h2>
-                <p>Customers can be restricted after reaching this no-show count.</p>
+                <h2>노쇼 제한 횟수</h2>
+                <p>고객의 노쇼 횟수가 설정값에 도달하면 예약이 제한될 수 있습니다.</p>
             </div>
             <input
                 type="number"
@@ -30,8 +30,8 @@
 
         <div class="settings-row">
             <div>
-                <h2>Deposit</h2>
-                <p>When disabled, service deposit settings should be cleared and hidden.</p>
+                <h2>예약금</h2>
+                <p>사용하지 않으면 서비스별 예약금 설정이 초기화되고 숨겨집니다.</p>
             </div>
             <label class="settings-toggle">
                 <input
@@ -39,18 +39,18 @@
                     name="deposit_enabled"
                     {% if settings.deposit_enabled %}checked{% endif %}
                 >
-                <span>Use deposit</span>
+                <span>예약금 사용</span>
             </label>
         </div>
 
         <div class="settings-row settings-deposit-account-row">
             <div>
-                <h2>Deposit Account</h2>
-                <p>Displayed to customers when a service requires a deposit.</p>
+                <h2>예약금 계좌</h2>
+                <p>예약금이 필요한 서비스에서 고객에게 표시됩니다.</p>
             </div>
             <div class="settings-field-stack">
                 <label>
-                    <span>Bank</span>
+                    <span>은행</span>
                     <input
                         type="text"
                         name="deposit_bank_name"
@@ -60,7 +60,7 @@
                 </label>
 
                 <label>
-                    <span>Account Number</span>
+                    <span>계좌번호</span>
                     <input
                         type="text"
                         name="deposit_account_number"
@@ -70,7 +70,7 @@
                 </label>
 
                 <label>
-                    <span>Account Holder</span>
+                    <span>예금주</span>
                     <input
                         type="text"
                         name="deposit_account_holder"
@@ -80,7 +80,7 @@
                 </label>
 
                 <label>
-                    <span>Deposit Due Minutes</span>
+                    <span>예약금 입금 제한 시간</span>
                     <input
                         type="number"
                         name="deposit_due_minutes"
@@ -90,7 +90,7 @@
                 </label>
 
                 <label>
-                    <span>Deposit Notice</span>
+                    <span>예약금 안내</span>
                     <textarea
                         name="deposit_notice"
                         rows="4"
@@ -102,15 +102,15 @@
 
         <div class="settings-row">
             <div>
-                <h2>Booking Approval</h2>
-                <p>Choose whether customer reservations are confirmed automatically or manually.</p>
+                <h2>예약 승인 방식</h2>
+                <p>고객 예약을 자동 확정할지 관리자 수동 확정으로 운영할지 선택합니다.</p>
             </div>
             <select name="booking_approval_mode">
                 <option value="auto" {% if settings.booking_approval_mode == "auto" %}selected{% endif %}>
-                    Auto approval
+                    자동 승인
                 </option>
                 <option value="manual" {% if settings.booking_approval_mode == "manual" %}selected{% endif %}>
-                    Manual approval
+                    수동 승인
                 </option>
             </select>
         </div>
@@ -118,12 +118,12 @@
 
         <div class="settings-row settings-admin-sms-row">
             <div>
-                <h2>Admin SMS Notifications</h2>
-                <p>Send booking and deposit event messages to internal admin numbers. Separate multiple numbers with commas or line breaks.</p>
+                <h2>관리자 문자 알림</h2>
+                <p>예약 및 예약금 관련 문자를 관리자 번호로 발송합니다. 여러 번호는 쉼표 또는 줄바꿈으로 구분하세요.</p>
             </div>
             <div class="settings-field-stack">
                 <label>
-                    <span>Admin SMS Recipients</span>
+                    <span>관리자 문자 수신번호</span>
                     <textarea
                         name="admin_sms_recipients"
                         rows="4"
@@ -133,38 +133,38 @@
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_booking_created_enabled" {% if settings.admin_sms_booking_created_enabled is not sameas false %}checked{% endif %}>
-                    <span>New booking</span>
+                    <span>새 예약</span>
                 </label>
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_booking_changed_enabled" {% if settings.admin_sms_booking_changed_enabled is not sameas false %}checked{% endif %}>
-                    <span>Booking updated</span>
+                    <span>예약 변경</span>
                 </label>
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_booking_cancelled_enabled" {% if settings.admin_sms_booking_cancelled_enabled is not sameas false %}checked{% endif %}>
-                    <span>Booking cancelled</span>
+                    <span>예약 취소</span>
                 </label>
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_deposit_request_enabled" {% if settings.admin_sms_deposit_request_enabled is not sameas false %}checked{% endif %}>
-                    <span>Deposit requested</span>
+                    <span>예약금 요청</span>
                 </label>
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_deposit_paid_enabled" {% if settings.admin_sms_deposit_paid_enabled is not sameas false %}checked{% endif %}>
-                    <span>Deposit confirmed</span>
+                    <span>예약금 확인</span>
                 </label>
 
                 <label class="settings-checkbox-line">
                     <input type="checkbox" name="admin_sms_booking_reminder_enabled" {% if settings.admin_sms_booking_reminder_enabled is not sameas false %}checked{% endif %}>
-                    <span>Same-day 9 AM booking reminder</span>
+                    <span>당일 오전 9시 예약 알림</span>
                 </label>
             </div>
         </div>
 
         <div class="admin-form-actions">
-            <button type="submit" class="btn-primary">Save Settings</button>
+            <button type="submit" class="btn-primary">설정 저장</button>
         </div>
 
     </form>

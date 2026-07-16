@@ -7,22 +7,22 @@
 <section class="admin-services-section admin-calendar-section">
 
     <div class="admin-page-header">
-        <p class="eyebrow">RESERVATION CALENDAR</p>
-        <h1>Admin Calendar</h1>
-        <p>Manage daily reservations, booking status, deposit status, and no-show handling.</p>
+        <p class="eyebrow">예약 캘린더</p>
+        <h1>관리자 캘린더</h1>
+        <p>일별 예약, 예약 상태, 예약금 및 노쇼를 관리합니다.</p>
     </div>
 
     <div class="calendar-toolbar admin-form-card">
         <form method="get" action="/admin/calendar" class="calendar-date-form">
-            <label for="calendar-date">Date</label>
+            <label for="calendar-date">날짜</label>
             <div class="calendar-date-actions">
                 <input id="calendar-date" type="date" name="date" value="{{ target_date }}">
-                <button type="submit" class="booking-action-btn">Search</button>
+                <button type="submit" class="booking-action-btn">검색</button>
             </div>
         </form>
 
         <button type="button" class="btn-primary" onclick="openAdminBookingModal()">
-            Create Booking
+            예약 등록
         </button>
     </div>
 
@@ -35,23 +35,23 @@
     <div class="admin-stat-grid calendar-stat-grid">
         <div class="admin-stat-card">
             <span>{{ bookings|length }}</span>
-            <p>Total</p>
+            <p>전체</p>
         </div>
         <div class="admin-stat-card">
             <span>{{ pending_count }}</span>
-            <p>Pending</p>
+            <p>대기</p>
         </div>
         <div class="admin-stat-card">
             <span>{{ confirmed_count }}</span>
-            <p>Confirmed</p>
+            <p>확정</p>
         </div>
         <div class="admin-stat-card">
             <span>{{ completed_count }}</span>
-            <p>Completed</p>
+            <p>완료</p>
         </div>
         <div class="admin-stat-card">
             <span>{{ no_show_count }}</span>
-            <p>No Show</p>
+            <p>노쇼</p>
         </div>
     </div>
 
@@ -77,15 +77,15 @@
                             </div>
 
                             {% if booking.status == "pending" %}
-                                <span class="status-badge status-pending">Pending</span>
+                                <span class="status-badge status-pending">대기</span>
                             {% elif booking.status == "confirmed" %}
-                                <span class="status-badge status-confirmed">Confirmed</span>
+                                <span class="status-badge status-confirmed">확정</span>
                             {% elif booking.status == "completed" %}
-                                <span class="status-badge status-completed">Completed</span>
+                                <span class="status-badge status-completed">완료</span>
                             {% elif booking.status == "cancelled" %}
-                                <span class="status-badge status-cancelled">Cancelled</span>
+                                <span class="status-badge status-cancelled">취소</span>
                             {% elif booking.status == "no_show" %}
-                                <span class="status-badge status-cancelled">No Show</span>
+                                <span class="status-badge status-cancelled">노쇼</span>
                             {% else %}
                                 <span class="status-badge">{{ booking.status }}</span>
                             {% endif %}
@@ -93,23 +93,23 @@
 
                         <div class="booking-info-grid">
                             <div>
-                                <span>Customer</span>
+                                <span>고객</span>
                                 <strong>{{ booking.customer.name }}</strong>
                             </div>
                             <div>
-                                <span>Staff</span>
+                                <span>직원</span>
                                 <strong>{{ booking.staff.name }}</strong>
                             </div>
                             <div>
-                                <span>Service</span>
+                                <span>서비스</span>
                                 <strong>{{ booking.service.name_ko }}</strong>
                             </div>
                             <div>
-                                <span>Price</span>
+                                <span>가격</span>
                                 <strong>₩{{ "{:,}".format(booking.service.price) }}</strong>
                             </div>
                             <div>
-                                <span>Late Notice</span>
+                                <span>지각 알림</span>
                                 {% if booking.late_notice_minutes %}
                                     <strong>{{ booking.late_notice_minutes }} min late</strong>
                                 {% else %}
@@ -117,31 +117,31 @@
                                 {% endif %}
                             </div>
                             <div>
-                                <span>Deposit</span>
+                                <span>예약금</span>
                                 <strong>{{ booking.deposit_payment_status or "none" }}</strong>
                             </div>
                         </div>
 
                         <details class="booking-deposit-details">
-                            <summary>Deposit Management</summary>
+                            <summary>예약금 관리</summary>
 
                             <div class="deposit-control-grid">
                                 <div>
-                                    <label for="depositStatus{{ booking.id }}">Deposit Status</label>
+                                    <label for="depositStatus{{ booking.id }}">예약금 상태</label>
                                     <select id="depositStatus{{ booking.id }}">
-                                        <option value="none" {% if booking.deposit_payment_status=="none" %}selected{% endif %}>None</option>
-                                        <option value="required" {% if booking.deposit_payment_status=="required" %}selected{% endif %}>Required</option>
-                                        <option value="paid" {% if booking.deposit_payment_status=="paid" %}selected{% endif %}>Paid</option>
-                                        <option value="refunded" {% if booking.deposit_payment_status=="refunded" %}selected{% endif %}>Refunded</option>
-                                        <option value="failed" {% if booking.deposit_payment_status=="failed" %}selected{% endif %}>Failed</option>
+                                        <option value="none" {% if booking.deposit_payment_status=="none" %}selected{% endif %}>없음</option>
+                                        <option value="required" {% if booking.deposit_payment_status=="required" %}selected{% endif %}>필수</option>
+                                        <option value="paid" {% if booking.deposit_payment_status=="paid" %}selected{% endif %}>입금 완료</option>
+                                        <option value="refunded" {% if booking.deposit_payment_status=="refunded" %}selected{% endif %}>환불</option>
+                                        <option value="failed" {% if booking.deposit_payment_status=="failed" %}selected{% endif %}>실패</option>
                                     </select>
                                     <button type="button" class="booking-action-btn" onclick="updateDepositStatus({{ booking.id }})">
-                                        Save Status
+                                        상태 저장
                                     </button>
                                 </div>
 
                                 <div>
-                                    <label for="paymentLink{{ booking.id }}">Payment Link</label>
+                                    <label for="paymentLink{{ booking.id }}">결제 링크</label>
                                     <input
                                         type="text"
                                         id="paymentLink{{ booking.id }}"
@@ -151,7 +151,7 @@
                                 </div>
 
                                 <div>
-                                    <label for="depositNote{{ booking.id }}">Deposit Note</label>
+                                    <label for="depositNote{{ booking.id }}">예약금 메모</label>
                                     <input
                                         type="text"
                                         id="depositNote{{ booking.id }}"
@@ -162,7 +162,7 @@
 
                                 <div class="deposit-request-save">
                                     <button type="button" class="booking-action-btn" onclick="updateDepositRequest({{ booking.id }})">
-                                        Save Request
+                                        요청 저장
                                     </button>
                                 </div>
                             </div>
@@ -171,39 +171,39 @@
                         <div class="booking-status-actions">
                             {% if booking.status == "pending" %}
                                 <button type="button" class="booking-action-btn" onclick="openStatusModal({{ booking.id }}, 'confirmed', '예약을 확정 처리하시겠습니까?')">
-                                    Confirm
+                                    확인
                                 </button>
                                 <button type="button" class="booking-action-btn" onclick="openAdminRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
-                                    Reschedule
+                                    예약 변경
                                 </button>
                                 <button type="button" class="booking-action-btn" onclick="openAdminAssignmentModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
-                                    Edit Assignment
+                                    예약 배정 변경
                                 </button>
                                 <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
-                                    Cancel
+                                    취소
                                 </button>
                             {% elif booking.status == "confirmed" %}
                                 <button type="button" class="booking-action-btn" onclick="openStatusModal({{ booking.id }}, 'completed', '시술을 완료 처리하시겠습니까?')">
-                                    Complete
+                                    완료
                                 </button>
                                 <button type="button" class="booking-action-btn" onclick="openAdminRescheduleModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
-                                    Reschedule
+                                    예약 변경
                                 </button>
                                 <button type="button" class="booking-action-btn" onclick="openAdminAssignmentModal({{ booking.id }}, {{ booking.staff_id }}, {{ booking.service_id }})">
-                                    Edit Assignment
+                                    예약 배정 변경
                                 </button>
                                 <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'no_show', '노쇼 처리하시겠습니까?')">
-                                    No Show
+                                    노쇼
                                 </button>
                                 <button type="button" class="booking-action-btn danger" onclick="openStatusModal({{ booking.id }}, 'cancelled', '예약을 취소 처리하시겠습니까?')">
-                                    Cancel
+                                    취소
                                 </button>
                             {% elif booking.status == "no_show" %}
                                 <button type="button" class="booking-action-btn" onclick="openRevertNoShowModal({{ booking.id }})">
-                                    Revert No Show
+                                    노쇼 취소
                                 </button>
                             {% else %}
-                                <span class="booking-locked-note">Status change unavailable</span>
+                                <span class="booking-locked-note">상태 변경 불가</span>
                             {% endif %}
                         </div>
                     </div>
@@ -212,9 +212,9 @@
         </div>
     {% else %}
         <div class="admin-form-card empty-calendar-card">
-            <h2>No bookings</h2>
-            <p>There are no reservations for this date.</p>
-            <button type="button" class="btn-primary" onclick="openAdminBookingModal()">Create Booking</button>
+            <h2>예약이 없습니다.</h2>
+            <p>해당 날짜의 예약이 없습니다.</p>
+            <button type="button" class="btn-primary" onclick="openAdminBookingModal()">예약 등록</button>
         </div>
     {% endif %}
 
@@ -245,11 +245,11 @@
 
 <div id="adminRescheduleModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3>Reschedule Booking</h3>
-        <p>Select a new date and available time for this booking.</p>
+        <h3>예약 변경</h3>
+        <p>변경할 날짜와 예약 가능 시간을 선택하세요.</p>
 
         <div class="modal-form-group">
-            <label for="adminRescheduleDate">New Date</label>
+            <label for="adminRescheduleDate">새 날짜</label>
             <input
                 type="date"
                 id="adminRescheduleDate"
@@ -258,18 +258,18 @@
         </div>
 
         <div class="modal-form-group">
-            <label for="adminRescheduleSlot">Available Time</label>
+            <label for="adminRescheduleSlot">예약 가능 시간</label>
             <select id="adminRescheduleSlot">
-                <option value="">Select a date first</option>
+                <option value="">먼저 날짜를 선택하세요.</option>
             </select>
         </div>
 
         <div class="modal-actions">
             <button type="button" class="booking-action-btn" onclick="closeModal('adminRescheduleModal')">
-                Back
+                뒤로
             </button>
             <button type="button" class="btn-primary" onclick="confirmAdminRescheduleBooking()">
-                Reschedule
+                예약 변경
             </button>
         </div>
     </div>
@@ -278,11 +278,11 @@
 
 <div id="adminAssignmentModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3>Edit Assignment</h3>
-        <p>Change staff, service, date, and time for this booking.</p>
+        <h3>예약 배정 변경</h3>
+        <p>이 예약의 직원, 서비스, 날짜 및 시간을 변경합니다.</p>
 
         <div class="modal-form-group">
-            <label for="assignmentStaffSelect">Staff</label>
+            <label for="assignmentStaffSelect">직원</label>
             <select id="assignmentStaffSelect" onchange="loadAdminAssignmentSlots()">
                 {% for staff in staff_list %}
                     <option value="{{ staff.id }}">{{ staff.name }}</option>
@@ -291,18 +291,18 @@
         </div>
 
         <div class="modal-form-group">
-            <label for="assignmentServiceSelect">Service</label>
+            <label for="assignmentServiceSelect">서비스</label>
             <select id="assignmentServiceSelect" onchange="loadAdminAssignmentSlots()">
                 {% for service in services %}
                     <option value="{{ service.id }}">
-                        [{{ service.category }}] {{ service.name_ko }} / {{ service.duration_minutes }} min
+                        [{{ service.category }}] {{ service.name_ko }} / {{ service.duration_minutes }}분
                     </option>
                 {% endfor %}
             </select>
         </div>
 
         <div class="modal-form-group">
-            <label for="assignmentDate">New Date</label>
+            <label for="assignmentDate">새 날짜</label>
             <input
                 type="date"
                 id="assignmentDate"
@@ -311,18 +311,18 @@
         </div>
 
         <div class="modal-form-group">
-            <label for="assignmentSlot">Available Time</label>
+            <label for="assignmentSlot">예약 가능 시간</label>
             <select id="assignmentSlot">
-                <option value="">Select staff, service, and date</option>
+                <option value="">직원, 서비스, 날짜를 선택하세요.</option>
             </select>
         </div>
 
         <div class="modal-actions">
             <button type="button" class="booking-action-btn" onclick="closeModal('adminAssignmentModal')">
-                Back
+                뒤로
             </button>
             <button type="button" class="btn-primary" onclick="confirmAdminAssignmentUpdate()">
-                Save Changes
+                변경사항 저장
             </button>
         </div>
     </div>
@@ -723,7 +723,7 @@ async function loadAdminRescheduleSlots() {
 
         if (!data.ok) {
             slotSelect.innerHTML =
-                `<option value="">${data.message || "Failed to load slots"}</option>`;
+                `<option value="">${data.message || "예약 가능 시간을 불러오지 못했습니다."}</option>`;
             return;
         }
 
@@ -814,7 +814,7 @@ async function loadAdminAssignmentSlots() {
 
         if (!data.ok) {
             slotSelect.innerHTML =
-                `<option value="">${data.message || "Failed to load slots"}</option>`;
+                `<option value="">${data.message || "예약 가능 시간을 불러오지 못했습니다."}</option>`;
             return;
         }
 
@@ -840,7 +840,7 @@ function confirmAdminAssignmentUpdate() {
     const newStartTime = document.getElementById("assignmentSlot").value;
 
     if (!pendingAdminAssignmentBookingId || !staffId || !serviceId || !newStartTime) {
-        alert("Please select staff, service, date, and time.");
+        alert("직원, 서비스, 날짜와 시간을 선택하세요.");
         return;
     }
 

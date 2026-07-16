@@ -7,67 +7,67 @@
 <section class="admin-dashboard">
 
     <div class="admin-hero">
-        <p class="eyebrow">ADMIN PANEL</p>
+        <p class="eyebrow">관리자 패널</p>
         <h1>Salon De Nature</h1>
-        <p>Manage bookings, staff, customers and revenue.</p>
+        <p>예약, 직원, 고객 및 매출을 관리합니다.</p>
     </div>
 
     <div class="admin-stat-grid">
         <div class="admin-stat-card">
-            <h3>Today</h3>
+            <h3>오늘</h3>
             <span>{{ today_booking_count }}</span>
 
         </div>
 
         <div class="admin-stat-card">
-            <h3>Pending</h3>
+            <h3>대기</h3>
             <span>{{ pending_count }}</span>
 
         </div>
 
         <div class="admin-stat-card">
-            <h3>Revenue</h3>
+            <h3>매출</h3>
             <span>₩{{ "{:,}".format(today_revenue) }}</span>
         </div>
 
     </div>
 
     <h2 class="admin-section-title">
-        Management
+        관리
     </h2>
 
     <div class="admin-menu-grid">
 
         <a href="/admin/calendar" class="admin-menu-card">
-            Reservation Calendar
+            예약 캘린더
         </a>
 
         <a href="/admin/bookings/create" class="admin-menu-card">
-            Create Reservation
+            예약 등록
         </a>
 
         <a href="/admin/customers" class="admin-menu-card">
-            Customer Management
+            고객 관리
         </a>
 
         <a href="/admin/staff" class="admin-menu-card">
-            Staff Management
+            직원 관리
         </a>
 
         <a href="/admin/services" class="admin-menu-card">
-            Service Management
+            서비스 관리
         </a>
 
         <a href="/admin/users" class="admin-menu-card">
-            Admin Accounts
+            관리자 계정
         </a>
 
         <a href="/admin/revenue" class="admin-menu-card">
-            Revenue Dashboard
+            매출 대시보드
         </a>
 
         <a href="/admin/settings" class="admin-menu-card">
-            Shop Settings
+            샵 설정
         </a>
 
     </div>

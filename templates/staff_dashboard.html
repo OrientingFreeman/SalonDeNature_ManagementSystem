@@ -7,36 +7,36 @@
 <section class="admin-services-section staff-dashboard-section">
 
     <div class="admin-page-header">
-        <p class="eyebrow">STAFF DASHBOARD</p>
-        <h1>Today’s Schedule</h1>
+        <p class="eyebrow">직원 대시보드</p>
+        <h1>오늘 일정</h1>
         <p>{{ session.staff_name }}님, assigned reservations for today.</p>
     </div>
 
     <div class="staff-dashboard-top-actions">
         <a href="/staff/calendar" class="btn-primary">
-            View Calendar
+            캘린더 보기
         </a>
     </div>
 
     <div class="admin-stat-grid staff-dashboard-stat-grid">
         <div class="admin-stat-card">
             <span>{{ total_count }}</span>
-            <p>Today Bookings</p>
+            <p>오늘 예약</p>
         </div>
 
         <div class="admin-stat-card">
             <span>{{ completed_count }}</span>
-            <p>Completed</p>
+            <p>완료</p>
         </div>
 
         <div class="admin-stat-card">
             <span>₩{{ "{:,}".format(expected_revenue) }}</span>
-            <p>Expected Revenue</p>
+            <p>예상 매출</p>
         </div>
     </div>
 
     <div class="admin-section-header">
-        <h2>Today’s Reservations</h2>
+        <h2>오늘 예약</h2>
         <p>{{ bookings|length }} bookings</p>
     </div>
 
@@ -56,11 +56,11 @@
                             </div>
 
                             {% if booking.status == "confirmed" %}
-                                <span class="status-badge status-confirmed">Confirmed</span>
+                                <span class="status-badge status-confirmed">확정</span>
                             {% elif booking.status == "completed" %}
-                                <span class="status-badge status-completed">Completed</span>
+                                <span class="status-badge status-completed">완료</span>
                             {% elif booking.status == "pending" %}
-                                <span class="status-badge status-pending">Pending</span>
+                                <span class="status-badge status-pending">대기</span>
                             {% else %}
                                 <span class="status-badge status-cancelled">{{ booking.status }}</span>
                             {% endif %}
@@ -69,10 +69,10 @@
                         <div class="staff-booking-actions">
                             {% if booking.status == "confirmed" %}
                                 <button type="button" class="btn-primary" onclick="openCompleteModal({{ booking.id }})">
-                                    Complete
+                                    완료
                                 </button>
                             {% else %}
-                                <span class="booking-locked-note">No action available</span>
+                                <span class="booking-locked-note">처리 가능한 작업 없음</span>
                             {% endif %}
                         </div>
                     </div>
@@ -81,8 +81,8 @@
         </div>
     {% else %}
         <div class="admin-form-card empty-staff-booking-card">
-            <h2>No bookings</h2>
-            <p>There are no reservations assigned today.</p>
+            <h2>예약이 없습니다.</h2>
+            <p>오늘 배정된 예약이 없습니다.</p>
         </div>
     {% endif %}
 
@@ -90,11 +90,11 @@
 
 <div id="completeModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3>Complete Booking</h3>
-        <p>Mark this reservation as completed?</p>
+        <h3>예약 완료</h3>
+        <p>이 예약을 완료 처리하시겠습니까?</p>
         <div class="modal-actions">
-            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">Back</button>
-            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">Complete</button>
+            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">뒤로</button>
+            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">완료</button>
         </div>
     </div>
 </div>

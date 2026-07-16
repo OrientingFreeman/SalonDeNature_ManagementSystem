@@ -6,22 +6,22 @@
 <section class="admin-notifications-page sms-template-page">
     <div class="notification-center-hero">
         <div>
-            <p class="notification-center-eyebrow">SMS CENTER</p>
-            <h1>SMS Templates</h1>
+            <p class="notification-center-eyebrow">문자 센터</p>
+            <h1>문자 템플릿</h1>
             <p class="notification-center-subtitle">
-                Manage customer-facing SMS copy for booking and deposit events.
+                예약 및 예약금 관련 고객 문자 내용을 관리합니다.
             </p>
         </div>
 
         <div class="notification-center-actions">
             <a class="notification-action-btn muted" href="{{ url_for('dashboard.admin_notifications_page') }}">
-                Back to Notifications
+                알림 목록으로
             </a>
             <form method="POST"
                   action="{{ url_for('dashboard.admin_sms_templates_seed_defaults') }}"
                   onsubmit="return confirm('Create any missing default templates? Existing templates will not be overwritten.');">
                 <button class="notification-action-btn primary" type="submit">
-                    Sync defaults
+                    기본 템플릿 동기화
                 </button>
             </form>
         </div>
@@ -29,7 +29,7 @@
 
     <div class="sms-template-layout">
         <aside class="sms-template-list-card">
-            <h2>Templates</h2>
+            <h2>템플릿</h2>
             <div class="sms-template-list">
                 {% for item in templates %}
                     <a class="sms-template-list-item {% if selected_template and item.id == selected_template.id %}is-active{% endif %}"
@@ -41,7 +41,7 @@
                         </strong>
                     </a>
                 {% else %}
-                    <p class="notification-sms-empty">No SMS templates yet. Click Sync defaults.</p>
+                    <p class="notification-sms-empty">문자 템플릿이 없습니다. 기본 템플릿 동기화를 실행하세요.</p>
                 {% endfor %}
             </div>
         </aside>
@@ -59,42 +59,42 @@
                         </div>
                         <label class="sms-template-switch">
                             <input type="checkbox" name="is_enabled" {% if selected_template.is_enabled %}checked{% endif %}>
-                            <span>Enable sending</span>
+                            <span>발송 사용</span>
                         </label>
                     </div>
 
                     <label class="sms-template-field">
-                        <span>Template name</span>
+                        <span>템플릿 이름</span>
                         <input type="text" name="name" value="{{ selected_template.name }}" required>
                     </label>
 
                     <label class="sms-template-field">
-                        <span>Description</span>
+                        <span>설명</span>
                         <input type="text" name="description" value="{{ selected_template.description or '' }}">
                     </label>
 
                     <label class="sms-template-field">
-                        <span>Content</span>
+                        <span>내용</span>
                         <textarea name="content" rows="12" required data-sms-template-content>{{ selected_template.content }}</textarea>
                     </label>
 
                     <div class="sms-template-editor-actions">
                         <button type="button" class="notification-action-btn muted" data-sms-preview-btn>
-                            Preview
+                            미리보기
                         </button>
                         <button type="submit" class="notification-action-btn primary">
-                            Save template
+                            템플릿 저장
                         </button>
                     </div>
                 </form>
             </main>
 
             <aside class="sms-template-preview-card">
-                <h2>Preview</h2>
-                <p class="sms-template-help">Sample data is used for preview only. Actual sends use booking data.</p>
+                <h2>미리보기</h2>
+                <p class="sms-template-help">미리보기에는 예시 데이터가 사용되며 실제 발송에는 예약 데이터가 사용됩니다.</p>
                 <pre data-sms-preview-output>{{ preview_text }}</pre>
 
-                <h3>Placeholders</h3>
+                <h3>치환 변수</h3>
                 <div class="sms-placeholder-list">
                     {% for token, label in placeholders %}
                         <button type="button" class="sms-placeholder-chip" data-placeholder-token="{{ token }}">
@@ -106,7 +106,7 @@
             </aside>
         {% else %}
             <main class="sms-template-editor-card">
-                <p class="notification-sms-empty">No template selected.</p>
+                <p class="notification-sms-empty">선택된 템플릿이 없습니다.</p>
             </main>
         {% endif %}
     </div>

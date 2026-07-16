@@ -287,7 +287,7 @@ def admin_booking_status_form(booking_id):
         send_booking_cancelled_sms(booking)
     db.session.commit()
 
-    flash(f"Booking status changed: {old_status} → {new_status}", "success")
+    flash(f"예약 상태가 변경되었습니다: {old_status} → {new_status}", "success")
     return redirect(url_for("dashboard.admin_booking_detail", booking_id=booking_id))
 
 
@@ -390,17 +390,17 @@ def admin_notifications_sms_test():
     message = request.form.get("message", "").strip()
 
     if not recipient:
-        flash("Please enter a recipient phone number.", "error")
+        flash("수신 전화번호를 입력하세요.", "error")
         return redirect(url_for("dashboard.admin_notifications_page"))
 
     result = send_test_sms(recipient, message or None)
 
     if result.get("ok") and not result.get("skipped"):
-        flash("Test SMS sent successfully.", "success")
+        flash("테스트 문자를 발송했습니다.", "success")
     elif result.get("skipped"):
-        flash(f"Test SMS skipped: {result.get('reason')}", "warning")
+        flash(f"테스트 문자 발송을 건너뛰었습니다: {result.get('reason')}", "warning")
     else:
-        flash(f"Test SMS failed: {result.get('reason')}", "error")
+        flash(f"테스트 문자 발송에 실패했습니다: {result.get('reason')}", "error")
 
     return redirect(url_for("dashboard.admin_notifications_page"))
 
@@ -444,11 +444,11 @@ def admin_sms_template_update(template_id):
     description = request.form.get("description", "").strip()
 
     if not name:
-        flash("Template name is required.", "error")
+        flash("템플릿 이름은 필수입니다.", "error")
         return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
 
     if not content:
-        flash("Template content is required.", "error")
+        flash("템플릿 내용은 필수입니다.", "error")
         return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
 
     template.name = name
@@ -457,7 +457,7 @@ def admin_sms_template_update(template_id):
     template.is_enabled = request.form.get("is_enabled") == "on"
     db.session.commit()
 
-    flash("SMS template updated.", "success")
+    flash("문자 템플릿을 수정했습니다.", "success")
     return redirect(url_for("dashboard.admin_sms_templates_page", template=template.template_key))
 
 
@@ -477,7 +477,7 @@ def admin_sms_template_preview(template_id):
 @admin_required
 def admin_sms_templates_seed_defaults():
     created = ensure_default_sms_templates()
-    flash(f"Default template sync complete. Created: {created}", "success")
+    flash(f"기본 템플릿 동기화 완료. 생성: {created}", "success")
     return redirect(url_for("dashboard.admin_sms_templates_page"))
 
 
@@ -490,7 +490,7 @@ def admin_run_booking_reminders():
         try:
             target_date = datetime.strptime(target_date_text, "%Y-%m-%d").date()
         except ValueError:
-            flash("Reminder date must use YYYY-MM-DD format.", "error")
+            flash("알림 날짜는 YYYY-MM-DD 형식이어야 합니다.", "error")
             return redirect(url_for("dashboard.admin_notifications_page"))
 
     result = run_booking_reminders(target_date=target_date, source="admin_manual")
@@ -526,7 +526,7 @@ def admin_notification_delete(notification_id):
     db.session.delete(notification)
     db.session.commit()
 
-    flash("Notification deleted.", "success")
+    flash("알림을 삭제했습니다.", "success")
     return redirect(url_for(
         "dashboard.admin_notifications_page",
         page=request.args.get("page", 1),
@@ -568,7 +568,7 @@ def admin_notifications_bulk_action():
     ]
 
     if not notification_ids:
-        flash("Please select at least one notification.", "error")
+        flash("알림을 하나 이상 선택하세요.", "error")
         return redirect(url_for(
             "dashboard.admin_notifications_page",
             page=request.form.get("page", 1),
@@ -580,13 +580,13 @@ def admin_notifications_bulk_action():
     if action == "mark_read":
         updated_count = mark_admin_notifications_read_by_ids(notification_ids)
         db.session.commit()
-        flash(f"{updated_count} notification(s) marked as read.", "success")
+        flash(f"{updated_count} 개 알림을 읽음 처리했습니다.", "success")
     elif action == "delete":
         deleted_count = delete_admin_notifications_by_ids(notification_ids)
         db.session.commit()
-        flash(f"{deleted_count} notification(s) deleted.", "success")
+        flash(f"{deleted_count} 개 알림을 삭제했습니다.", "success")
     else:
-        flash("Invalid bulk action.", "error")
+        flash("잘못된 일괄 처리입니다.", "error")
 
     return redirect(url_for(
         "dashboard.admin_notifications_page",
@@ -606,7 +606,7 @@ def admin_notifications_cleanup():
     flash(
         (
             f"Notification cleanup completed. "
-            f"{result['total_deleted_count']} old notification(s) deleted."
+            f"{result['total_deleted_count']} old 개 알림을 삭제했습니다."
         ),
         "success"
     )
@@ -782,7 +782,7 @@ def create_staff_admin():
             file.save(save_path)
             profile_image_url = f"/static/uploads/staff/{filename}"
         else:
-            flash("Only image files are allowed.", "error")
+            flash("이미지 파일만 업로드할 수 있습니다.", "error")
             return redirect(url_for("dashboard.admin_staff"))
 
     profile_image_url=profile_image_url
@@ -849,7 +849,7 @@ def update_staff_admin(staff_id):
 
     if file and file.filename:
         if not allowed_image(file.filename):
-            flash("Only image files are allowed.", "error")
+            flash("이미지 파일만 업로드할 수 있습니다.", "error")
             return redirect(
                 url_for(
                     "dashboard.edit_staff_page",
@@ -1042,7 +1042,7 @@ def create_service_admin():
         deposit_amount = int(request.form.get("deposit_amount") or 0) if deposit_required else 0
 
         if deposit_required and deposit_amount <= 0:
-            flash("Deposit amount must be greater than 0 when deposit is required.", "error")
+            flash("예약금이 필요한 경우 예약금액은 0보다 커야 합니다.", "error")
             return redirect(url_for("dashboard.admin_services"))
     else:
         deposit_required = False
@@ -1116,7 +1116,7 @@ def update_service_admin(service_id):
         deposit_amount = int(request.form.get("deposit_amount") or 0) if deposit_required else 0
 
         if deposit_required and deposit_amount <= 0:
-            flash("Deposit amount must be greater than 0 when deposit is required.", "error")
+            flash("예약금이 필요한 경우 예약금액은 0보다 커야 합니다.", "error")
             return redirect(url_for("dashboard.edit_service_page", service_id=service.id))
 
         service.deposit_required = deposit_required
@@ -1435,7 +1435,7 @@ def admin_revenue():
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
     except ValueError:
-        flash("Invalid date range.", "error")
+        flash("날짜 범위가 올바르지 않습니다.", "error")
         return redirect(url_for("dashboard.admin_revenue"))
 
     analytics = build_revenue_analytics(start_date, end_date)
@@ -1564,7 +1564,7 @@ def create_staff_time_off(staff_id):
     staff = Staff.query.get(staff_id)
 
     if not staff:
-        flash("Staff member not found.")
+        flash("직원을 찾을 수 없습니다.")
         return redirect(url_for("dashboard.admin_staff"))
 
     off_date_str = request.form.get("off_date")
@@ -1574,7 +1574,7 @@ def create_staff_time_off(staff_id):
     is_full_day = request.form.get("is_full_day") == "on"
 
     if not off_date_str:
-        flash("Please select a date.")
+        flash("날짜를 선택하세요.")
         return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
     off_date = datetime.strptime(off_date_str, "%Y-%m-%d").date()
@@ -1584,14 +1584,14 @@ def create_staff_time_off(staff_id):
         time_off_end = datetime.combine(off_date, time.max)
     else:
         if not start_time_str or not end_time_str:
-            flash("Please enter both start and end times.")
+            flash("시작 시간과 종료 시간을 모두 입력하세요.")
             return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
         time_off_start = datetime.combine(off_date, datetime.strptime(start_time_str, "%H:%M").time())
         time_off_end = datetime.combine(off_date, datetime.strptime(end_time_str, "%H:%M").time())
 
     if time_off_end <= time_off_start:
-        flash("End time must be later than start time.")
+        flash("종료 시간은 시작 시간보다 늦어야 합니다.")
         return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
     conflicting_booking = Booking.query.filter(
@@ -1602,7 +1602,7 @@ def create_staff_time_off(staff_id):
     ).first()
 
     if conflicting_booking:
-        flash("This staff member already has a booking during the selected time off period. Please cancel or reschedule that booking first.")
+        flash("선택한 휴무 시간에 기존 예약이 있습니다. 해당 예약을 먼저 취소하거나 변경하세요.")
         return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
     overlapping_time_off = StaffTimeOff.query.filter(
@@ -1612,7 +1612,7 @@ def create_staff_time_off(staff_id):
     ).first()
 
     if overlapping_time_off:
-        flash("This time off period overlaps with an existing time off entry.")
+        flash("기존 휴무 시간과 겹칩니다.")
         return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
     time_off = StaffTimeOff(
@@ -1625,7 +1625,7 @@ def create_staff_time_off(staff_id):
     db.session.add(time_off)
     db.session.commit()
 
-    flash("Staff time off has been registered.")
+    flash("직원 휴무를 등록했습니다.")
     return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
 
@@ -1635,13 +1635,13 @@ def delete_staff_time_off(staff_id, time_off_id):
     time_off = StaffTimeOff.query.filter_by(id=time_off_id, staff_id=staff_id).first()
 
     if not time_off:
-        flash("Time off entry not found.")
+        flash("휴무 기록을 찾을 수 없습니다.")
         return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
     db.session.delete(time_off)
     db.session.commit()
 
-    flash("Staff time off has been deleted.")
+    flash("직원 휴무를 삭제했습니다.")
     return redirect(url_for("dashboard.staff_schedule_page", staff_id=staff_id))
 
 
@@ -1764,19 +1764,19 @@ def admin_change_password():
             admin.password_hash,
             current_password
         ):
-            flash("Current password is incorrect.")
+            flash("현재 비밀번호가 올바르지 않습니다.")
             return redirect(url_for(
                 "dashboard.admin_change_password"
             ))
 
         if new_password != confirm_password:
-            flash("New passwords do not match.")
+            flash("새 비밀번호가 일치하지 않습니다.")
             return redirect(url_for(
                 "dashboard.admin_change_password"
             ))
 
         if len(new_password) < 8:
-            flash("Password must be at least 8 characters.")
+            flash("비밀번호는 8자 이상이어야 합니다.")
             return redirect(url_for(
                 "dashboard.admin_change_password"
             ))
@@ -1787,7 +1787,7 @@ def admin_change_password():
 
         db.session.commit()
 
-        flash("Password updated successfully.")
+        flash("비밀번호를 변경했습니다.")
 
         return redirect("/admin")
 
@@ -1802,32 +1802,32 @@ def reset_customer_password(customer_id):
     customer = Customer.query.get(customer_id)
 
     if not customer:
-        flash("Customer not found.")
+        flash("고객을 찾을 수 없습니다.")
         return redirect(url_for("dashboard.admin_customers"))
 
     if customer.login_provider != "local":
-        flash("Password reset is only available for local accounts.")
+        flash("일반 회원가입 계정만 비밀번호를 초기화할 수 있습니다.")
         return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
 
     new_password = request.form.get("new_password")
     confirm_password = request.form.get("confirm_password")
 
     if not new_password or not confirm_password:
-        flash("Please enter and confirm the new password.")
+        flash("새 비밀번호와 확인 값을 입력하세요.")
         return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
 
     if new_password != confirm_password:
-        flash("Passwords do not match.")
+        flash("비밀번호가 일치하지 않습니다.")
         return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
 
     if len(new_password) < 8:
-        flash("Password must be at least 8 characters.")
+        flash("비밀번호는 8자 이상이어야 합니다.")
         return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
 
     customer.password_hash = generate_password_hash(new_password)
     db.session.commit()
 
-    flash("Customer password has been reset.")
+    flash("고객 비밀번호를 초기화했습니다.")
     return redirect(url_for("dashboard.customer_detail", customer_id=customer_id))
 
 
@@ -2097,7 +2097,7 @@ def admin_timeline_move():
     )
 
     db.session.add(event)
-    notify_booking_changed(booking, "Moved on admin timeline.")
+    notify_booking_changed(booking, "관리자 타임라인에서 이동")
     send_booking_changed_sms(booking)
     db.session.commit()
 
@@ -2153,7 +2153,7 @@ def admin_timeline_mark_deposit_paid(booking_id):
     )
 
     db.session.add(event)
-    notify_deposit_paid(booking, source="Admin")
+    notify_deposit_paid(booking, source="관리자")
     send_deposit_paid_sms(booking)
     db.session.commit()
 

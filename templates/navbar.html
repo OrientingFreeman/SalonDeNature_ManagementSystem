@@ -1,118 +1,63 @@
 {% if request.args.get("embed") != "1" %}
 <nav class="navbar">
-
     <div class="nav-left">
-
-        <div class="logo">
-            <a href="/">
-                Salon De Nature
-            </a>
-        </div>
-
+        <div class="logo"><a href="/">Salon De Nature</a></div>
         <div class="nav-links">
-            
             {% if session.get("customer_id") %}
-                <a href="/booking">Book Appointment</a>
-                <a href="/my-bookings">My Bookings</a>
-                <a href="/change-password">Account</a>
-                <a href="/contact">Contact</a>
+                <a href="/booking">{{ text.book_now if text is defined else 'Book Appointment' }}</a>
+                <a href="/my-bookings">{{ text.my_bookings if text is defined else 'My Bookings' }}</a>
+                <a href="/change-password">{{ text.account if text is defined else 'Account' }}</a>
+                <a href="/contact">{{ text.contact if text is defined else 'Contact' }}</a>
             {% endif %}
-
             {% if session.get("staff_id") %}
-                <a href="/staff/dashboard">Dashboard</a>
-                <a href="/staff/calendar">Calendar</a>
-                <a href="/staff/change-password">Account</a>
+                <a href="/staff/dashboard">대시보드</a>
+                <a href="/staff/calendar">캘린더</a>
+                <a href="/staff/change-password">내 계정</a>
             {% endif %}
-
             {% if session.get("admin_logged_in") %}
-                <a href="/admin">Dashboard</a>
-                <a href="/admin/calendar">Calendar</a>
-                <a href="/admin/customers">Customers</a>
-                <a href="/admin/services">Services</a>
-                <a href="/admin/staff">Staff</a>
-                <a href="/admin/revenue">Revenue</a>
-                <a href="/admin/settings">Settings</a>
-                <a href="/admin/users">AdminAccount</a>
-                <a href="/admin/change-password">My Account</a>
+                <a href="/admin">대시보드</a>
+                <a href="/admin/calendar">캘린더</a>
+                <a href="/admin/customers">고객 관리</a>
+                <a href="/admin/services">서비스 관리</a>
+                <a href="/admin/staff">직원 관리</a>
+                <a href="/admin/revenue">매출 분석</a>
+                <a href="/admin/settings">설정</a>
+                <a href="/admin/users">관리자 계정</a>
+                <a href="/admin/change-password">내 계정</a>
             {% endif %}
-
         </div>
-
     </div>
-
     <div class="nav-right">
-
-        {% if not session.get("customer_id")
-              and not session.get("staff_id")
-              and not session.get("admin_logged_in") %}
-
-            <a href="/login">Login</a>
-
-            <a class="btn-book" href="/signup">
-                Sign Up
-            </a>
-
-            <a href="/staff/login">
-                {{ text.staff_login if text is defined else "Staff Login" }}
-            </a>
-
-            <a href="/admin/login">
-                {{ text.admin_login if text is defined else "Admin Login" }}
-            </a>
-
+        {% if not session.get("customer_id") and not session.get("staff_id") and not session.get("admin_logged_in") %}
+            <a href="/login">{{ text.login if text is defined else 'Log In' }}</a>
+            <a class="btn-book" href="/signup">{{ text.signup if text is defined else 'Sign Up' }}</a>
+            <a href="/staff/login">직원 로그인</a>
+            <a href="/admin/login">관리자 로그인</a>
         {% endif %}
-
-        {% if session.get("customer_id") %}
-            <a class="btn-book" href="/logout">
-                Log Out
-            </a>
-        {% endif %}
-
-        {% if session.get("staff_id") %}
-            <a class="btn-book" href="/staff/logout">
-                Log Out
-            </a>
-        {% endif %}
-
+        {% if session.get("customer_id") %}<a class="btn-book" href="/logout">{{ text.logout if text is defined else 'Log Out' }}</a>{% endif %}
+        {% if session.get("staff_id") %}<a class="btn-book" href="/staff/logout">로그아웃</a>{% endif %}
         {% if session.get("admin_logged_in") %}
             <div class="admin-notification-widget" data-notification-widget>
-                <button class="admin-notification-button" type="button" data-notification-toggle aria-label="Admin notifications">
+                <button class="admin-notification-button" type="button" data-notification-toggle aria-label="관리자 알림">
                     <span class="admin-notification-icon">🔔</span>
-                    <span class="admin-notification-badge{% if not admin_unread_notification_count %} is-hidden{% endif %}" data-notification-badge>
-                        {{ admin_unread_notification_count or 0 }}
-                    </span>
+                    <span class="admin-notification-badge{% if not admin_unread_notification_count %} is-hidden{% endif %}" data-notification-badge>{{ admin_unread_notification_count or 0 }}</span>
                 </button>
-
                 <div class="admin-notification-dropdown" data-notification-dropdown>
-                    <div class="admin-notification-dropdown-header">
-                        <strong>Notifications</strong>
-                        <button type="button" data-notification-mark-all>Mark all as read</button>
-                    </div>
-
+                    <div class="admin-notification-dropdown-header"><strong>알림</strong><button type="button" data-notification-mark-all>모두 읽음 처리</button></div>
                     <div class="admin-notification-list" data-notification-list>
                         {% for notification in admin_recent_notifications or [] %}
-                            <a class="admin-notification-item{% if not notification.is_read %} is-unread{% endif %}"
-                               href="{{ notification.target_url or '/admin/timeline' }}"
-                               data-notification-id="{{ notification.id }}">
+                            <a class="admin-notification-item{% if not notification.is_read %} is-unread{% endif %}" href="{{ notification.target_url or '/admin/timeline' }}" data-notification-id="{{ notification.id }}">
                                 <span class="admin-notification-title">{{ notification.title }}</span>
                                 <span class="admin-notification-message">{{ notification.message }}</span>
                                 <span class="admin-notification-time">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</span>
                             </a>
-                        {% else %}
-                            <div class="admin-notification-empty">No notifications yet.</div>
-                        {% endfor %}
+                        {% else %}<div class="admin-notification-empty">알림이 없습니다.</div>{% endfor %}
                     </div>
-
-                    <a class="admin-notification-view-all" href="/admin/notifications">View all notifications</a>
+                    <a class="admin-notification-view-all" href="/admin/notifications">전체 알림 보기</a>
                 </div>
             </div>
-
-            <a class="btn-book" href="/admin/logout">
-                Log Out
-            </a>
+            <a class="btn-book" href="/admin/logout">로그아웃</a>
         {% endif %}
-
     </div>
-
 </nav>
 {% endif %}

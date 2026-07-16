@@ -7,21 +7,21 @@
 <section class="admin-services-section staff-calendar-section">
 
     <div class="admin-page-header">
-        <p class="eyebrow">STAFF CALENDAR</p>
-        <h1>My Reservations</h1>
+        <p class="eyebrow">직원 캘린더</p>
+        <h1>내 예약</h1>
         <p>{{ session.staff_name }}님, review your assigned reservations by date.</p>
     </div>
 
     <div class="calendar-toolbar admin-form-card">
         <form method="GET" action="/staff/calendar" class="calendar-date-form">
-            <label for="calendar-date">Date</label>
+            <label for="calendar-date">날짜</label>
             <div class="calendar-date-actions">
                 <input id="calendar-date" type="date" name="date" value="{{ target_date }}">
-                <button type="submit" class="booking-action-btn">Search</button>
+                <button type="submit" class="booking-action-btn">검색</button>
             </div>
         </form>
 
-        <a href="/staff/dashboard" class="btn-primary">Today Dashboard</a>
+        <a href="/staff/dashboard" class="btn-primary">오늘 대시보드</a>
     </div>
 
     {% set pending_count = bookings|selectattr("status", "equalto", "pending")|list|length %}
@@ -30,11 +30,11 @@
     {% set no_show_count = bookings|selectattr("status", "equalto", "no_show")|list|length %}
 
     <div class="admin-stat-grid staff-calendar-stat-grid">
-        <div class="admin-stat-card"><span>{{ bookings|length }}</span><p>Total</p></div>
-        <div class="admin-stat-card"><span>{{ confirmed_count }}</span><p>Confirmed</p></div>
-        <div class="admin-stat-card"><span>{{ completed_count }}</span><p>Completed</p></div>
-        <div class="admin-stat-card"><span>{{ pending_count }}</span><p>Pending</p></div>
-        <div class="admin-stat-card"><span>{{ no_show_count }}</span><p>No Show</p></div>
+        <div class="admin-stat-card"><span>{{ bookings|length }}</span><p>전체</p></div>
+        <div class="admin-stat-card"><span>{{ confirmed_count }}</span><p>확정</p></div>
+        <div class="admin-stat-card"><span>{{ completed_count }}</span><p>완료</p></div>
+        <div class="admin-stat-card"><span>{{ pending_count }}</span><p>대기</p></div>
+        <div class="admin-stat-card"><span>{{ no_show_count }}</span><p>노쇼</p></div>
     </div>
 
     <div class="admin-section-header">
@@ -59,34 +59,34 @@
                             </div>
 
                             {% if booking.status == "pending" %}
-                                <span class="status-badge status-pending">Pending</span>
+                                <span class="status-badge status-pending">대기</span>
                             {% elif booking.status == "confirmed" %}
-                                <span class="status-badge status-confirmed">Confirmed</span>
+                                <span class="status-badge status-confirmed">확정</span>
                             {% elif booking.status == "completed" %}
-                                <span class="status-badge status-completed">Completed</span>
+                                <span class="status-badge status-completed">완료</span>
                             {% elif booking.status == "cancelled" %}
-                                <span class="status-badge status-cancelled">Cancelled</span>
+                                <span class="status-badge status-cancelled">취소</span>
                             {% elif booking.status == "no_show" %}
-                                <span class="status-badge status-cancelled">No Show</span>
+                                <span class="status-badge status-cancelled">노쇼</span>
                             {% else %}
                                 <span class="status-badge">{{ booking.status }}</span>
                             {% endif %}
                         </div>
 
                         <div class="staff-calendar-meta">
-                            <div><span>Customer</span><strong>{{ booking.customer.name }}</strong></div>
-                            <div><span>Service</span><strong>{{ booking.service.name_ko }}</strong></div>
-                            <div><span>Price</span><strong>₩{{ "{:,}".format(booking.service.price) }}</strong></div>
-                            <div><span>Deposit</span><strong>{{ booking.deposit_payment_status or "none" }}</strong></div>
+                            <div><span>고객</span><strong>{{ booking.customer.name }}</strong></div>
+                            <div><span>서비스</span><strong>{{ booking.service.name_ko }}</strong></div>
+                            <div><span>가격</span><strong>₩{{ "{:,}".format(booking.service.price) }}</strong></div>
+                            <div><span>예약금</span><strong>{{ booking.deposit_payment_status or "none" }}</strong></div>
                         </div>
 
                         <div class="staff-calendar-actions">
                             {% if booking.status == "confirmed" %}
                                 <button type="button" class="btn-primary" onclick="openCompleteModal({{ booking.id }})">
-                                    Complete
+                                    완료
                                 </button>
                             {% else %}
-                                <span class="booking-locked-note">No action available</span>
+                                <span class="booking-locked-note">처리 가능한 작업 없음</span>
                             {% endif %}
                         </div>
                     </div>
@@ -95,8 +95,8 @@
         </div>
     {% else %}
         <div class="admin-form-card empty-staff-calendar-card">
-            <h2>No reservations</h2>
-            <p>There are no reservations assigned to you for this date.</p>
+            <h2>예약이 없습니다.</h2>
+            <p>해당 날짜에 배정된 예약이 없습니다.</p>
         </div>
     {% endif %}
 
@@ -104,11 +104,11 @@
 
 <div id="completeModal" class="modal-backdrop">
     <div class="modal-box">
-        <h3>Complete Booking</h3>
-        <p>Mark this reservation as completed?</p>
+        <h3>예약 완료</h3>
+        <p>이 예약을 완료 처리하시겠습니까?</p>
         <div class="modal-actions">
-            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">Back</button>
-            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">Complete</button>
+            <button type="button" class="booking-action-btn" onclick="closeModal('completeModal')">뒤로</button>
+            <button type="button" class="btn-primary" onclick="confirmCompleteBooking()">완료</button>
         </div>
     </div>
 </div>

@@ -31,9 +31,9 @@
 <section class="admin-form-section service-edit-section">
 
     <div class="admin-page-header">
-        <p class="eyebrow">SERVICE MANAGEMENT</p>
-        <h1>Edit Service</h1>
-        <p>Update service menu information, pricing, duration, deposit settings, and visibility.</p>
+        <p class="eyebrow">서비스 관리</p>
+        <h1>서비스 수정</h1>
+        <p>서비스 정보, 가격, 소요 시간, 예약금 및 노출 여부를 수정합니다.</p>
     </div>
 
     <div class="admin-form-card service-edit-card">
@@ -41,45 +41,45 @@
 
             <div class="form-grid two-columns">
                 <div>
-                    <label for="category">Category</label>
+                    <label for="category">카테고리</label>
                     <select id="category" name="category" required>
-                        <option value="nail" {% if service.category == "nail" %}selected{% endif %}>Nail</option>
-                        <option value="waxing" {% if service.category == "waxing" %}selected{% endif %}>Waxing</option>
+                        <option value="nail" {% if service.category == "nail" %}selected{% endif %}>네일</option>
+                        <option value="waxing" {% if service.category == "waxing" %}selected{% endif %}>왁싱</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="duration_minutes">Duration</label>
+                    <label for="duration_minutes">소요 시간</label>
                     <select id="duration_minutes" name="duration_minutes" required>
-                        <option value="30" {% if service.duration_minutes == 30 %}selected{% endif %}>30 min</option>
-                        <option value="60" {% if service.duration_minutes == 60 %}selected{% endif %}>60 min</option>
-                        <option value="90" {% if service.duration_minutes == 90 %}selected{% endif %}>90 min</option>
-                        <option value="120" {% if service.duration_minutes == 120 %}selected{% endif %}>120 min</option>
+                        <option value="30" {% if service.duration_minutes == 30 %}selected{% endif %}>30분</option>
+                        <option value="60" {% if service.duration_minutes == 60 %}selected{% endif %}>60분</option>
+                        <option value="90" {% if service.duration_minutes == 90 %}selected{% endif %}>90분</option>
+                        <option value="120" {% if service.duration_minutes == 120 %}selected{% endif %}>120분</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-grid two-columns">
                 <div>
-                    <label for="name_ko">Korean Name</label>
+                    <label for="name_ko">한글 서비스명</label>
                     <input id="name_ko" type="text" name="name_ko" value="{{ service.name_ko }}" required>
                 </div>
 
                 <div>
-                    <label for="name_en">English Name</label>
+                    <label for="name_en">영문 서비스명</label>
                     <input id="name_en" type="text" name="name_en" value="{{ service.name_en or '' }}">
                 </div>
             </div>
 
             <div class="form-grid two-columns">
                 <div>
-                    <label for="price">Price</label>
+                    <label for="price">가격</label>
                     <input id="price" type="number" name="price" value="{{ service.price }}" min="0" required>
                 </div>
 
             {% if settings.deposit_enabled %}
                 <div>
-                    <label for="deposit_amount">Deposit Amount</label>
+                    <label for="deposit_amount">예약금액</label>
                     <input
                         type="number"
                         name="deposit_amount"
@@ -101,23 +101,23 @@
     id="deposit_required"
     {% if service.deposit_required %}checked{% endif %}
 >
-                <span>Deposit required</span>
+                <span>예약금 필요</span>
             </label>
             {% endif %}
 
             <div class="service-edit-status-box">
-                <span>Current Status</span>
+                <span>현재 상태</span>
                 {% if service.is_active %}
-                    <strong class="status-badge status-confirmed">Active</strong>
+                    <strong class="status-badge status-confirmed">활성</strong>
                 {% else %}
-                    <strong class="status-badge status-cancelled">Inactive</strong>
+                    <strong class="status-badge status-cancelled">비활성</strong>
                 {% endif %}
-                <p>Status is changed from the Service List using the Activate/Deactivate button.</p>
+                <p>상태는 서비스 목록의 활성화/비활성화 버튼에서 변경합니다.</p>
             </div>
 
             <div class="admin-form-actions">
-                <a href="/admin/services" class="booking-action-btn">Cancel</a>
-                <button type="submit" class="btn-primary">Save Changes</button>
+                <a href="/admin/services" class="booking-action-btn">취소</a>
+                <button type="submit" class="btn-primary">변경사항 저장</button>
             </div>
 
         </form>

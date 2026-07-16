@@ -3,52 +3,52 @@
 <section class="admin-booking-detail-page">
     <div class="booking-detail-header">
         <div>
-            <p class="eyebrow">BOOKING #{{ booking.id }}</p>
+            <p class="eyebrow">예약 #{{ booking.id }}</p>
             <h1>{{ booking.customer.name }} · {{ booking.service.name_ko }}</h1>
             <p>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }} · {{ booking.staff.name }}</p>
         </div>
         <div class="booking-detail-header-actions">
             <span class="booking-status status-{{ booking.status }}">{{ booking.status }}</span>
-            <a href="{{ url_for('dashboard.admin_timeline', date=booking.start_time.strftime('%Y-%m-%d'), booking_id=booking.id) }}" class="detail-btn">Timeline</a>
-            <a href="{{ url_for('dashboard.admin_calendar', date=booking.start_time.strftime('%Y-%m-%d')) }}" class="detail-btn secondary">Calendar</a>
+            <a href="{{ url_for('dashboard.admin_timeline', date=booking.start_time.strftime('%Y-%m-%d'), booking_id=booking.id) }}" class="detail-btn">타임라인</a>
+            <a href="{{ url_for('dashboard.admin_calendar', date=booking.start_time.strftime('%Y-%m-%d')) }}" class="detail-btn secondary">캘린더</a>
         </div>
     </div>
 
     <div class="booking-detail-grid">
         <article class="detail-card">
-            <h2>Booking information</h2>
+            <h2>예약 정보</h2>
             <dl class="detail-list">
-                <div><dt>Customer</dt><dd>{{ booking.customer.name }}</dd></div>
-                <div><dt>Phone</dt><dd>{{ booking.customer.phone or '-' }}</dd></div>
-                <div><dt>Email</dt><dd>{{ booking.customer.email or '-' }}</dd></div>
-                <div><dt>Service</dt><dd>{{ booking.service.name_ko }} · ₩{{ '{:,}'.format(booking.service.price) }}</dd></div>
-                <div><dt>Staff</dt><dd>{{ booking.staff.name }}</dd></div>
-                <div><dt>Schedule</dt><dd>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</dd></div>
-                <div><dt>Deposit</dt><dd>{{ booking.deposit_payment_status or 'none' }}{% if booking.deposit_paid %} · paid{% endif %}</dd></div>
-                <div><dt>Created</dt><dd>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else '-' }}</dd></div>
+                <div><dt>고객</dt><dd>{{ booking.customer.name }}</dd></div>
+                <div><dt>연락처</dt><dd>{{ booking.customer.phone or '-' }}</dd></div>
+                <div><dt>이메일</dt><dd>{{ booking.customer.email or '-' }}</dd></div>
+                <div><dt>서비스</dt><dd>{{ booking.service.name_ko }} · ₩{{ '{:,}'.format(booking.service.price) }}</dd></div>
+                <div><dt>직원</dt><dd>{{ booking.staff.name }}</dd></div>
+                <div><dt>일정</dt><dd>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</dd></div>
+                <div><dt>예약금</dt><dd>{{ booking.deposit_payment_status or 'none' }}{% if booking.deposit_paid %} · paid{% endif %}</dd></div>
+                <div><dt>생성일</dt><dd>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else '-' }}</dd></div>
             </dl>
-            <div class="detail-note"><strong>Booking memo</strong><p>{{ booking.memo or 'No booking memo.' }}</p></div>
-            <div class="detail-note"><strong>Deposit note</strong><p>{{ booking.deposit_note or 'No deposit note.' }}</p></div>
+            <div class="detail-note"><strong>예약 메모</strong><p>{{ booking.memo or '예약 메모가 없습니다.' }}</p></div>
+            <div class="detail-note"><strong>예약금 메모</strong><p>{{ booking.deposit_note or '예약금 메모가 없습니다.' }}</p></div>
         </article>
 
         <article class="detail-card">
-            <h2>Status management</h2>
-            <p class="card-description">Only valid next actions are shown. Cancellation and no-show require a reason. Every action is recorded in BookingEvent.</p>
+            <h2>상태 처리</h2>
+            <p class="card-description">가능한 다음 처리만 표시됩니다. 취소와 노쇼는 사유가 필수이며 모든 처리는 이력에 기록됩니다.</p>
 
             {% if booking.status == 'pending' %}
                 <div class="status-action-list">
-                    <button type="button" class="status-action status-confirm" data-status="confirmed" data-label="Confirm booking" data-reason-required="false">Confirm booking</button>
-                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">Cancel booking</button>
+                    <button type="button" class="status-action status-confirm" data-status="confirmed" data-label="Confirm booking" data-reason-required="false">예약 확정</button>
+                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">예약 취소</button>
                 </div>
             {% elif booking.status == 'confirmed' %}
                 <div class="status-action-list">
-                    <button type="button" class="status-action status-complete" data-status="completed" data-label="Complete booking" data-reason-required="false">Complete booking</button>
-                    <button type="button" class="status-action status-noshow" data-status="no_show" data-label="Mark as no-show" data-reason-required="true">Mark as no-show</button>
-                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">Cancel booking</button>
+                    <button type="button" class="status-action status-complete" data-status="completed" data-label="Complete booking" data-reason-required="false">시술 완료</button>
+                    <button type="button" class="status-action status-noshow" data-status="no_show" data-label="Mark as no-show" data-reason-required="true">노쇼 처리</button>
+                    <button type="button" class="status-action status-cancel" data-status="cancelled" data-label="Cancel booking" data-reason-required="true">예약 취소</button>
                 </div>
             {% else %}
                 <div class="terminal-status-notice">
-                    This booking is in a terminal status. Further status changes are not permitted.
+                    이미 최종 상태인 예약으로 추가 상태 변경이 불가능합니다.
                 </div>
             {% endif %}
         </article>
@@ -57,8 +57,8 @@
     <article class="detail-card booking-timeline-card">
         <div class="card-title-row timeline-title-row">
             <div>
-                <h2>Booking timeline</h2>
-                <p>Booking events and customer/administrator SMS attempts in chronological order.</p>
+                <h2>예약 처리 이력</h2>
+                <p>예약 이벤트와 고객·관리자 문자 발송 내역을 시간순으로 표시합니다.</p>
             </div>
             <span>{{ timeline_entries|length }}</span>
         </div>
@@ -85,14 +85,14 @@
                         {% if item.kind == 'sms' %}
                             <div class="timeline-sms-meta">
                                 <span class="sms-status sms-{{ item.sms_status }}">{{ item.sms_status }}</span>
-                                <span>{{ item.recipient_phone or 'No recipient number' }}</span>
+                                <span>{{ item.recipient_phone or '수신번호 없음' }}</span>
                             </div>
                             {% if item.error_message %}<p class="sms-error">{{ item.error_message }}</p>{% endif %}
                         {% endif %}
                     </div>
                 </div>
             {% else %}
-                <div class="timeline-empty">No booking events or SMS attempts have been recorded.</div>
+                <div class="timeline-empty">기록된 예약 이벤트 또는 문자 발송 내역이 없습니다.</div>
             {% endfor %}
         </div>
     </article>
@@ -101,16 +101,16 @@
 
 <div class="status-modal-backdrop" id="statusModal" hidden>
     <div class="status-modal" role="dialog" aria-modal="true" aria-labelledby="statusModalTitle">
-        <h2 id="statusModalTitle">Confirm status action</h2>
+        <h2 id="statusModalTitle">상태 처리 확인</h2>
         <p id="statusModalDescription"></p>
         <form method="POST" action="{{ url_for('dashboard.admin_booking_status_form', booking_id=booking.id) }}" id="statusActionForm">
             <input type="hidden" id="statusInput" name="status">
-            <label class="field-label" for="statusMemo">Reason / processing memo</label>
-            <textarea id="statusMemo" name="memo" rows="4" placeholder="Enter the operational reason or memo"></textarea>
+            <label class="field-label" for="statusMemo">처리 사유 / 메모</label>
+            <textarea id="statusMemo" name="memo" rows="4" placeholder="입력 the operational reason or memo"></textarea>
             <p class="reason-help" id="reasonHelp"></p>
             <div class="status-modal-actions">
-                <button type="button" class="modal-btn secondary" id="statusModalCancel">Back</button>
-                <button type="submit" class="modal-btn primary" id="statusModalConfirm">Confirm</button>
+                <button type="button" class="modal-btn secondary" id="statusModalCancel">뒤로</button>
+                <button type="submit" class="modal-btn primary" id="statusModalConfirm">확인</button>
             </div>
         </form>
     </div>

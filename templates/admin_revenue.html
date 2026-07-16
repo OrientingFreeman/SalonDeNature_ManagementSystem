@@ -2,42 +2,42 @@
 {% block title %}Revenue & Analytics{% endblock %}
 {% block content %}
 <section class="analytics-page">
-  <header class="analytics-header"><div><p class="eyebrow">PHASE13 · BUSINESS ANALYTICS</p><h1>Revenue & Operations</h1><p>Completed-booking revenue and selected-period operating performance.</p></div></header>
+  <header class="analytics-header"><div><p class="eyebrow">경영 분석</p><h1>매출 및 운영 분석</h1><p>완료 예약 매출과 선택 기간 운영 지표입니다.</p></div></header>
 
   <form method="GET" action="{{ url_for('dashboard.admin_revenue') }}" class="analytics-filter card">
-    <label>Start date<input type="date" name="start_date" value="{{ filter_start_date }}"></label>
-    <label>End date<input type="date" name="end_date" value="{{ filter_end_date }}"></label>
-    <button type="submit">Apply</button>
-    <a href="{{ url_for('dashboard.export_revenue_excel', start_date=filter_start_date, end_date=filter_end_date) }}">Export Excel</a>
+    <label>시작일<input type="date" name="start_date" value="{{ filter_start_date }}"></label>
+    <label>종료일<input type="date" name="end_date" value="{{ filter_end_date }}"></label>
+    <button type="submit">조회</button>
+    <a href="{{ url_for('dashboard.export_revenue_excel', start_date=filter_start_date, end_date=filter_end_date) }}">엑셀 내보내기</a>
   </form>
 
-  <div class="definition-note">Revenue and average ticket use completed bookings. Cancellation and no-show rates use all bookings in the selected period. Completion conversion uses terminal bookings only.</div>
+  <div class="definition-note">매출과 객단가는 완료 예약 기준이며, 취소율과 노쇼율은 선택 기간 전체 예약 기준입니다. 완료 전환율은 종결 예약 기준입니다.</div>
 
   <div class="kpi-grid">
-    <article class="kpi"><small>Selected revenue</small><strong>₩{{ '{:,}'.format(filtered_revenue) }}</strong><span>{{ filtered_bookings|length }} completed</span></article>
-    <article class="kpi"><small>Average ticket</small><strong>₩{{ '{:,}'.format(average_ticket) }}</strong><span>per completed booking</span></article>
-    <article class="kpi"><small>Completion conversion</small><strong>{{ completion_rate }}%</strong><span>completed ÷ terminal</span></article>
-    <article class="kpi"><small>Cancellation rate</small><strong>{{ cancellation_rate }}%</strong><span>{{ status_counts.cancelled }} cancelled</span></article>
-    <article class="kpi"><small>No-show rate</small><strong>{{ no_show_rate }}%</strong><span>{{ status_counts.no_show }} no-show</span></article>
-    <article class="kpi"><small>Returning customer rate</small><strong>{{ repeat_customer_rate }}%</strong><span>{{ returning_customer_count }} returning · {{ new_customer_count }} new</span></article>
+    <article class="kpi"><small>선택 기간 매출</small><strong>₩{{ '{:,}'.format(filtered_revenue) }}</strong><span>{{ filtered_bookings|length }} completed</span></article>
+    <article class="kpi"><small>평균 객단가</small><strong>₩{{ '{:,}'.format(average_ticket) }}</strong><span>완료 예약 1건당</span></article>
+    <article class="kpi"><small>완료 전환율</small><strong>{{ completion_rate }}%</strong><span>완료 ÷ 종결 예약</span></article>
+    <article class="kpi"><small>취소율</small><strong>{{ cancellation_rate }}%</strong><span>{{ status_counts.cancelled }} cancelled</span></article>
+    <article class="kpi"><small>노쇼율</small><strong>{{ no_show_rate }}%</strong><span>{{ status_counts.no_show }} no-show</span></article>
+    <article class="kpi"><small>재방문 고객 비율</small><strong>{{ repeat_customer_rate }}%</strong><span>{{ returning_customer_count }} returning · {{ new_customer_count }} new</span></article>
   </div>
 
   <div class="summary-strip">
-    <div><span>Today</span><strong>₩{{ '{:,}'.format(today_revenue) }}</strong></div><div><span>This week</span><strong>₩{{ '{:,}'.format(week_revenue) }}</strong></div><div><span>This month</span><strong>₩{{ '{:,}'.format(month_revenue) }}</strong></div><div><span>All-time</span><strong>₩{{ '{:,}'.format(total_revenue) }}</strong></div>
+    <div><span>오늘</span><strong>₩{{ '{:,}'.format(today_revenue) }}</strong></div><div><span>이번 주</span><strong>₩{{ '{:,}'.format(week_revenue) }}</strong></div><div><span>이번 달</span><strong>₩{{ '{:,}'.format(month_revenue) }}</strong></div><div><span>전체 누적</span><strong>₩{{ '{:,}'.format(total_revenue) }}</strong></div>
   </div>
 
   <div class="chart-grid">
-    <article class="card chart wide"><h2>Daily revenue</h2><div class="canvas"><canvas id="dailyChart"></canvas></div></article>
-    <article class="card chart"><h2>Booking status distribution</h2><div class="canvas"><canvas id="statusChart"></canvas></div></article>
-    <article class="card chart"><h2>Revenue by staff</h2><div class="canvas"><canvas id="staffChart"></canvas></div></article>
-    <article class="card chart"><h2>Revenue by category</h2><div class="canvas"><canvas id="categoryChart"></canvas></div></article>
-    <article class="card chart"><h2>Bookings by weekday</h2><div class="canvas"><canvas id="weekdayChart"></canvas></div></article>
-    <article class="card chart wide"><h2>Bookings by start time</h2><div class="canvas"><canvas id="hourChart"></canvas></div></article>
+    <article class="card chart wide"><h2>일별 매출</h2><div class="canvas"><canvas id="dailyChart"></canvas></div></article>
+    <article class="card chart"><h2>예약 상태 분포</h2><div class="canvas"><canvas id="statusChart"></canvas></div></article>
+    <article class="card chart"><h2>직원별 매출</h2><div class="canvas"><canvas id="staffChart"></canvas></div></article>
+    <article class="card chart"><h2>카테고리별 매출</h2><div class="canvas"><canvas id="categoryChart"></canvas></div></article>
+    <article class="card chart"><h2>요일별 예약 건수</h2><div class="canvas"><canvas id="weekdayChart"></canvas></div></article>
+    <article class="card chart wide"><h2>시간대별 예약 건수</h2><div class="canvas"><canvas id="hourChart"></canvas></div></article>
   </div>
 
   <div class="table-grid">
-    <article class="card"><h2>Service performance</h2><div class="table-scroll"><table><thead><tr><th>Service</th><th>Completed</th><th>Revenue</th></tr></thead><tbody>{% for name, revenue in service_revenue.items() %}<tr><td>{{ name }}</td><td>{{ service_count.get(name, 0) }}</td><td>₩{{ '{:,}'.format(revenue) }}</td></tr>{% else %}<tr><td colspan="3">No data.</td></tr>{% endfor %}</tbody></table></div></article>
-    <article class="card"><h2>Staff performance</h2><div class="table-scroll"><table><thead><tr><th>Staff</th><th>Completed</th><th>Revenue</th></tr></thead><tbody>{% for name, revenue in staff_revenue.items() %}<tr><td>{{ name }}</td><td>{{ staff_count.get(name, 0) }}</td><td>₩{{ '{:,}'.format(revenue) }}</td></tr>{% else %}<tr><td colspan="3">No data.</td></tr>{% endfor %}</tbody></table></div></article>
+    <article class="card"><h2>서비스별 실적</h2><div class="table-scroll"><table><thead><tr><th>서비스</th><th>완료</th><th>매출</th></tr></thead><tbody>{% for name, revenue in service_revenue.items() %}<tr><td>{{ name }}</td><td>{{ service_count.get(name, 0) }}</td><td>₩{{ '{:,}'.format(revenue) }}</td></tr>{% else %}<tr><td colspan="3">데이터가 없습니다.</td></tr>{% endfor %}</tbody></table></div></article>
+    <article class="card"><h2>직원별 실적</h2><div class="table-scroll"><table><thead><tr><th>직원</th><th>완료</th><th>매출</th></tr></thead><tbody>{% for name, revenue in staff_revenue.items() %}<tr><td>{{ name }}</td><td>{{ staff_count.get(name, 0) }}</td><td>₩{{ '{:,}'.format(revenue) }}</td></tr>{% else %}<tr><td colspan="3">데이터가 없습니다.</td></tr>{% endfor %}</tbody></table></div></article>
   </div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

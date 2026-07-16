@@ -54,36 +54,49 @@
         </article>
     </div>
 
-    <div class="booking-detail-grid lower-grid">
-        <article class="detail-card">
-            <div class="card-title-row"><h2>Booking event history</h2><span>{{ events|length }}</span></div>
-            <div class="history-list">
-                {% for event in events %}
-                    <div class="history-item">
-                        <div><strong>{{ event.event_type.replace('_',' ') }}</strong><p>{{ event.memo or '-' }}</p></div>
-                        <time>{{ event.created_at.strftime('%Y-%m-%d %H:%M') if event.created_at else '-' }}</time>
-                    </div>
-                {% else %}<p class="empty-copy">No event history.</p>{% endfor %}
+    <article class="detail-card booking-timeline-card">
+        <div class="card-title-row timeline-title-row">
+            <div>
+                <h2>Booking timeline</h2>
+                <p>Booking events and customer/administrator SMS attempts in chronological order.</p>
             </div>
-        </article>
+            <span>{{ timeline_entries|length }}</span>
+        </div>
 
-        <article class="detail-card">
-            <div class="card-title-row"><h2>SMS history</h2><span>{{ sms_logs|length }}</span></div>
-            <div class="history-list">
-                {% for log in sms_logs %}
-                    <div class="history-item sms-history-item">
-                        <div>
-                            <strong>{{ log.template_key or log.event_type }} · {{ log.recipient_type }}</strong>
-                            <p>{{ log.recipient_phone or '-' }} · <span class="sms-status sms-{{ log.status }}">{{ log.status }}</span></p>
-                            <p class="sms-message">{{ log.message }}</p>
-                            {% if log.error_message %}<p class="sms-error">{{ log.error_message }}</p>{% endif %}
-                        </div>
-                        <time>{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '-' }}</time>
+        <div class="booking-timeline">
+            {% for item in timeline_entries %}
+                <div class="timeline-entry timeline-{{ item.kind }} timeline-category-{{ item.category }}">
+                    <div class="timeline-rail">
+                        <span class="timeline-dot">
+                            {% if item.kind == 'sms' %}✉{% elif item.category in ['cancelled', 'cancelled_by_customer', 'no_show', 'payment_failed'] %}!{% elif item.category in ['confirmed', 'completed', 'payment_paid', 'deposit_marked_paid'] %}✓{% elif item.category in ['rescheduled', 'changed', 'timeline_drag_moved'] %}↔{% else %}•{% endif %}
+                        </span>
                     </div>
-                {% else %}<p class="empty-copy">No SMS history for this booking.</p>{% endfor %}
-            </div>
-        </article>
-    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-entry-header">
+                            <div>
+                                <strong>{{ item.title }}</strong>
+                                <span class="timeline-source">{{ item.source }}</span>
+                            </div>
+                            <time>{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}</time>
+                        </div>
+
+                        {% if item.memo %}<p class="timeline-memo">{{ item.memo }}</p>{% endif %}
+
+                        {% if item.kind == 'sms' %}
+                            <div class="timeline-sms-meta">
+                                <span class="sms-status sms-{{ item.sms_status }}">{{ item.sms_status }}</span>
+                                <span>{{ item.recipient_phone or 'No recipient number' }}</span>
+                            </div>
+                            {% if item.error_message %}<p class="sms-error">{{ item.error_message }}</p>{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="timeline-empty">No booking events or SMS attempts have been recorded.</div>
+            {% endfor %}
+        </div>
+    </article>
+
 </section>
 
 <div class="status-modal-backdrop" id="statusModal" hidden>
@@ -105,6 +118,8 @@
 
 <style>
 .admin-booking-detail-page{max-width:1280px;margin:0 auto;padding:30px 20px 60px}.booking-detail-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:24px}.booking-detail-header h1{margin:5px 0 8px}.booking-detail-header p{margin:0;color:#667085}.booking-detail-header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.booking-status,.detail-btn{border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700}.booking-status{background:#f2f4f7}.status-confirmed{background:#dcfae6;color:#067647}.status-cancelled,.status-no_show{background:#fee4e2;color:#b42318}.status-completed{background:#e0f2fe;color:#026aa2}.status-pending{background:#fef0c7;color:#b54708}.detail-btn{background:#111827;color:#fff;text-decoration:none}.detail-btn.secondary{background:#fff;color:#344054;border:1px solid #d0d5dd}.booking-detail-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:20px}.lower-grid{margin-top:20px;grid-template-columns:1fr 1fr}.detail-card{background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.detail-card h2{margin:0 0 16px;font-size:18px}.detail-list{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:0}.detail-list div{padding:12px 0;border-bottom:1px solid #f0f1f3}.detail-list dt{font-size:12px;color:#667085;margin-bottom:4px}.detail-list dd{margin:0;font-weight:650}.detail-note{margin-top:16px;padding:14px;background:#f9fafb;border-radius:12px}.detail-note p{white-space:pre-wrap;margin:7px 0 0;color:#475467}.card-description{color:#667085;font-size:14px;line-height:1.55}.field-label{display:block;margin:14px 0 7px;font-weight:700;font-size:13px}.status-action-list{display:grid;gap:10px;margin-top:18px}.status-action{width:100%;border:0;border-radius:11px;padding:13px 14px;font-weight:750;cursor:pointer;text-align:left}.status-confirm{background:#dcfae6;color:#067647}.status-complete{background:#e0f2fe;color:#026aa2}.status-noshow,.status-cancel{background:#fee4e2;color:#b42318}.terminal-status-notice{margin-top:18px;padding:14px;border:1px solid #e4e7ec;border-radius:12px;background:#f9fafb;color:#667085;line-height:1.5}.card-title-row{display:flex;justify-content:space-between;align-items:center}.card-title-row span{background:#f2f4f7;border-radius:999px;padding:5px 9px;font-size:12px}.history-list{display:flex;flex-direction:column}.history-item{display:flex;justify-content:space-between;gap:15px;padding:14px 0;border-top:1px solid #f0f1f3}.history-item:first-child{border-top:0}.history-item strong{font-size:14px;text-transform:capitalize}.history-item p{margin:5px 0 0;color:#667085;font-size:13px;white-space:pre-wrap}.history-item time{white-space:nowrap;font-size:12px;color:#98a2b3}.sms-message{color:#344054!important}.sms-error{color:#b42318!important}.sms-status{font-weight:700}.sms-sent{color:#067647}.sms-skipped{color:#b54708}.sms-failed{color:#b42318}.empty-copy{color:#98a2b3}.status-modal-backdrop{position:fixed;inset:0;z-index:2000;background:rgba(16,24,40,.55);display:flex;align-items:center;justify-content:center;padding:20px}.status-modal-backdrop[hidden]{display:none}.status-modal{width:min(520px,100%);background:#fff;border-radius:18px;padding:24px;box-shadow:0 24px 80px rgba(16,24,40,.25)}.status-modal h2{margin:0 0 8px}.status-modal>p{margin:0;color:#667085;line-height:1.5}.status-modal textarea{width:100%;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:10px;padding:11px;background:#fff}.reason-help{min-height:20px;margin:7px 0 0;color:#667085;font-size:12px}.reason-help.required{color:#b42318;font-weight:700}.status-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.modal-btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}.modal-btn.primary{background:#111827;color:#fff}.modal-btn.secondary{background:#f2f4f7;color:#344054}@media(max-width:850px){.booking-detail-header{flex-direction:column}.booking-detail-grid,.lower-grid{grid-template-columns:1fr}.detail-list{grid-template-columns:1fr}.history-item{flex-direction:column}.history-item time{white-space:normal}}
+
+.booking-timeline-card{margin-top:20px}.timeline-title-row{align-items:flex-start}.timeline-title-row h2{margin-bottom:5px}.timeline-title-row p{margin:0;color:#667085;font-size:13px}.booking-timeline{margin-top:12px}.timeline-entry{display:grid;grid-template-columns:42px 1fr;position:relative}.timeline-rail{position:relative;display:flex;justify-content:center}.timeline-rail:after{content:"";position:absolute;top:34px;bottom:-8px;width:2px;background:#eaecf0}.timeline-entry:last-child .timeline-rail:after{display:none}.timeline-dot{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f2f4f7;color:#475467;border:2px solid #fff;box-shadow:0 0 0 1px #d0d5dd;font-size:13px;font-weight:800}.timeline-sms .timeline-dot{background:#eef4ff;color:#3538cd}.timeline-category-confirmed .timeline-dot,.timeline-category-completed .timeline-dot,.timeline-category-payment_paid .timeline-dot,.timeline-category-deposit_marked_paid .timeline-dot{background:#dcfae6;color:#067647}.timeline-category-cancelled .timeline-dot,.timeline-category-cancelled_by_customer .timeline-dot,.timeline-category-no_show .timeline-dot,.timeline-category-payment_failed .timeline-dot{background:#fee4e2;color:#b42318}.timeline-content{padding:1px 0 24px 5px;min-width:0}.timeline-entry-header{display:flex;justify-content:space-between;gap:18px}.timeline-entry-header strong{display:block;font-size:14px}.timeline-source{display:inline-block;margin-top:4px;padding:3px 7px;border-radius:999px;background:#f2f4f7;color:#667085;font-size:11px;font-weight:700}.timeline-entry-header time{white-space:nowrap;color:#98a2b3;font-size:12px}.timeline-memo{margin:10px 0 0;padding:11px 12px;border-radius:10px;background:#f9fafb;color:#475467;font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}.timeline-sms-meta{display:flex;gap:9px;align-items:center;margin-top:8px;color:#667085;font-size:12px}.timeline-empty{padding:28px;text-align:center;color:#98a2b3;background:#f9fafb;border-radius:12px}@media(max-width:650px){.timeline-entry{grid-template-columns:34px 1fr}.timeline-entry-header{flex-direction:column;gap:5px}.timeline-entry-header time{white-space:normal}.timeline-content{padding-left:2px}.timeline-dot{width:24px;height:24px}}
 </style>
 
 <script>

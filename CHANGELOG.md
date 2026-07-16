@@ -1,5 +1,21 @@
 # Salon De Nature Management System Changelog
 
+## v0.11.9 - Phase11-6 Unified Booking Timeline
+
+Added
+- Unified administrator booking timeline combining `BookingEvent` records and booking-specific SMS logs.
+- Chronological event rail with event-specific markers for status, schedule, deposit, payment, and SMS activity.
+- Human-readable labels, source classification, timestamps, processing memo, SMS recipient, delivery status, and error details.
+- Responsive timeline layout for desktop and mobile booking detail views.
+
+Changed
+- The separate booking event history and SMS history panels are replaced by one operational history view.
+- Timeline entries are ordered oldest to newest so the full booking lifecycle reads from top to bottom.
+
+Notes
+- Existing `BookingEvent` does not contain an administrator/user foreign key, so Phase11-6 displays a factual workflow source rather than inventing a handler name.
+- No database migration is required.
+
 ## v0.11.8 - Phase11-5B Controlled Admin Status Processing
 
 Added

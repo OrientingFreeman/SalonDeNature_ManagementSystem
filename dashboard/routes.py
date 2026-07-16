@@ -80,6 +80,75 @@ def allowed_image(filename):
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
+BOOKING_TIMELINE_LABELS = {
+    "created": "Booking created",
+    "confirmed": "Booking confirmed",
+    "completed": "Treatment completed",
+    "cancelled": "Booking cancelled",
+    "cancelled_by_customer": "Cancelled by customer",
+    "no_show": "Marked as no-show",
+    "no_show_reverted": "No-show reverted",
+    "rescheduled": "Booking rescheduled",
+    "changed": "Booking changed",
+    "late_notice": "Late arrival notice",
+    "deposit_request_info_updated": "Deposit request updated",
+    "deposit_status_changed": "Deposit status changed",
+    "deposit_marked_paid": "Deposit marked as paid",
+    "payment_paid": "Payment completed",
+    "payment_failed": "Payment failed",
+    "timeline_drag_moved": "Schedule moved on timeline",
+}
+
+
+def _booking_event_source(event_type):
+    if event_type == "cancelled_by_customer":
+        return "Customer"
+    if event_type in {"payment_paid", "payment_failed"}:
+        return "Payment system"
+    if event_type == "created":
+        return "Booking workflow"
+    return "Admin workflow"
+
+
+def _booking_timeline_entries(events, sms_logs):
+    entries = []
+
+    for event in events:
+        entries.append({
+            "kind": "event",
+            "category": event.event_type,
+            "title": BOOKING_TIMELINE_LABELS.get(
+                event.event_type,
+                event.event_type.replace("_", " ").title(),
+            ),
+            "source": _booking_event_source(event.event_type),
+            "memo": event.memo,
+            "created_at": event.created_at,
+            "sort_id": event.id,
+        })
+
+    for log in sms_logs:
+        recipient_label = "Customer" if log.recipient_type == "customer" else "Administrator"
+        template_label = (log.template_key or log.event_type).replace("_", " ").title()
+        entries.append({
+            "kind": "sms",
+            "category": "sms",
+            "title": f"{template_label} SMS",
+            "source": f"SMS · {recipient_label}",
+            "memo": log.message,
+            "created_at": log.created_at,
+            "sort_id": log.id,
+            "sms_status": log.status,
+            "recipient_phone": log.recipient_phone,
+            "error_message": log.error_message,
+        })
+
+    return sorted(
+        entries,
+        key=lambda item: (item["created_at"] or datetime.min, item["sort_id"] or 0),
+    )
+
+
 @dashboard_bp.context_processor
 def inject_admin_notification_context():
     if not session.get("admin_logged_in"):
@@ -179,12 +248,14 @@ def admin_booking_detail(booking_id):
         .all()
     )
     reminder_logs = [log for log in sms_logs if log.template_key in {"booking_reminder", "admin_booking_reminder"}]
+    timeline_entries = _booking_timeline_entries(events, sms_logs)
     return render_template(
         "admin_booking_detail.html",
         booking=booking,
         events=events,
         sms_logs=sms_logs,
         reminder_logs=reminder_logs,
+        timeline_entries=timeline_entries,
     )
 
 

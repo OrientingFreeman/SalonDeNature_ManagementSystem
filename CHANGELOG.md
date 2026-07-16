@@ -1,5 +1,20 @@
 # Salon De Nature Management System Changelog
 
+## v0.14.3 - Phase14-4 API Operations and Security
+
+Added
+- Session API CSRF token endpoint and X-CSRF-Token enforcement for POST/PATCH requests.
+- Configurable restricted CORS, in-process rate limiting, API request IDs, security headers, and structured request logging.
+- API operations and security deployment documentation.
+
+Changed
+- Public and authenticated API endpoints now apply endpoint-specific request limits.
+- API responses include X-Request-ID and no-store/nosniff headers.
+
+Notes
+- No database migration is required.
+- The in-memory limiter is per Gunicorn worker; Nginx or Redis is recommended for strict distributed enforcement.
+
 ## v0.14.2 - Phase14-3 Administrator REST API
 
 Added

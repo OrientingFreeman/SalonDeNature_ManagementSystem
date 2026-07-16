@@ -5,6 +5,7 @@ from flask import request, session
 
 from api import api_v1_bp
 from api.responses import error_response, success_response
+from api.security import rate_limit, require_api_csrf
 from bookings.models import Booking, BookingEvent
 from bookings.services import (
     cancel_booking_by_customer,
@@ -173,6 +174,7 @@ def _service_error_response(result):
 
 
 @api_v1_bp.get("/me/bookings")
+@rate_limit()
 @customer_api_login_required
 def list_my_bookings(customer):
     status_filter = (request.args.get("status") or "all").strip().lower()
@@ -220,6 +222,7 @@ def list_my_bookings(customer):
 
 
 @api_v1_bp.get("/me/bookings/<int:booking_id>")
+@rate_limit()
 @customer_api_login_required
 def get_my_booking(customer, booking_id):
     booking = _owned_booking(customer.id, booking_id)
@@ -233,6 +236,8 @@ def get_my_booking(customer, booking_id):
 
 
 @api_v1_bp.post("/me/bookings")
+@rate_limit(limit=30, window_seconds=60)
+@require_api_csrf
 @customer_api_login_required
 def create_my_booking(customer):
     data = request.get_json(silent=True)
@@ -286,6 +291,8 @@ def create_my_booking(customer):
 
 
 @api_v1_bp.post("/me/bookings/<int:booking_id>/cancel")
+@rate_limit(limit=30, window_seconds=60)
+@require_api_csrf
 @customer_api_login_required
 def cancel_my_booking(customer, booking_id):
     booking = _owned_booking(customer.id, booking_id)
@@ -315,6 +322,8 @@ def cancel_my_booking(customer, booking_id):
 
 
 @api_v1_bp.post("/me/bookings/<int:booking_id>/reschedule")
+@rate_limit(limit=30, window_seconds=60)
+@require_api_csrf
 @customer_api_login_required
 def reschedule_my_booking(customer, booking_id):
     booking = _owned_booking(customer.id, booking_id)

@@ -29,3 +29,11 @@ class Config:
     SOLAPI_FROM_NUMBER = os.getenv("SOLAPI_FROM_NUMBER")
     SOLAPI_API_BASE_URL = os.getenv("SOLAPI_API_BASE_URL", "https://api.solapi.com")
     SOLAPI_TIMEOUT_SECONDS = int(os.getenv("SOLAPI_TIMEOUT_SECONDS", "10"))
+    API_RATE_LIMIT = int(os.getenv("API_RATE_LIMIT", "120"))
+    API_RATE_WINDOW_SECONDS = int(os.getenv("API_RATE_WINDOW_SECONDS", "60"))
+    API_CORS_ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv("API_CORS_ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+

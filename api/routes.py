@@ -5,6 +5,7 @@ from flask import Response, jsonify, request
 from api import api_docs_bp, api_v1_bp
 from api.openapi import build_openapi_spec
 from api.responses import error_response, success_response
+from api.security import get_or_create_csrf_token, rate_limit
 from bookings.models import Service, StaffService
 from bookings.services import get_available_slots, get_available_slots_any_staff
 from staff.models import Staff
@@ -60,6 +61,7 @@ def _staff_payload(staff):
 
 
 @api_v1_bp.get("/health")
+@rate_limit(limit=60, window_seconds=60)
 def health():
     return success_response({
         "status": "ok",
@@ -68,7 +70,14 @@ def health():
     })
 
 
+@api_v1_bp.get("/csrf-token")
+@rate_limit(limit=30, window_seconds=60)
+def csrf_token():
+    return success_response({"csrf_token": get_or_create_csrf_token()})
+
+
 @api_v1_bp.get("/services")
+@rate_limit()
 def list_services():
     category = (request.args.get("category") or "").strip()
     query = Service.query.filter_by(is_active=True)
@@ -79,6 +88,7 @@ def list_services():
 
 
 @api_v1_bp.get("/staff")
+@rate_limit()
 def list_staff():
     service_id, invalid = _positive_int_arg("service_id")
     if invalid:
@@ -102,6 +112,7 @@ def list_staff():
 
 
 @api_v1_bp.get("/availability")
+@rate_limit(limit=60, window_seconds=60)
 def availability():
     date_raw = (request.args.get("date") or "").strip()
     service_id, invalid = _positive_int_arg("service_id")

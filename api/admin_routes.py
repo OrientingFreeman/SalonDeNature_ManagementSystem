@@ -5,6 +5,7 @@ from flask import request, session
 
 from api import api_v1_bp
 from api.responses import error_response, success_response
+from api.security import rate_limit, require_api_csrf
 from bookings.models import Booking, BookingEvent
 from bookings.services import ALLOWED_STATUS_TRANSITIONS, update_booking_status
 from dashboard.analytics import build_revenue_analytics
@@ -53,6 +54,7 @@ def _booking_payload(booking, include_events=False):
 
 
 @api_v1_bp.get("/admin/bookings")
+@rate_limit()
 @admin_api_login_required
 def list_admin_bookings(_admin):
     page = request.args.get("page", 1, type=int)
@@ -86,6 +88,7 @@ def list_admin_bookings(_admin):
 
 
 @api_v1_bp.get("/admin/bookings/<int:booking_id>")
+@rate_limit()
 @admin_api_login_required
 def get_admin_booking(_admin, booking_id):
     booking = Booking.query.get(booking_id)
@@ -95,6 +98,7 @@ def get_admin_booking(_admin, booking_id):
 
 
 @api_v1_bp.get("/admin/bookings/<int:booking_id>/events")
+@rate_limit()
 @admin_api_login_required
 def get_admin_booking_events(_admin, booking_id):
     if not Booking.query.get(booking_id):
@@ -104,6 +108,8 @@ def get_admin_booking_events(_admin, booking_id):
 
 
 @api_v1_bp.patch("/admin/bookings/<int:booking_id>/status")
+@rate_limit(limit=30, window_seconds=60)
+@require_api_csrf
 @admin_api_login_required
 def change_admin_booking_status(_admin, booking_id):
     data = request.get_json(silent=True)
@@ -128,6 +134,7 @@ def change_admin_booking_status(_admin, booking_id):
 
 
 @api_v1_bp.get("/admin/analytics/revenue")
+@rate_limit()
 @admin_api_login_required
 def admin_revenue_analytics(_admin):
     start_raw = (request.args.get("start_date") or "").strip()

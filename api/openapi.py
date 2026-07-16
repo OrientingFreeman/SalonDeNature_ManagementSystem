@@ -14,9 +14,9 @@ def build_openapi_spec():
         "openapi": "3.0.3",
         "info": {
             "title": "Salon De Nature API",
-            "version": "1.2.0",
+            "version": "1.3.0",
             "description": (
-                "Phase14-3 API. Public catalog, customer booking, and session-authenticated administrator endpoints."
+                "Phase14-4 API with session authentication, CSRF protection, restricted CORS, rate limits, and request tracing."
             ),
         },
         "servers": [{"url": "/", "description": "Current server"}],
@@ -29,6 +29,14 @@ def build_openapi_spec():
             {"name": "Administrator analytics"},
         ],
         "paths": {
+            "/api/v1/csrf-token": {
+                "get": {
+                    "tags": ["System"],
+                    "summary": "Issue or return the session CSRF token",
+                    "description": "Call this in the authenticated browser session, then send the value in X-CSRF-Token for POST and PATCH requests.",
+                    "responses": {"200": {"description": "CSRF token"}, "429": _error_response("Rate limit exceeded")},
+                }
+            },
             "/api/v1/health": {
                 "get": {
                     "tags": ["System"],
@@ -113,7 +121,7 @@ def build_openapi_spec():
             "/api/v1/admin/bookings/{booking_id}/status": {
                 "patch": {
                     "tags": ["Administrator bookings"], "summary": "Apply a controlled booking status transition",
-                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}, {"$ref": "#/components/parameters/CsrfToken"}],
                     "requestBody": {"required": True, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminStatusRequest"}}}},
                     "responses": {"200": {"description": "Status changed using existing event, notification, and cancellation SMS workflow"}, "401": _error_response("Administrator login required"), "404": _error_response("Booking not found"), "409": _error_response("Invalid status transition"), "422": _error_response("Cancellation or no-show reason required")}
                 }
@@ -143,6 +151,7 @@ def build_openapi_spec():
                 "post": {
                     "tags": ["Customer bookings"],
                     "summary": "Create a booking for the authenticated customer",
+                    "parameters": [{"$ref": "#/components/parameters/CsrfToken"}],
                     "requestBody": {
                         "required": True,
                         "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateBookingRequest"}}},
@@ -171,7 +180,7 @@ def build_openapi_spec():
                 "post": {
                     "tags": ["Customer bookings"],
                     "summary": "Cancel an owned booking",
-                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}, {"$ref": "#/components/parameters/CsrfToken"}],
                     "requestBody": {
                         "required": True,
                         "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CancelBookingRequest"}}},
@@ -189,7 +198,7 @@ def build_openapi_spec():
                 "post": {
                     "tags": ["Customer bookings"],
                     "summary": "Reschedule an owned booking",
-                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}, {"$ref": "#/components/parameters/CsrfToken"}],
                     "requestBody": {
                         "required": True,
                         "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RescheduleBookingRequest"}}},
@@ -209,6 +218,11 @@ def build_openapi_spec():
                 "BookingId": {
                     "name": "booking_id", "in": "path", "required": True,
                     "schema": {"type": "integer", "minimum": 1},
+                },
+                "CsrfToken": {
+                    "name": "X-CSRF-Token", "in": "header", "required": True,
+                    "schema": {"type": "string"},
+                    "description": "Token returned by GET /api/v1/csrf-token in the same Flask session."
                 }
             },
             "schemas": {

@@ -514,7 +514,7 @@ def create_booking(customer_id, staff_id, service_id, start_time):
     }
 
 
-def cancel_booking_by_customer(booking_id):
+def cancel_booking_by_customer(booking_id, reason=None):
     booking = Booking.query.get(booking_id)
 
     if not booking:
@@ -543,10 +543,14 @@ def cancel_booking_by_customer(booking_id):
 
     booking.status = "cancelled"
 
+    cancellation_memo = "고객 앱 취소"
+    if reason and str(reason).strip():
+        cancellation_memo = f"고객 앱 취소: {str(reason).strip()}"
+
     event = BookingEvent(
         booking_id=booking.id,
         event_type="cancelled_by_customer",
-        memo="고객 앱 취소"
+        memo=cancellation_memo
     )
 
     db.session.add(event)

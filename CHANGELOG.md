@@ -1,5 +1,24 @@
 # Salon De Nature Management System Changelog
 
+## v0.14.1 - Phase14-2 Customer Booking REST API
+
+Added
+- Session-authenticated customer booking endpoints under `/api/v1/me/bookings`.
+- Paginated customer-owned booking list with operational status filters.
+- Customer booking detail response including chronological `BookingEvent` history.
+- Customer booking creation with explicit or automatic eligible staff assignment.
+- Customer cancellation API with a required reason.
+- Customer rescheduling API using the existing availability rules.
+- OpenAPI documentation for all Phase14-2 endpoints and request schemas.
+
+Changed
+- Customer cancellation service accepts an optional reason and records it in `BookingEvent` while preserving existing web compatibility and cancellation SMS delivery.
+- API ownership checks return `404` for missing or non-owned bookings.
+
+Notes
+- Authentication reuses the existing Flask customer session; no token or database migration is introduced.
+- Existing booking creation, cancellation, rescheduling, SMS, and event services are reused rather than duplicated.
+
 ## v0.14.0 - Phase14-1 REST API Foundation
 
 Added

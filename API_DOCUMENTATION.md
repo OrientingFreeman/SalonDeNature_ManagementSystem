@@ -63,3 +63,41 @@ With the project environment activated and dependencies installed:
 ```bash
 python -m unittest tests.test_api_v1 -v
 ```
+
+## Phase14-2 customer booking API
+
+These endpoints reuse the existing Flask customer login session. Log in through the website first, then call the API from the same browser/session. A customer ID is never accepted from the request body.
+
+- `GET /api/v1/me/bookings?status=all&page=1&per_page=20`
+- `GET /api/v1/me/bookings/<booking_id>`
+- `POST /api/v1/me/bookings`
+- `POST /api/v1/me/bookings/<booking_id>/cancel`
+- `POST /api/v1/me/bookings/<booking_id>/reschedule`
+
+Booking ownership is checked server-side. A missing or non-owned booking returns `404` so another customer's booking existence is not disclosed.
+
+Create request example:
+
+```json
+{
+  "service_id": 1,
+  "staff_id": "any",
+  "start_time": "2026-08-01T14:00"
+}
+```
+
+Cancellation requires a reason. The existing cancellation SMS and BookingEvent workflow remains active:
+
+```json
+{
+  "reason": "Schedule conflict"
+}
+```
+
+Reschedule request example:
+
+```json
+{
+  "new_start_time": "2026-08-02T15:30"
+}
+```

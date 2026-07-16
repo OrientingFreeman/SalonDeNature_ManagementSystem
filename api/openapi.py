@@ -14,10 +14,9 @@ def build_openapi_spec():
         "openapi": "3.0.3",
         "info": {
             "title": "Salon De Nature API",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "description": (
-                "Phase14-2 API. Public catalog and availability endpoints plus "
-                "session-authenticated customer booking endpoints."
+                "Phase14-3 API. Public catalog, customer booking, and session-authenticated administrator endpoints."
             ),
         },
         "servers": [{"url": "/", "description": "Current server"}],
@@ -26,6 +25,8 @@ def build_openapi_spec():
             {"name": "Catalog"},
             {"name": "Availability"},
             {"name": "Customer bookings"},
+            {"name": "Administrator bookings"},
+            {"name": "Administrator analytics"},
         ],
         "paths": {
             "/api/v1/health": {
@@ -75,6 +76,53 @@ def build_openapi_spec():
                         "404": _error_response("Service or staff not found"),
                         "422": _error_response("Staff cannot perform the service"),
                     },
+                }
+            },
+            "/api/v1/admin/bookings": {
+                "get": {
+                    "tags": ["Administrator bookings"],
+                    "summary": "List bookings with filters and pagination",
+                    "description": "Uses the existing Flask administrator login session cookie.",
+                    "parameters": [
+                        {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["pending", "confirmed", "completed", "cancelled", "no_show"]}},
+                        {"name": "staff_id", "in": "query", "schema": {"type": "integer", "minimum": 1}},
+                        {"name": "service_id", "in": "query", "schema": {"type": "integer", "minimum": 1}},
+                        {"name": "customer_id", "in": "query", "schema": {"type": "integer", "minimum": 1}},
+                        {"name": "date_from", "in": "query", "schema": {"type": "string", "format": "date"}},
+                        {"name": "date_to", "in": "query", "schema": {"type": "string", "format": "date"}},
+                        {"name": "page", "in": "query", "schema": {"type": "integer", "minimum": 1, "default": 1}},
+                        {"name": "per_page", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}}
+                    ],
+                    "responses": {"200": {"description": "Paginated booking list"}, "401": _error_response("Administrator login required")}
+                }
+            },
+            "/api/v1/admin/bookings/{booking_id}": {
+                "get": {
+                    "tags": ["Administrator bookings"], "summary": "Get booking detail and event history",
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "responses": {"200": {"description": "Booking detail"}, "401": _error_response("Administrator login required"), "404": _error_response("Booking not found")}
+                }
+            },
+            "/api/v1/admin/bookings/{booking_id}/events": {
+                "get": {
+                    "tags": ["Administrator bookings"], "summary": "List booking events",
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "responses": {"200": {"description": "Chronological BookingEvent list"}, "401": _error_response("Administrator login required"), "404": _error_response("Booking not found")}
+                }
+            },
+            "/api/v1/admin/bookings/{booking_id}/status": {
+                "patch": {
+                    "tags": ["Administrator bookings"], "summary": "Apply a controlled booking status transition",
+                    "parameters": [{"$ref": "#/components/parameters/BookingId"}],
+                    "requestBody": {"required": True, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AdminStatusRequest"}}}},
+                    "responses": {"200": {"description": "Status changed using existing event, notification, and cancellation SMS workflow"}, "401": _error_response("Administrator login required"), "404": _error_response("Booking not found"), "409": _error_response("Invalid status transition"), "422": _error_response("Cancellation or no-show reason required")}
+                }
+            },
+            "/api/v1/admin/analytics/revenue": {
+                "get": {
+                    "tags": ["Administrator analytics"], "summary": "Get revenue and operations analytics",
+                    "parameters": [{"name": "start_date", "in": "query", "schema": {"type": "string", "format": "date"}}, {"name": "end_date", "in": "query", "schema": {"type": "string", "format": "date"}}],
+                    "responses": {"200": {"description": "Revenue, conversion, cancellation, no-show, customer, staff, service, weekday, and hourly metrics"}, "400": _error_response("Invalid date format"), "401": _error_response("Administrator login required")}
                 }
             },
             "/api/v1/me/bookings": {
@@ -189,6 +237,10 @@ def build_openapi_spec():
                 "CancelBookingRequest": {
                     "type": "object", "required": ["reason"],
                     "properties": {"reason": {"type": "string", "minLength": 1}},
+                },
+                "AdminStatusRequest": {
+                    "type": "object", "required": ["status"],
+                    "properties": {"status": {"type": "string", "enum": ["confirmed", "completed", "cancelled", "no_show"]}, "reason": {"type": "string"}},
                 },
                 "RescheduleBookingRequest": {
                     "type": "object", "required": ["new_start_time"],

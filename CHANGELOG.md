@@ -1,5 +1,20 @@
 # Salon De Nature Management System Changelog
 
+## v0.14.2 - Phase14-3 Administrator REST API
+
+Added
+- Session-authenticated administrator booking list, detail, BookingEvent, controlled status transition, and revenue analytics endpoints.
+- Administrator filters for status, staff, service, customer, date range, and pagination.
+- OpenAPI documentation for administrator APIs.
+
+Changed
+- Revenue web dashboard and REST API now share `dashboard.analytics.build_revenue_analytics`.
+- Administrator status API reuses existing transition, notification, BookingEvent, and cancellation SMS workflows.
+
+Notes
+- No database migration is required.
+- Administrator API authentication uses the existing Flask admin session.
+
 ## v0.14.1 - Phase14-2 Customer Booking REST API
 
 Added

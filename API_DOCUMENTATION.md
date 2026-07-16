@@ -101,3 +101,15 @@ Reschedule request example:
   "new_start_time": "2026-08-02T15:30"
 }
 ```
+
+## Phase14-3 administrator API
+
+Administrator endpoints reuse the existing Flask administrator session. Log in through `/admin/login` before using Swagger `Try it out` in the same browser.
+
+- `GET /api/v1/admin/bookings`
+- `GET /api/v1/admin/bookings/<booking_id>`
+- `GET /api/v1/admin/bookings/<booking_id>/events`
+- `PATCH /api/v1/admin/bookings/<booking_id>/status`
+- `GET /api/v1/admin/analytics/revenue`
+
+Status changes reuse the controlled transition service. Cancellation and no-show require a reason. Cancellation continues to trigger the existing customer and administrator cancellation SMS workflow; completion and no-show do not send automatic SMS.

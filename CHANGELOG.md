@@ -1,5 +1,17 @@
 # Salon De Nature Management System Changelog
 
+## v0.16.2 - Final Handover Data Cleanup
+
+Added
+- Safe dry-run-first `prepare_handover.py` utility for removing test customers, staff, bookings, payment records, SMS logs, notifications, schedules, time off, and linked staff profile images.
+- Automatic timestamped SQLite backup before executed cleanup.
+- Administrator selection and preservation while retaining services, shop settings, SMS templates, and migration state.
+- Korean handover cleanup guide.
+
+Notes
+- No database migration is required.
+- The cleanup must be reviewed in dry-run mode before using `--execute`.
+
 ## v0.16.1 - Internal Korean UI / Customer Bilingual UI
 
 Added

@@ -208,6 +208,8 @@
     }
 }
 
+.booking-filter-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.booking-filter-tab{border:1px solid #d9ddd7;background:#fff;color:var(--forest);padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}.booking-filter-tab span{margin-left:5px;color:var(--sage)}.booking-filter-tab.active{background:var(--forest);color:#fff;border-color:var(--forest)}.booking-filter-tab.active span{color:#fff}.booking-action-btn.detail-link{text-decoration:none;background:#f4f6f2;color:var(--forest)}.my-booking-card[hidden]{display:none!important}
+
 </style>
 
 
@@ -230,11 +232,18 @@
 
     </div>
 
+    <div class="booking-filter-tabs" role="tablist" aria-label="Reservation status filter">
+        <button type="button" class="booking-filter-tab active" data-filter="all">All <span>{{ bookings|length }}</span></button>
+        <button type="button" class="booking-filter-tab" data-filter="upcoming">Upcoming <span>{{ booking_groups.upcoming|length }}</span></button>
+        <button type="button" class="booking-filter-tab" data-filter="completed">Completed <span>{{ booking_groups.completed|length }}</span></button>
+        <button type="button" class="booking-filter-tab" data-filter="closed">Cancelled / No-show <span>{{ booking_groups.closed|length }}</span></button>
+    </div>
+
     {% if bookings %}
-        <div class="booking-card-list">
+        <div class="booking-card-list" id="bookingCardList">
 
             {% for booking in bookings %}
-            <div class="my-booking-card">
+            <div class="my-booking-card" data-booking-group="{% if booking.status in ['pending', 'confirmed'] %}upcoming{% elif booking.status == 'completed' %}completed{% else %}closed{% endif %}">
 
                 <div class="booking-card-main">
                     <h3>
@@ -348,6 +357,7 @@
                 {% endif %}
 
                 <div class="booking-card-actions">
+                    <a class="booking-action-btn detail-link" href="{{ url_for('customer_booking.my_booking_detail', booking_id=booking.id, lang=lang) }}">View details</a>
                     {% if booking.status in ["pending", "confirmed"] %}
                         <button class="booking-action-btn danger"
                         onclick="openCancelModal({{ booking.id }})">
@@ -437,6 +447,16 @@
 
 <script>
 const LANG = "{{ lang }}";
+document.querySelectorAll('.booking-filter-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+        const filter = tab.dataset.filter;
+        document.querySelectorAll('.booking-filter-tab').forEach(function(item){ item.classList.toggle('active', item === tab); });
+        document.querySelectorAll('.my-booking-card').forEach(function(card){
+            card.hidden = filter !== 'all' && card.dataset.bookingGroup !== filter;
+        });
+    });
+});
+
 
 const MESSAGES = {
     ko: {

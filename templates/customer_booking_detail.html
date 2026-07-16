@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Reservation Details{% endblock %}
+{% block content %}
+<section class="customer-booking-detail">
+  <div class="detail-topbar">
+    <div>
+      <p class="eyebrow">RESERVATION #{{ booking.id }}</p>
+      <h1>{% if lang == 'en' and booking.service.name_en %}{{ booking.service.name_en }}{% else %}{{ booking.service.name_ko }}{% endif %}</h1>
+      <p>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</p>
+    </div>
+    <span class="customer-status status-{{ booking.status }}">{{ booking.status }}</span>
+  </div>
+
+  <div class="detail-layout">
+    <article class="customer-detail-card">
+      <h2>Reservation information</h2>
+      <dl class="customer-detail-list">
+        <div><dt>Staff</dt><dd>{{ booking.staff.name }}</dd></div>
+        <div><dt>Service</dt><dd>{% if lang == 'en' and booking.service.name_en %}{{ booking.service.name_en }}{% else %}{{ booking.service.name_ko }}{% endif %}</dd></div>
+        <div><dt>Schedule</dt><dd>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}–{{ booking.end_time.strftime('%H:%M') }}</dd></div>
+        <div><dt>Price</dt><dd>₩{{ '{:,}'.format(booking.service.price) }}</dd></div>
+        <div><dt>Deposit</dt><dd>{{ booking.deposit_payment_status or 'none' }}{% if booking.deposit_paid %} · paid{% endif %}</dd></div>
+        <div><dt>Created</dt><dd>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') if booking.created_at else '-' }}</dd></div>
+      </dl>
+      {% if booking.memo %}<div class="customer-note"><strong>Reservation memo</strong><p>{{ booking.memo }}</p></div>{% endif %}
+      {% if booking.deposit_note %}<div class="customer-note"><strong>Deposit notice</strong><p>{{ booking.deposit_note }}</p></div>{% endif %}
+    </article>
+
+    <article class="customer-detail-card">
+      <h2>Status guide</h2>
+      {% if booking.status == 'pending' %}<p>The reservation is awaiting salon confirmation.</p>
+      {% elif booking.status == 'confirmed' %}<p>Your reservation is confirmed.</p>
+      {% elif booking.status == 'completed' %}<p>This appointment has been completed.</p>
+      {% elif booking.status == 'cancelled' %}<p>This reservation was cancelled.</p>
+      {% elif booking.status == 'no_show' %}<p>This reservation was recorded as a no-show.</p>{% endif %}
+      {% if booking.status in ['pending','confirmed'] and booking.start_time.date() <= now.date() %}<p class="contact-notice">Same-day changes and cancellations require direct contact with the salon.</p>{% endif %}
+      <a class="back-link" href="{{ url_for('customer_booking.my_bookings', lang=lang) }}">Back to My Reservations</a>
+    </article>
+  </div>
+
+  <article class="customer-detail-card event-card">
+    <div class="event-title"><h2>Reservation history</h2><span>{{ events|length }}</span></div>
+    <div class="customer-event-list">
+      {% for event in events %}
+      <div class="customer-event event-{{ event.event_type }}">
+        <div class="event-dot">{% if event.event_type in ['confirmed','completed','deposit_marked_paid','payment_paid'] %}✓{% elif event.event_type in ['cancelled','cancelled_by_customer','no_show','payment_failed'] %}!{% elif event.event_type in ['changed','rescheduled','timeline_drag_moved'] %}↔{% else %}•{% endif %}</div>
+        <div class="event-body"><div class="event-head"><strong>{{ event.event_type.replace('_',' ')|title }}</strong><time>{{ event.created_at.strftime('%Y-%m-%d %H:%M') if event.created_at else '-' }}</time></div>{% if event.memo %}<p>{{ event.memo }}</p>{% endif %}</div>
+      </div>
+      {% else %}<p class="event-empty">No reservation history has been recorded.</p>{% endfor %}
+    </div>
+  </article>
+</section>
+<style>
+.customer-booking-detail{max-width:1120px;margin:0 auto;padding:34px 20px 70px}.detail-topbar{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px}.detail-topbar h1{margin:5px 0 8px}.detail-topbar p{margin:0;color:#667085}.customer-status{padding:9px 13px;border-radius:999px;font-size:13px;font-weight:800;text-transform:capitalize;background:#f2f4f7}.status-pending{background:#fff4d8;color:#8a5d00}.status-confirmed{background:#e4f4ea;color:#137333}.status-completed{background:#e0f2fe;color:#026aa2}.status-cancelled,.status-no_show{background:#fde8e8;color:#b42318}.detail-layout{display:grid;grid-template-columns:1.35fr .65fr;gap:20px}.customer-detail-card{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:24px;box-shadow:0 4px 16px rgba(16,24,40,.04)}.customer-detail-card h2{margin:0 0 16px}.customer-detail-list{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:0}.customer-detail-list div{padding:13px 0;border-bottom:1px solid #f0f1f3}.customer-detail-list dt{font-size:12px;color:#667085;margin-bottom:4px}.customer-detail-list dd{margin:0;font-weight:700}.customer-note{margin-top:15px;padding:14px;background:#f9fafb;border-radius:13px}.customer-note p{margin:7px 0 0;white-space:pre-wrap;color:#475467}.contact-notice{padding:12px;border-radius:12px;background:#fff4d8;color:#8a5d00;font-weight:700}.back-link{display:inline-block;margin-top:18px;padding:11px 14px;border-radius:11px;background:var(--forest);color:#fff;text-decoration:none;font-weight:800}.event-card{margin-top:20px}.event-title{display:flex;justify-content:space-between;align-items:center}.event-title span{padding:5px 9px;background:#f2f4f7;border-radius:999px;font-size:12px}.customer-event{display:grid;grid-template-columns:36px 1fr;position:relative}.customer-event:after{content:"";position:absolute;left:14px;top:30px;bottom:-4px;width:2px;background:#eaecf0}.customer-event:last-child:after{display:none}.event-dot{position:relative;z-index:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f2f4f7;font-weight:900}.event-body{padding:2px 0 24px}.event-head{display:flex;justify-content:space-between;gap:16px}.event-head time{font-size:12px;color:#98a2b3;white-space:nowrap}.event-body p{margin:8px 0 0;padding:11px;background:#f9fafb;border-radius:10px;color:#475467;white-space:pre-wrap}.event-empty{color:#98a2b3}@media(max-width:760px){.detail-topbar{flex-direction:column}.detail-layout,.customer-detail-list{grid-template-columns:1fr}.event-head{flex-direction:column;gap:4px}.event-head time{white-space:normal}}
+</style>
+{% endblock %}

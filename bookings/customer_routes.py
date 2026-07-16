@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from extensions import db
 from customers.models import Customer
 from staff.models import Staff
-from bookings.models import Service, Booking
+from bookings.models import Service, Booking, BookingEvent
 from dashboard.models import ShopSettings
 from bookings.services import (
     create_booking,
@@ -191,13 +191,52 @@ def my_bookings():
         customer_id=customer.id
     ).order_by(Booking.start_time.desc()).all()
 
+    now = datetime.now()
+    booking_groups = {
+        "upcoming": [b for b in bookings if b.status in ("pending", "confirmed")],
+        "completed": [b for b in bookings if b.status == "completed"],
+        "closed": [b for b in bookings if b.status in ("cancelled", "no_show")],
+    }
+
     return render_template(
         "my_bookings.html",
         bookings=bookings,
+        booking_groups=booking_groups,
         customer=customer,
         lang=lang,
         text=get_text(lang),
         today=date.today(),
+        now=now,
+        settings=ShopSettings.query.first()
+    )
+
+
+@customer_booking_bp.route("/my-bookings/<int:booking_id>")
+def my_booking_detail(booking_id):
+    if not session.get("customer_id"):
+        return redirect(url_for("auth.login"))
+
+    lang = get_lang()
+    customer = Customer.query.get(session["customer_id"])
+    if not customer:
+        session.pop("customer_id", None)
+        return redirect(url_for("auth.login"))
+
+    booking = Booking.query.filter_by(
+        id=booking_id, customer_id=customer.id
+    ).first_or_404()
+
+    events = BookingEvent.query.filter_by(booking_id=booking.id).order_by(
+        BookingEvent.created_at.asc(), BookingEvent.id.asc()
+    ).all()
+
+    return render_template(
+        "customer_booking_detail.html",
+        booking=booking,
+        events=events,
+        customer=customer,
+        lang=lang,
+        text=get_text(lang),
         now=datetime.now(),
         settings=ShopSettings.query.first()
     )

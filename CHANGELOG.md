@@ -1,5 +1,21 @@
 # Salon De Nature Management System Changelog
 
+## v0.12.0 - Phase11-7 Customer My Booking Hub
+
+Added
+- Status-filtered My Reservations view for upcoming, completed, cancelled, and no-show bookings.
+- Customer-owned reservation detail page with schedule, service, staff, price, deposit, and memo information.
+- Customer-facing chronological BookingEvent history.
+- Direct View details navigation from each reservation card.
+
+Changed
+- My Reservations now groups bookings by operational state while preserving existing cancellation, rescheduling, and late-notice actions.
+- Reservation detail access is constrained by the authenticated customer ID.
+
+Notes
+- No database migration is required.
+- Existing customer cancellation and rescheduling API ownership checks remain active.
+
 ## v0.11.9 - Phase11-6 Unified Booking Timeline
 
 Added

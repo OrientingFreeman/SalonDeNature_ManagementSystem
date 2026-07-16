@@ -1,5 +1,20 @@
 # Salon De Nature Management System Changelog
 
+## v0.16.2 - Mobile Timeline Modal Accessibility
+
+Added
+- Scrollable reservation-detail, reschedule, and assignment modals on mobile browsers.
+- iOS safe-area and dynamic viewport-height handling for timeline dialogs.
+- Mobile two-column/one-column action layouts so all desktop booking actions remain reachable.
+- Background scroll locking while timeline dialogs are open.
+
+Changed
+- Timeline dialogs reset their own scroll position whenever opened.
+- Escape and backdrop closing preserve body-scroll state across nested dialogs.
+
+Notes
+- No database migration or environment-variable change is required.
+
 ## v0.16.2 - Final Handover Data Cleanup
 
 Added

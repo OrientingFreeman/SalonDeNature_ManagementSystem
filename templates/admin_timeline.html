@@ -393,6 +393,7 @@
 
 .timeline-booking-block{
     position:absolute;
+    touch-action:manipulation;
     left:8px;
     right:8px;
     border-radius:12px;
@@ -445,15 +446,36 @@
     z-index:1000;
     inset:0;
     background:rgba(0,0,0,.45);
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+    box-sizing:border-box;
 }
 
 .modal-box{
     background:white;
-    width:min(520px, 92vw);
-    margin:12vh auto;
+    width:min(520px, 100%);
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin:clamp(12px, 7vh, 72px) auto;
     padding:28px;
     border-radius:18px;
     box-shadow:0 8px 32px rgba(0,0,0,.2);
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    box-sizing:border-box;
+}
+
+body.timeline-modal-open{
+    overflow:hidden;
+    touch-action:none;
 }
 
 .modal-box h3{
@@ -933,6 +955,103 @@
     }
 }
 
+@media(max-width:640px){
+    .modal-backdrop{
+        padding:
+            max(8px, env(safe-area-inset-top))
+            max(8px, env(safe-area-inset-right))
+            max(8px, env(safe-area-inset-bottom))
+            max(8px, env(safe-area-inset-left));
+    }
+
+    .modal-box,
+    .timeline-detail-modal,
+    .timeline-reschedule-modal,
+    .timeline-assignment-modal{
+        width:100%;
+        max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        margin:0 auto;
+        padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+        border-radius:22px;
+    }
+
+    .modal-topline{
+        position:relative;
+        display:grid;
+        grid-template-columns:minmax(0, 1fr) auto;
+        gap:12px;
+        margin-bottom:14px;
+    }
+
+    .modal-topline h3{
+        font-size:clamp(25px, 8vw, 34px);
+        line-height:1.08;
+        overflow-wrap:anywhere;
+    }
+
+    .modal-topline p{
+        overflow-wrap:anywhere;
+    }
+
+    .modal-booking-info-grid{
+        grid-template-columns:1fr;
+        gap:10px;
+    }
+
+    .modal-booking-info-grid > div{
+        grid-template-columns:140px minmax(0, 1fr);
+        min-height:48px;
+        padding:11px 14px;
+    }
+
+    .timeline-status-actions,
+    .timeline-modal-actions{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        width:100%;
+        gap:10px;
+    }
+
+    .timeline-status-actions .booking-action-btn,
+    .timeline-modal-actions .booking-action-btn{
+        width:100%;
+        min-width:0;
+        min-height:46px;
+        justify-content:center;
+        text-align:center;
+    }
+
+    .timeline-status-actions .booking-action-btn:last-child:nth-child(odd),
+    .timeline-modal-actions .booking-action-btn:last-child:nth-child(odd){
+        grid-column:1 / -1;
+    }
+
+    .timeline-deposit-actions{
+        padding:14px;
+    }
+
+    .modal-memo-box{
+        margin-top:14px;
+        padding:14px;
+    }
+}
+
+@media(max-width:390px){
+    .modal-booking-info-grid > div{
+        grid-template-columns:112px minmax(0, 1fr);
+    }
+
+    .timeline-status-actions,
+    .timeline-modal-actions{
+        grid-template-columns:1fr;
+    }
+
+    .timeline-status-actions .booking-action-btn:last-child:nth-child(odd),
+    .timeline-modal-actions .booking-action-btn:last-child:nth-child(odd){
+        grid-column:auto;
+    }
+}
+
 
 .booking-detail-open-btn{
     position:absolute;
@@ -1001,7 +1120,7 @@ function openBookingDetailModal(bookingId, customerName, phone, serviceName, sta
     statusBadge.textContent = status || "-";
     statusBadge.className = `status-badge modal-status-${status || "pending"}`;
 
-    document.getElementById("bookingDetailModal").style.display = "block";
+    showTimelineModal("bookingDetailModal");
 }
 
 
@@ -1055,10 +1174,7 @@ function openBookingDetailModalSafe(buttonOrBlock) {
         syncTimelineDepositActions(deposit, status);
     }
 
-    const modal = document.getElementById("bookingDetailModal");
-    if (modal) {
-        modal.style.display = "block";
-    }
+    showTimelineModal("bookingDetailModal");
 }
 
 document.addEventListener("click", function(event) {
@@ -1073,8 +1189,40 @@ document.addEventListener("click", function(event) {
 }, true);
 
 
+function visibleTimelineModalCount() {
+    return Array.from(document.querySelectorAll(".modal-backdrop")).filter(function(modal) {
+        return window.getComputedStyle(modal).display !== "none";
+    }).length;
+}
+
+function syncTimelineModalBodyLock() {
+    document.body.classList.toggle("timeline-modal-open", visibleTimelineModalCount() > 0);
+}
+
+function showTimelineModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.style.display = "block";
+    modal.scrollTop = 0;
+
+    const box = modal.querySelector(".modal-box");
+    if (box) {
+        box.scrollTop = 0;
+    }
+
+    syncTimelineModalBodyLock();
+}
+
+function hideTimelineModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.style.display = "none";
+    window.requestAnimationFrame(syncTimelineModalBodyLock);
+}
+
 function closeBookingDetailModal() {
-    document.getElementById("bookingDetailModal").style.display = "none";
+    hideTimelineModal("bookingDetailModal");
     selectedTimelineBookingId = null;
 }
 
@@ -1124,11 +1272,11 @@ function requestTimelineReschedule() {
     input.value = `${dateText}T${startTime}`;
     summary.textContent = `${block.dataset.customerName || "-"} · ${block.dataset.serviceName || "-"} · ${block.dataset.staffName || "-"}`;
 
-    document.getElementById("timelineRescheduleModal").style.display = "block";
+    showTimelineModal("timelineRescheduleModal");
 }
 
 function closeTimelineRescheduleModal() {
-    document.getElementById("timelineRescheduleModal").style.display = "none";
+    hideTimelineModal("timelineRescheduleModal");
 }
 
 function submitTimelineReschedule() {
@@ -1185,11 +1333,11 @@ function requestTimelineAssignment() {
     document.getElementById("timelineAssignmentInput").value = `${dateText}T${startTime}`;
     document.getElementById("assignmentBookingSummary").textContent = `${block.dataset.customerName || "-"} · ${block.dataset.serviceName || "-"} · ${block.dataset.staffName || "-"}`;
 
-    document.getElementById("timelineAssignmentModal").style.display = "block";
+    showTimelineModal("timelineAssignmentModal");
 }
 
 function closeTimelineAssignmentModal() {
-    document.getElementById("timelineAssignmentModal").style.display = "none";
+    hideTimelineModal("timelineAssignmentModal");
 }
 
 function submitTimelineAssignment() {
@@ -1436,6 +1584,24 @@ window.addEventListener("click", function(event) {
     }
 });
 
+
+
+
+document.addEventListener("keydown", function(event) {
+    if (event.key !== "Escape") return;
+
+    const assignmentModal = document.getElementById("timelineAssignmentModal");
+    const rescheduleModal = document.getElementById("timelineRescheduleModal");
+    const detailModal = document.getElementById("bookingDetailModal");
+
+    if (assignmentModal && window.getComputedStyle(assignmentModal).display !== "none") {
+        closeTimelineAssignmentModal();
+    } else if (rescheduleModal && window.getComputedStyle(rescheduleModal).display !== "none") {
+        closeTimelineRescheduleModal();
+    } else if (detailModal && window.getComputedStyle(detailModal).display !== "none") {
+        closeBookingDetailModal();
+    }
+});
 
 let draggingBookingId = null;
 let draggingDurationMinutes = null;

@@ -12,6 +12,7 @@ from payments.routes import payment_bp
 from reminders import reminders_cli
 from api import api_v1_bp, api_docs_bp
 from api.security import register_api_security
+from pwa import pwa_bp
 
 
 
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(payment_bp)
     app.register_blueprint(api_v1_bp)
     app.register_blueprint(api_docs_bp)
+    app.register_blueprint(pwa_bp)
     register_api_security(app)
     app.cli.add_command(reminders_cli)
 

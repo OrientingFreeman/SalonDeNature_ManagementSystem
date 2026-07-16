@@ -1,5 +1,22 @@
 # Salon De Nature Management System Changelog
 
+## v0.16.0 - Phase16 Progressive Web App
+
+Added
+- Installable PWA manifest, app icons, maskable icon, and root-scoped service worker.
+- Android/Chromium install prompt and iOS Add to Home Screen guidance.
+- Generic offline fallback page and PWA deployment/verification documentation.
+- PWA contract tests for manifest structure, route syntax, and sensitive-cache exclusions.
+
+Changed
+- Base layout now includes mobile viewport, theme color, Apple web app metadata, manifest, and service-worker registration.
+- Static same-origin assets use cache-first refresh while navigated HTML, API responses, administrator, staff, and customer booking data are not cached.
+
+Notes
+- HTTPS is required and is already present in the production deployment.
+- No database migration or additional environment variable is required.
+- Increment the service-worker cache version when changing precached assets.
+
 ## v0.15.3 - Phase15-A3 Automated CRM Segmentation
 
 Added

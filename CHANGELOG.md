@@ -1,5 +1,19 @@
 # Salon De Nature Management System Changelog
 
+## v0.15.4 - CRM Customer Excel Export
+
+Added
+- Administrator-only Excel export for the CRM customer status table.
+- Current customer search, segment, booking restriction, and sorting conditions are preserved in the downloaded workbook.
+- Korean headers, filter summary, frozen table header, Excel auto-filter, formatted dates, percentages, and KRW values.
+
+Changed
+- CRM customer list header now includes an Excel download action next to customer creation.
+
+Notes
+- Export metrics use the same live booking-derived CRM calculation as the on-screen table.
+- No database migration or new dependency is required because openpyxl is already part of the project.
+
 ## v0.16.2 - Mobile Timeline Modal Accessibility
 
 Added

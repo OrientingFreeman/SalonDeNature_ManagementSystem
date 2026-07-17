@@ -21,6 +21,7 @@ from io import BytesIO
 
 from dashboard.models import ShopSettings, AdminUser, AdminNotification
 from dashboard.analytics import build_revenue_analytics
+from dashboard.crm_export import build_customer_crm_workbook
 from dashboard.crm import (
     build_customer_crm_rows,
     filter_customer_crm_rows,
@@ -1240,6 +1241,50 @@ def admin_customers():
         segment=segment,
         status=status,
         sort_key=sort_key,
+    )
+
+
+@dashboard_bp.route("/admin/customers/export")
+@admin_required
+def export_customers_excel():
+    query = request.args.get("q", "").strip()
+    segment = request.args.get("segment", "all").strip().lower()
+    status = request.args.get("status", "all").strip().lower()
+    sort_key = request.args.get("sort", "recent").strip().lower()
+
+    valid_segments = {"all", "new", "returning", "potential_vip", "vip", "dormant", "at_risk"}
+    valid_statuses = {"all", "normal", "restricted"}
+    valid_sorts = {"recent", "revenue", "visits", "no_show", "risk", "name"}
+
+    if segment not in valid_segments:
+        segment = "all"
+    if status not in valid_statuses:
+        status = "all"
+    if sort_key not in valid_sorts:
+        sort_key = "recent"
+
+    customer_rows = filter_customer_crm_rows(
+        build_customer_crm_rows(),
+        query=query,
+        segment=segment,
+        status=status,
+    )
+    customer_rows = sort_customer_crm_rows(customer_rows, sort_key=sort_key)
+
+    file_stream = build_customer_crm_workbook(
+        customer_rows,
+        query=query,
+        segment=segment,
+        status=status,
+        sort_key=sort_key,
+    )
+    filename = f"CustomerCRM_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 

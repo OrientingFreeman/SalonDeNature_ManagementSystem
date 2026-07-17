@@ -76,6 +76,26 @@
         <button type="button" class="secondary" id="pwaInstallDismiss" aria-label="{% if internal_ko %}설치 안내 닫기{% else %}Dismiss installation prompt{% endif %}">{% if internal_ko %}나중에{% else %}{{ text.later if text is defined else 'Later' }}{% endif %}</button>
     </div>
 </aside>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>Salon De Nature</h3>
+      <p>Premium Nail Studio</p>
+    </div>
+    <div class="footer-info">
+      <div><strong>대표</strong> 홍수민</div>
+      <div><strong>사업자등록번호</strong> 550702720</div>
+    </div>
+    <div class="footer-links">
+      <a href="{{ url_for('main.terms') }}">이용약관</a>
+      <a href="{{ url_for('main.privacy') }}">개인정보처리방침</a>
+      <a href="{{ url_for('main.booking_policy') }}">예약 취소 정책</a>
+    </div>
+  </div>
+  <div class="footer-copy">© 2026 Salon De Nature. All rights reserved.</div>
+</footer>
+
 <script src="{{ url_for('static', filename='pwa/pwa.js') }}" defer></script>
 </body>
 </html>

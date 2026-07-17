@@ -116,6 +116,7 @@ def kakao_login():
         f"?client_id={current_app.config['KAKAO_REST_API_KEY']}"
         f"&redirect_uri={current_app.config['KAKAO_REDIRECT_URI']}"
         "&response_type=code"
+        "&prompt=login"
     )
     return redirect(kakao_auth_url)
 
